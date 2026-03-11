@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>KRATOS — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:#E8112A; --red-dim:rgba(232,17,42,0.12);
+  --bike:#0EA5E9; --bike-dim:rgba(14,165,233,0.12);
+  --green:#10B981; --green-dim:rgba(16,185,129,0.12);
+  --orange:#F59E0B; --orange-dim:rgba(245,158,11,0.12);
+  --purple:#A855F7; --purple-dim:rgba(168,85,247,0.12);
+  --bg:#0A0A0A; --s1:#111; --s2:#191919; --s3:#222; --s4:#2C2C2C;
+  --border:rgba(255,255,255,0.07);
+  --text:#F0F0F0; --muted:#555; --muted2:#888;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:'DM Sans',sans-serif;color:var(--text);font-size:15px;
+  display:flex;flex-direction:column;height:100dvh;}
+
+#loadingScreen{position:fixed;inset:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:100;gap:16px;}
+.ls-logo{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:0.15em;color:var(--red);}
+.ls-sub{font-size:0.65rem;color:var(--muted2);letter-spacing:0.2em;text-transform:uppercase;}
+.ls-spinner{width:24px;height:24px;border:2px solid var(--s4);border-top-color:var(--red);
+  border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.view{display:none;flex-direction:column;flex:1;overflow:hidden;}
+.view.active{display:flex;}
+
+.status-bar{padding:14px 18px 10px;display:flex;align-items:center;
+  justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--border);}
+.sb-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.1em;color:var(--red);}
+.sb-admin-badge{font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+  padding:4px 10px;border-radius:20px;background:var(--purple-dim);color:var(--purple);}
+.logout-btn{padding:5px 10px;border-radius:8px;background:none;
+  border:1px solid var(--border);color:var(--muted);
+  font-size:0.65rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;}
+
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;padding:16px 16px calc(16px + var(--safe-bottom));}
+
+.bottom-nav{display:flex;background:rgba(10,10,10,0.95);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  padding:8px 0 calc(8px + var(--safe-bottom));flex-shrink:0;}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 0;cursor:pointer;border:none;background:none;transition:all 0.15s;}
+.bnav-icon{font-size:1.3rem;}
+.bnav-label{font-size:0.6rem;font-weight:600;letter-spacing:0.08em;
+  text-transform:uppercase;color:var(--muted);transition:color 0.15s;}
+.bnav-item.active .bnav-label{color:var(--red);}
+.bnav-item.active .bnav-icon{transform:scale(1.1);}
+
+.section-label{font-size:0.6rem;font-weight:700;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--muted);margin:16px 0 8px;padding-left:2px;}
+
+/* ATHLETE CARDS */
+.athlete-card{background:var(--s1);border:1px solid var(--border);
+  border-radius:14px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:all 0.12s;}
+.athlete-card:active{transform:scale(0.99);}
+.athlete-card.selected{border-color:rgba(232,17,42,0.4);}
+.ac-head{padding:14px 16px;display:flex;align-items:center;gap:12px;}
+.ac-avatar{width:40px;height:40px;border-radius:50%;
+  background:var(--red-dim);border:1px solid var(--red-dim);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--red);flex-shrink:0;}
+.ac-info{flex:1;}
+.ac-name{font-weight:600;font-size:0.92rem;}
+.ac-email{font-size:0.7rem;color:var(--muted2);margin-top:2px;}
+.ac-stats{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.ac-stat{font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+  padding:2px 8px;border-radius:4px;}
+.ac-body{border-top:1px solid var(--border);padding:14px 16px;display:none;}
+.athlete-card.open .ac-body{display:block;}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.stat-box{padding:10px;background:var(--s2);border-radius:10px;border:1px solid var(--border);text-align:center;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--text);}
+.stat-lbl{font-size:0.58rem;color:var(--muted2);font-weight:600;
+  letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;}
+
+/* PROGRAM ASSIGN */
+.assign-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.assign-label{font-size:0.72rem;color:var(--muted2);flex:1;}
+.assign-select{
+  background:var(--s3);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;
+  padding:8px 12px;outline:none;cursor:pointer;flex:1;
+  -webkit-appearance:none;
+}
+.assign-btn{
+  padding:9px 14px;border-radius:8px;
+  background:var(--red);color:white;border:none;
+  font-weight:700;font-size:0.72rem;letter-spacing:0.08em;
+  text-transform:uppercase;cursor:pointer;flex-shrink:0;
+}
+
+/* MESSAGE PANEL */
+.msg-mini{background:var(--s2);border:1px solid var(--border);
+  border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:0.78rem;line-height:1.5;}
+.msg-mini-meta{font-size:0.62rem;color:var(--muted2);margin-bottom:3px;font-weight:600;}
+.msg-mini.coach-sent{border-left:2px solid var(--red);}
+.msg-mini.athlete-sent{border-left:2px solid var(--bike);}
+.msg-compose{display:flex;gap:8px;margin-top:10px;}
+.msg-compose textarea{
+  flex:1;padding:10px 12px;background:var(--s3);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:0.82rem;outline:none;resize:none;-webkit-appearance:none;
+}
+.msg-compose button{
+  padding:10px 16px;background:var(--red);color:white;border:none;
+  border-radius:10px;font-weight:700;font-size:0.8rem;cursor:pointer;flex-shrink:0;
+}
+
+/* NEW ATHLETE */
+.new-athlete-form{background:var(--s1);border:1px solid var(--border);
+  border-radius:14px;padding:18px 16px;margin-bottom:10px;}
+.na-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;
+  letter-spacing:0.06em;margin-bottom:14px;}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:0.62rem;font-weight:700;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--muted2);margin-bottom:5px;}
+.field input, .field select{
+  width:100%;padding:11px 13px;background:var(--s2);
+  border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;
+  outline:none;-webkit-appearance:none;transition:border-color 0.15s;
+}
+.field input:focus{border-color:rgba(232,17,42,0.4);}
+.field input::placeholder{color:var(--muted);}
+.create-btn{
+  width:100%;padding:14px;margin-top:4px;
+  background:var(--red);color:white;border:none;border-radius:12px;
+  font-weight:700;font-size:0.88rem;letter-spacing:0.1em;
+  text-transform:uppercase;cursor:pointer;transition:opacity 0.15s;
+}
+.create-btn:active{opacity:0.85;}
+.create-btn:disabled{opacity:0.4;}
+.success-msg{
+  margin-top:10px;padding:10px 12px;background:var(--green-dim);
+  border:1px solid rgba(16,185,129,0.2);border-radius:8px;
+  font-size:0.78rem;color:var(--green);display:none;
+}
+.success-msg.visible{display:block;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeUp 0.2s ease both;}
+</style>
+</head>
+<body>
+
+<div id="loadingScreen">
+  <div class="ls-logo">KRATOS</div>
+  <div class="ls-sub">Admin Panel</div>
+  <div class="ls-spinner"></div>
+</div>
+
+<!-- ── VIEW: ATLETI ── -->
+<div class="view active" id="view-athletes">
+  <div class="status-bar">
+    <div class="sb-logo">KRATOS</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="sb-admin-badge">👑 Admin</span>
+      <button class="logout-btn" onclick="doLogout()">Esci</button>
+    </div>
+  </div>
+  <div class="scroll-area">
+    <div class="section-label">I tuoi atleti</div>
+    <div id="athleteList"></div>
+  </div>
+</div>
+
+<!-- ── VIEW: NUOVO ATLETA ── -->
+<div class="view" id="view-new">
+  <div class="status-bar">
+    <div class="sb-logo">KRATOS</div>
+    <span class="sb-admin-badge">Nuovo Atleta</span>
+  </div>
+  <div class="scroll-area">
+    <div class="new-athlete-form">
+      <div class="na-title">Crea account atleta</div>
+
+      <div class="field">
+        <label>Nome completo</label>
+        <input type="text" id="na-name" placeholder="Mario Rossi">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="na-email" placeholder="atleta@email.com" inputmode="email">
+      </div>
+      <div class="field">
+        <label>Password temporanea</label>
+        <input type="text" id="na-password" placeholder="minimo 6 caratteri">
+      </div>
+      <div class="field">
+        <label>Programma da assegnare</label>
+        <select id="na-program">
+          <option value="kratos_default">Kratos — Blocco 1 (default)</option>
+          <option value="kratos_strength">Kratos — Forza</option>
+          <option value="custom">Nessuno (assegna dopo)</option>
+        </select>
+      </div>
+
+      <button class="create-btn" id="createBtn" onclick="createAthlete()">
+        Crea account ✓
+      </button>
+      <div class="success-msg" id="successMsg"></div>
+    </div>
+
+    <div style="font-size:0.72rem;color:var(--muted2);padding:0 2px;line-height:1.6;">
+      💡 Dopo la creazione, l'atleta accede con email e password da te impostati su questa pagina (index.html). Può cambiare la password dal profilo in seguito.
+    </div>
+  </div>
+</div>
+
+<!-- ── VIEW: MESSAGGI GLOBALI ── -->
+<div class="view" id="view-msgs">
+  <div class="status-bar">
+    <div class="sb-logo">KRATOS</div>
+    <span class="sb-admin-badge">Messaggi</span>
+  </div>
+  <div class="scroll-area" id="globalMsgArea">
+    <div class="section-label">Seleziona un atleta per vedere i messaggi</div>
+    <div id="allAthletesMsgList"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="bnav-item active" id="nav-athletes" onclick="switchView('athletes')">
+    <span class="bnav-icon">👥</span><span class="bnav-label">Atleti</span>
+  </button>
+  <button class="bnav-item" id="nav-new" onclick="switchView('new')">
+    <span class="bnav-icon">➕</span><span class="bnav-label">Nuovo</span>
+  </button>
+  <button class="bnav-item" id="nav-msgs" onclick="switchView('msgs')">
+    <span class="bnav-icon">💬</span><span class="bnav-label">Messaggi</span>
+  </button>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://tzkokgpxqjeyuvyvmqtt.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6a29rZ3B4cWpleXV2eXZtcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjg2ODEsImV4cCI6MjA4ODg0NDY4MX0.sIqJgyh1bAsKNHlFU5Q7LgpaoEJrZlgMlIH4EQx0hyo';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let adminUser = null;
+let athletes  = [];
+let selectedAthleteId = null;
+
+// ─── BOOT ────────────────────────────────────────────────────────────
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+  adminUser = session.user;
+
+  const { data: profile } = await sb.from('profiles')
+    .select('role').eq('id', adminUser.id).single();
+  if (profile?.role !== 'admin') { window.location.href = 'athlete.html'; return; }
+
+  await loadAthletes();
+  document.getElementById('loadingScreen').style.display = 'none';
+}
+
+// ─── LOAD ATHLETES ───────────────────────────────────────────────────
+async function loadAthletes() {
+  const { data } = await sb.from('profiles')
+    .select('*')
+    .eq('role', 'athlete')
+    .eq('coach_id', adminUser.id)
+    .order('full_name');
+
+  athletes = data || [];
+  renderAthletes();
+  renderMsgAthletes();
+}
+
+function renderAthletes() {
+  const c = document.getElementById('athleteList');
+  c.innerHTML = '';
+
+  if (athletes.length === 0) {
+    c.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted2);font-size:0.82rem;">
+      Nessun atleta ancora.<br>Tocca <strong style="color:var(--text)">+ Nuovo</strong> per aggiungere il primo.
+    </div>`;
+    return;
+  }
+
+  athletes.forEach((a, idx) => {
+    const card = document.createElement('div');
+    card.className = 'athlete-card fade-in';
+    card.style.animationDelay = (idx*0.06)+'s';
+    card.id = `acard-${a.id}`;
+
+    const initials = (a.full_name||a.email||'?')
+      .split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+    card.innerHTML = `
+      <div class="ac-head" onclick="toggleAthleteCard('${a.id}')">
+        <div class="ac-avatar">${initials}</div>
+        <div class="ac-info">
+          <div class="ac-name">${a.full_name || '—'}</div>
+          <div class="ac-email">${a.email || ''}</div>
+          <div class="ac-stats">
+            <span class="ac-stat" style="background:var(--bike-dim);color:var(--bike);">${a.program_id||'Nessun programma'}</span>
+          </div>
+        </div>
+        <span style="color:var(--muted);font-size:1rem;">›</span>
+      </div>
+      <div class="ac-body" id="abody-${a.id}">
+        <!-- STATS -->
+        <div class="stats-grid" id="stats-${a.id}">
+          <div class="stat-box"><div class="stat-val" id="sw-${a.id}">—</div><div class="stat-lbl">Sett. attiva</div></div>
+          <div class="stat-box"><div class="stat-val" id="ex-${a.id}">—</div><div class="stat-lbl">Esercizi</div></div>
+          <div class="stat-box"><div class="stat-val" id="msg-${a.id}">—</div><div class="stat-lbl">Messaggi</div></div>
+        </div>
+        <!-- ASSIGN PROGRAM -->
+        <div class="section-label" style="margin-top:4px;">Programma assegnato</div>
+        <div class="assign-row">
+          <select class="assign-select" id="prog-select-${a.id}">
+            <option value="kratos_w1" ${a.program_id==='kratos_w1'?'selected':''}>Kratos — Sett 1-2</option>
+            <option value="kratos_w3" ${a.program_id==='kratos_w3'?'selected':''}>Kratos — Sett 3-4</option>
+            <option value="kratos_w5" ${a.program_id==='kratos_w5'?'selected':''}>Kratos — Sett 5-6</option>
+            <option value="kratos_w7" ${a.program_id==='kratos_w7'?'selected':''}>Kratos — Sett 7</option>
+            <option value="kratos_deload" ${a.program_id==='kratos_deload'?'selected':''}>Kratos — Deload</option>
+          </select>
+          <button class="assign-btn" onclick="assignProgram('${a.id}')">Assegna</button>
+        </div>
+        <!-- MESSAGES -->
+        <div class="section-label">Messaggi recenti</div>
+        <div id="msgprev-${a.id}" style="max-height:120px;overflow-y:auto;"></div>
+        <div class="msg-compose">
+          <textarea id="msgtxt-${a.id}" placeholder="Scrivi a ${a.full_name||'atleta'}..." rows="2"></textarea>
+          <button onclick="sendToAthlete('${a.id}')">↑</button>
+        </div>
+      </div>`;
+
+    c.appendChild(card);
+    loadAthleteStats(a.id);
+    loadAthleteMessages(a.id);
+  });
+}
+
+async function toggleAthleteCard(id) {
+  const card = document.getElementById(`acard-${id}`);
+  const isOpen = card.classList.contains('open');
+  document.querySelectorAll('.athlete-card.open').forEach(c => c.classList.remove('open'));
+  if (!isOpen) card.classList.add('open');
+}
+
+async function loadAthleteStats(id) {
+  const [{ count: exCount }, { count: msgCount }] = await Promise.all([
+    sb.from('logbook').select('*', { count:'exact', head:true }).eq('athlete_id', id).eq('done', true),
+    sb.from('messages').select('*', { count:'exact', head:true }).eq('athlete_id', id),
+  ]);
+  const { data: prof } = await sb.from('profiles').select('current_week').eq('id', id).single();
+  document.getElementById(`sw-${id}`)?.textContent && (document.getElementById(`sw-${id}`).textContent = prof?.current_week || 1);
+  document.getElementById(`ex-${id}`)?.textContent && (document.getElementById(`ex-${id}`).textContent = exCount || 0);
+  document.getElementById(`msg-${id}`)?.textContent && (document.getElementById(`msg-${id}`).textContent = msgCount || 0);
+}
+
+async function loadAthleteMessages(id) {
+  const { data: msgs } = await sb.from('messages')
+    .select('*').eq('athlete_id', id)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  const container = document.getElementById(`msgprev-${id}`);
+  if (!container) return;
+  container.innerHTML = '';
+  (msgs || []).reverse().forEach(m => {
+    const div = document.createElement('div');
+    div.className = `msg-mini ${m.sender_role==='admin'?'coach-sent':'athlete-sent'}`;
+    div.innerHTML = `<div class="msg-mini-meta">${m.sender_role==='admin'?'Tu (coach)':'Atleta'} · ${fmtDate(m.created_at)}</div>${m.text}`;
+    container.appendChild(div);
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+// ─── ASSIGN PROGRAM ──────────────────────────────────────────────────
+async function assignProgram(athleteId) {
+  const progId = document.getElementById(`prog-select-${athleteId}`)?.value;
+  const { error } = await sb.from('profiles')
+    .update({ program_id: progId }).eq('id', athleteId);
+  if (!error) {
+    const card = document.getElementById(`acard-${athleteId}`);
+    const pill = card?.querySelector('.ac-stat');
+    if (pill) { pill.textContent = progId; }
+    // Quick flash
+    const btn = card?.querySelector('.assign-btn');
+    if (btn) { btn.textContent = '✓'; btn.style.background='var(--green)';
+      setTimeout(() => { btn.textContent='Assegna'; btn.style.background='var(--red)'; }, 1500); }
+  }
+}
+
+// ─── SEND MESSAGE ────────────────────────────────────────────────────
+async function sendToAthlete(athleteId) {
+  const input = document.getElementById(`msgtxt-${athleteId}`);
+  const text = input?.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  await sb.from('messages').insert({
+    athlete_id: athleteId,
+    recipient_id: athleteId,
+    text, sender_role: 'admin',
+    created_at: new Date().toISOString()
+  });
+
+  await loadAthleteMessages(athleteId);
+}
+
+// ─── RENDER MSG ATHLETES (view messaggi) ────────────────────────────
+function renderMsgAthletes() {
+  const c = document.getElementById('allAthletesMsgList');
+  c.innerHTML = '';
+  athletes.forEach(a => {
+    const btn = document.createElement('div');
+    btn.className = 'athlete-card';
+    btn.style.cursor = 'pointer';
+    const ini = (a.full_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    btn.innerHTML = `<div class="ac-head">
+      <div class="ac-avatar">${ini}</div>
+      <div class="ac-info"><div class="ac-name">${a.full_name||'—'}</div></div>
+      <span style="color:var(--muted);">›</span></div>`;
+    btn.onclick = () => { switchView('athletes'); toggleAthleteCard(a.id); };
+    c.appendChild(btn);
+  });
+}
+
+// ─── CREATE ATHLETE ──────────────────────────────────────────────────
+async function createAthlete() {
+  const name  = document.getElementById('na-name').value.trim();
+  const email = document.getElementById('na-email').value.trim();
+  const pass  = document.getElementById('na-password').value;
+  const prog  = document.getElementById('na-program').value;
+  const btn   = document.getElementById('createBtn');
+  const succ  = document.getElementById('successMsg');
+
+  if (!name || !email || !pass || pass.length < 6) {
+    succ.textContent = '⚠️ Compila tutti i campi (password min 6 caratteri)';
+    succ.style.background = 'var(--red-dim)';
+    succ.style.color = '#ff6b6b';
+    succ.style.borderColor = 'rgba(232,17,42,0.2)';
+    succ.classList.add('visible');
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Creazione...';
+
+  // Create auth user via Supabase Admin API
+  // In produzione usa una Edge Function per creare utenti con ruolo
+  // Qui usiamo signUp che crea l'utente e poi aggiorniamo il profilo
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+
+  if (error) {
+    btn.disabled = false; btn.textContent = 'Crea account ✓';
+    succ.textContent = '⚠️ ' + error.message;
+    succ.style.background = 'var(--red-dim)';
+    succ.style.color = '#ff6b6b';
+    succ.classList.add('visible');
+    return;
+  }
+
+  // Insert profile (triggered also by DB trigger, but we set extra fields)
+  if (data.user) {
+    await sb.from('profiles').upsert({
+      id: data.user.id,
+      full_name: name,
+      email: email,
+      role: 'athlete',
+      coach_id: adminUser.id,
+      program_id: prog === 'custom' ? null : prog,
+      current_week: 1,
+    });
+  }
+
+  btn.disabled = false; btn.textContent = 'Crea account ✓';
+  succ.textContent = `✅ Account creato per ${name}! Può accedere con: ${email}`;
+  succ.style.background = 'var(--green-dim)';
+  succ.style.color = 'var(--green)';
+  succ.style.borderColor = 'rgba(16,185,129,0.2)';
+  succ.classList.add('visible');
+
+  // Clear form
+  ['na-name','na-email','na-password'].forEach(id => document.getElementById(id).value='');
+
+  // Reload
+  await loadAthletes();
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}) + ' ' +
+         d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+}
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v=>{v.classList.remove('active');v.style.display='none';});
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+  const v = document.getElementById('view-'+name);
+  v.style.display='flex'; v.classList.add('active');
+  document.getElementById('nav-'+name)?.classList.add('active');
+}
+async function doLogout(){
+  await sb.auth.signOut();
+  window.location.href='index.html';
+}
+
+boot();
+</script>
+</body>
+</html>

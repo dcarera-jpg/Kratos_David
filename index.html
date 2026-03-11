@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>KRATOS — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:#E8112A; --red-dim:rgba(232,17,42,0.12);
+  --bg:#0A0A0A; --s1:#111; --s2:#191919; --s3:#222;
+  --border:rgba(255,255,255,0.07);
+  --text:#F0F0F0; --muted:#555; --muted2:#888;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100dvh;padding:24px;}
+
+.logo-wrap{text-align:center;margin-bottom:40px;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:4rem;letter-spacing:0.15em;
+  color:var(--red);line-height:1;}
+.logo-sub{font-size:0.7rem;font-weight:600;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--muted2);margin-top:4px;}
+
+.login-card{
+  width:100%;max-width:360px;
+  background:var(--s1);border:1px solid var(--border);border-radius:20px;
+  padding:28px 24px;
+}
+.card-title{
+  font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.06em;
+  margin-bottom:20px;
+}
+
+.field{margin-bottom:14px;}
+.field label{
+  display:block;font-size:0.65rem;font-weight:700;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--muted2);margin-bottom:6px;
+}
+.field input{
+  width:100%;padding:13px 14px;
+  background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;
+  outline:none;transition:border-color 0.15s;
+  -webkit-appearance:none;
+}
+.field input:focus{border-color:rgba(232,17,42,0.4);}
+.field input::placeholder{color:var(--muted);}
+
+.login-btn{
+  width:100%;padding:15px;margin-top:6px;
+  background:var(--red);color:white;border:none;border-radius:12px;
+  font-weight:700;font-size:0.9rem;letter-spacing:0.1em;text-transform:uppercase;
+  cursor:pointer;transition:opacity 0.15s;
+}
+.login-btn:active{opacity:0.85;}
+.login-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+.error-msg{
+  margin-top:12px;padding:10px 12px;
+  background:var(--red-dim);border:1px solid rgba(232,17,42,0.2);
+  border-radius:8px;font-size:0.78rem;color:#ff6b6b;
+  display:none;
+}
+.error-msg.visible{display:block;}
+
+.spinner{
+  display:none;width:18px;height:18px;
+  border:2px solid rgba(255,255,255,0.3);border-top-color:white;
+  border-radius:50%;animation:spin 0.7s linear infinite;
+  margin:0 auto;
+}
+.spinner.visible{display:block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.version{
+  margin-top:24px;font-size:0.65rem;color:var(--muted);
+  letter-spacing:0.1em;text-align:center;
+}
+</style>
+</head>
+<body>
+
+<div class="logo-wrap">
+  <div class="logo">KRATOS</div>
+  <div class="logo-sub">Training Platform</div>
+</div>
+
+<div class="login-card">
+  <div class="card-title">Accedi</div>
+
+  <div class="field">
+    <label>Email</label>
+    <input type="email" id="emailInput" placeholder="la-tua@email.com" 
+           autocomplete="email" inputmode="email">
+  </div>
+
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="passwordInput" placeholder="••••••••"
+           autocomplete="current-password">
+  </div>
+
+  <button class="login-btn" id="loginBtn" onclick="doLogin()">
+    Entra
+  </button>
+  <div class="spinner" id="spinner"></div>
+  <div class="error-msg" id="errorMsg"></div>
+</div>
+
+<div class="version">KRATOS v3.0</div>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ─── ⚠️  CONFIGURA QUI ────────────────────────────────────────────────
+// Prendi questi valori da: supabase.com → tuo progetto → Settings → API
+const SUPABASE_URL  = 'https://tzkokgpxqjeyuvyvmqtt.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6a29rZ3B4cWpleXV2eXZtcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjg2ODEsImV4cCI6MjA4ODg0NDY4MX0.sIqJgyh1bAsKNHlFU5Q7LgpaoEJrZlgMlIH4EQx0hyo';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)';
+// ─────────────────────────────────────────────────────────────────────
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Se già loggato → redirect diretto
+sb.auth.getSession().then(({ data }) => {
+  if (data.session) redirect(data.session.user);
+});
+
+async function doLogin() {
+  const email    = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+  const btn      = document.getElementById('loginBtn');
+  const spinner  = document.getElementById('spinner');
+  const err      = document.getElementById('errorMsg');
+
+  if (!email || !password) {
+    showError('Inserisci email e password');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.style.display = 'none';
+  spinner.classList.add('visible');
+  err.classList.remove('visible');
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  spinner.classList.remove('visible');
+  btn.style.display = 'block';
+  btn.disabled = false;
+
+  if (error) {
+    showError('Email o password errati');
+    return;
+  }
+
+  redirect(data.user);
+}
+
+async function redirect(user) {
+  // Leggi il ruolo dell'utente dalla tabella profiles
+  const { data: profile } = await sb
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role === 'admin') {
+    window.location.href = 'admin.html';
+  } else {
+    window.location.href = 'athlete.html';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+// Enter key su password
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('passwordInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+});
+</script>
+</body>
+</html>
