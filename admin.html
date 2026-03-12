@@ -218,10 +218,54 @@ select.inp{cursor:pointer}
   <div class="scroll"><div id="msg-ath-list"></div></div>
 </div>
 
+<!-- ── AI IMPORT VIEW ── -->
+<div class="view" id="v-ai">
+  <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge" style="background:rgba(245,158,11,.12);color:#F59E0B">AI COACH</span></div>
+  <div class="scroll">
+    <div class="iform" style="margin-bottom:12px">
+      <div class="iform-title" style="color:#F59E0B">&#129504; GENERA PROGRAMMA CON AI</div>
+      <div style="font-size:.75rem;color:var(--mu2);margin-bottom:12px;line-height:1.6">Descrivi il programma in italiano. Puoi specificare: nome blocco, numero settimane, tipo (blast/deload), giorni e sessioni per ogni giorno.</div>
+      <div class="field">
+        <label>Descrizione programma</label>
+        <textarea class="inp" id="ai-prompt" rows="6" placeholder="Es: Blocco ipertrofia 4 settimane. Settimana A blast: lunedì petto e tricipiti, martedì schiena e bicipiti, mercoledì bici VO2max, giovedì gambe, venerdì spalle, sabato bici Z2, domenica riposo. Settimana B deload: lunedì full body, mercoledì bici leggera, domenica riposo."></textarea>
+      </div>
+      <button class="btn-red" id="ai-gen-btn" onclick="aiGenerate()" style="background:#F59E0B;margin-bottom:8px">&#9889; Genera programma</button>
+      <div id="ai-status" style="display:none;font-size:.76rem;padding:8px 10px;border-radius:8px;margin-top:6px"></div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div id="ai-preview" style="display:none">
+      <div class="sec-label">ANTEPRIMA — verifica prima di caricare</div>
+      <div id="ai-preview-content"></div>
+      <div style="display:flex;gap:8px;margin-top:4px;margin-bottom:16px">
+        <button class="btn-red" id="ai-upload-btn" onclick="aiUpload()" style="flex:2">&#11014; Carica su Supabase</button>
+        <button class="btn-out" onclick="aiReset()" style="flex:1">Ricomincia</button>
+      </div>
+      <div id="ai-upload-status" style="display:none;font-size:.76rem;padding:8px 10px;border-radius:8px;margin-bottom:12px"></div>
+    </div>
+
+    <!-- EXAMPLES -->
+    <div class="iform" style="margin-bottom:0">
+      <div class="iform-title">ESEMPI DI DESCRIZIONE</div>
+      <div style="font-size:.73rem;color:var(--mu2);line-height:1.7">
+        <div style="margin-bottom:8px;padding:8px;background:var(--s3);border-radius:8px;cursor:pointer" onclick="aiExample(0)">
+          &#9654; <strong style="color:var(--txt)">Ipertrofia classica</strong><br>
+          "Blocco ipertrofia 2 settimane. Settimana A blast: lun petto tri, mar schiena bic, mer bici, gio gambe, ven spalle, sab bici, dom riposo. Settimana B deload: lun full body, mer bici leggera, gli altri riposo."
+        </div>
+        <div style="padding:8px;background:var(--s3);border-radius:8px;cursor:pointer" onclick="aiExample(1)">
+          &#9654; <strong style="color:var(--txt)">Forza + bici</strong><br>
+          "Blocco forza 3 settimane. Settimana A: lun empuje, mar tiraggio, mer bici intervalli, gio gambe forza, ven upper, sab bici fondo. Settimana B deload: lun full body leggero, gio full body leggero, sab bici."
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <nav class="bnav">
   <button class="bni on" id="bn-athletes" onclick="sv('athletes')"><span class="bni-ic">&#128101;</span><span class="bni-lb">Atleti</span></button>
   <button class="bni"    id="bn-new"      onclick="sv('new')"><span class="bni-ic">&#10133;</span><span class="bni-lb">Nuovo</span></button>
   <button class="bni"    id="bn-prog"     onclick="sv('prog')"><span class="bni-ic">&#128203;</span><span class="bni-lb">Programmi</span></button>
+  <button class="bni"    id="bn-ai"       onclick="sv('ai')"><span class="bni-ic">&#129504;</span><span class="bni-lb">AI Coach</span></button>
   <button class="bni"    id="bn-msgs"     onclick="sv('msgs')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Messaggi</span></button>
 </nav>
 
@@ -235,6 +279,261 @@ var ME = null;
 var athletes = [];
 var allEx = [], allSess = [], allBlk = [];
 var DAY_NAMES = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+
+
+// ══════════════════════════════════════════════════════════════
+// AI PROGRAM GENERATOR
+// ══════════════════════════════════════════════════════════════
+
+var aiGeneratedPlan = null;
+
+var AI_EXAMPLES = [
+  'Blocco ipertrofia 2 settimane. Settimana A blast: lunedì petto e tricipiti, martedì schiena e bicipiti, mercoledì bici VO2max, giovedì gambe, venerdì spalle e core, sabato bici Z2 lungo, domenica riposo. Settimana B deload: lunedì full body leggero, mercoledì bici leggera, gli altri riposo.',
+  'Blocco forza 3 settimane. Settimana A blast: lunedì spinta orizzontale, martedì tirata verticale, mercoledì bici intervalli, giovedì gambe forza, venerdì upper body, sabato bici fondo. Settimana B blast: uguale settimana A ma con carichi +5%. Settimana C deload: lunedì full body leggero, giovedì full body leggero, sabato bici.'
+];
+
+function aiExample(i) {
+  document.getElementById('ai-prompt').value = AI_EXAMPLES[i];
+}
+
+function aiSetStatus(msg, type) {
+  var el = document.getElementById('ai-status');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+  el.style.background = type === 'ok' ? 'rgba(16,185,129,.12)' : type === 'err' ? 'rgba(232,17,42,.12)' : 'rgba(245,158,11,.12)';
+  el.style.color = type === 'ok' ? '#10B981' : type === 'err' ? '#E8112A' : '#F59E0B';
+}
+
+function aiSetUploadStatus(msg, type) {
+  var el = document.getElementById('ai-upload-status');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+  el.style.background = type === 'ok' ? 'rgba(16,185,129,.12)' : type === 'err' ? 'rgba(232,17,42,.12)' : 'rgba(245,158,11,.12)';
+  el.style.color = type === 'ok' ? '#10B981' : type === 'err' ? '#E8112A' : '#F59E0B';
+}
+
+function aiReset() {
+  aiGeneratedPlan = null;
+  document.getElementById('ai-preview').style.display = 'none';
+  document.getElementById('ai-status').style.display = 'none';
+  document.getElementById('ai-gen-btn').disabled = false;
+  document.getElementById('ai-gen-btn').textContent = '⚡ Genera programma';
+}
+
+function aiGenerate() {
+  var prompt = (document.getElementById('ai-prompt').value || '').trim();
+  if (!prompt) { aiSetStatus('Scrivi prima una descrizione del programma.', 'err'); return; }
+
+  var btn = document.getElementById('ai-gen-btn');
+  btn.disabled = true;
+  btn.textContent = 'Generazione in corso...';
+  aiSetStatus('L\'AI sta analizzando il programma...', 'loading');
+  document.getElementById('ai-preview').style.display = 'none';
+
+  // Load existing sessions to match names
+  sb.from('sessions').select('id, name, session_type').then(function(sr) {
+    var existingSessions = sr.data || [];
+    var sessListText = existingSessions.map(function(s){ return '"' + s.name + '" (id:' + s.id + ', tipo:' + s.session_type + ')'; }).join(', ');
+
+    var systemPrompt = [
+      'Sei un assistente per app di fitness.',
+      'Restituisci SOLO un oggetto JSON valido, senza markdown, senza backtick, senza testo aggiuntivo.',
+      'Sessioni nel database: ' + (sessListText || 'nessuna'),
+      'Struttura JSON: {"block":{"name":"Nome","description":"desc"},"week_templates":[{"name":"Nome","week_type":"blast","sort_order":1,"days":[{"day_of_week":1,"session_match":"nome","session_id":1,"notes":""}]}]}',
+      'Regole: day_of_week 1=Lun 2=Mar 3=Mer 4=Gio 5=Ven 6=Sab 7=Dom.',
+      'Se il giorno e riposo, ometti il giorno dall array days.',
+      'session_id: usa l id numerico della sessione se il nome corrisponde, altrimenti null.',
+      'session_match: nome breve descrittivo.',
+      'Rispondi SOLO con il JSON.'
+    ].join(' ')
+    var userMsg = 'Programma da convertire in JSON: ' + prompt;
+
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.textContent = '⚡ Genera programma';
+      if (!data.content || !data.content[0]) { aiSetStatus('Errore risposta AI.', 'err'); return; }
+      var raw = data.content[0].text.trim();
+      // Strip markdown fences if present
+      raw = raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+      try {
+        aiGeneratedPlan = JSON.parse(raw);
+        aiSetStatus('', '');
+        aiShowPreview(aiGeneratedPlan, existingSessions);
+      } catch(e) {
+        aiSetStatus('Errore parsing JSON: ' + e.message + '\nRisposta: ' + raw.substring(0,200), 'err');
+      }
+    })
+    .catch(function(e) {
+      btn.disabled = false;
+      btn.textContent = '⚡ Genera programma';
+      aiSetStatus('Errore di rete: ' + String(e), 'err');
+    });
+  });
+}
+
+function aiShowPreview(plan, existingSessions) {
+  var html = '';
+  var DAY_IT = ['','Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  var TYPE_COLORS = { blast:'rgba(232,17,42,.12)', deload:'rgba(14,165,233,.12)', taper:'rgba(168,85,247,.12)', test:'rgba(245,158,11,.12)' };
+  var TYPE_TC = { blast:'#E8112A', deload:'#0EA5E9', taper:'#A855F7', test:'#F59E0B' };
+
+  // Block header
+  html += '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:13px 14px;margin-bottom:10px">';
+  html += '<div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:4px">BLOCCO</div>';
+  html += '<div style="font-weight:700;font-size:.95rem">' + (plan.block.name || 'Senza nome') + '</div>';
+  if (plan.block.description) html += '<div style="font-size:.75rem;color:var(--mu2);margin-top:3px">' + plan.block.description + '</div>';
+  html += '<div style="font-size:.72rem;color:var(--mu2);margin-top:6px">' + (plan.week_templates||[]).length + ' settimane tipo</div>';
+  html += '</div>';
+
+  // Week templates
+  (plan.week_templates||[]).forEach(function(wk, wi) {
+    var tc = TYPE_TC[wk.week_type] || '#888';
+    var bg = TYPE_COLORS[wk.week_type] || 'rgba(255,255,255,.04)';
+    html += '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;margin-bottom:8px;overflow:hidden">';
+    html += '<div style="padding:11px 14px;display:flex;align-items:center;gap:8px">';
+    html += '<span style="font-size:.58rem;font-weight:700;padding:2px 8px;border-radius:6px;background:' + bg + ';color:' + tc + '">' + (wk.week_type||'blast').toUpperCase() + '</span>';
+    html += '<span style="font-weight:700;font-size:.88rem">' + (wk.name||'Settimana '+(wi+1)) + '</span>';
+    html += '</div>';
+
+    // Days grid
+    html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 10px 12px">';
+    var dayMap = {};
+    (wk.days||[]).forEach(function(d){ dayMap[d.day_of_week] = d; });
+    for (var d=1; d<=7; d++) {
+      var day = dayMap[d];
+      if (day) {
+        var isRest = !day.session_match;
+        var dayBg = isRest ? 'var(--s4)' : day.session_id ? 'rgba(232,17,42,.1)' : 'rgba(245,158,11,.1)';
+        var dayBorder = isRest ? 'var(--bdr)' : day.session_id ? 'rgba(232,17,42,.25)' : 'rgba(245,158,11,.3)';
+        html += '<div style="background:' + dayBg + ';border:1px solid ' + dayBorder + ';border-radius:7px;padding:5px 3px;text-align:center;min-height:44px">';
+        html += '<div style="font-size:.48rem;font-weight:700;color:var(--mu2);text-transform:uppercase">' + DAY_IT[d] + '</div>';
+        html += '<div style="font-size:.52rem;margin-top:2px;line-height:1.3;color:' + (day.session_id ? '#E8112A' : '#F59E0B') + '">' + (day.session_match||'').substring(0,10) + '</div>';
+        if (!day.session_id && day.session_match) html += '<div style="font-size:.44rem;color:#F59E0B;margin-top:1px">⚠ nuova</div>';
+      } else {
+        html += '<div style="background:var(--s3);border:1px solid var(--bdr);border-radius:7px;padding:5px 3px;text-align:center;min-height:44px">';
+        html += '<div style="font-size:.48rem;font-weight:700;color:var(--mu2);text-transform:uppercase">' + DAY_IT[d] + '</div>';
+        html += '<div style="font-size:.6rem;margin-top:4px">💤</div>';
+        html += '</div>';
+      }
+    }
+    html += '</div>';
+
+    // Sessions legend
+    var sessUsed = [];
+    (wk.days||[]).forEach(function(d){ if(d.session_match) sessUsed.push(d); });
+    if (sessUsed.length) {
+      html += '<div style="padding:0 12px 10px">';
+      sessUsed.forEach(function(d){
+        var col = d.session_id ? '#10B981' : '#F59E0B';
+        var icon = d.session_id ? '✓ collegata' : '⚠ sessione non trovata — creala prima';
+        html += '<div style="font-size:.68rem;color:' + col + ';margin-bottom:2px">G' + d.day_of_week + ': <strong>' + d.session_match + '</strong> — ' + icon + '</div>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+  });
+
+  // Warning if unmatched sessions
+  var unmatched = [];
+  (plan.week_templates||[]).forEach(function(wk){
+    (wk.days||[]).forEach(function(d){ if(d.session_match && !d.session_id && unmatched.indexOf(d.session_match)<0) unmatched.push(d.session_match); });
+  });
+  if (unmatched.length) {
+    html += '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:.74rem;color:#F59E0B;line-height:1.6">';
+    html += '<strong>⚠ Attenzione:</strong> queste sessioni non esistono ancora nel database:<br>';
+    unmatched.forEach(function(n){ html += '&bull; ' + n + '<br>'; });
+    html += 'Creale prima nella sezione Programmi → Sessioni, poi rigenera.';
+    html += '</div>';
+  }
+
+  document.getElementById('ai-preview-content').innerHTML = html;
+  document.getElementById('ai-preview').style.display = 'block';
+}
+
+function aiUpload() {
+  if (!aiGeneratedPlan) return;
+  var btn = document.getElementById('ai-upload-btn');
+  btn.disabled = true;
+  btn.textContent = 'Caricamento...';
+  aiSetUploadStatus('Creazione blocco...', 'loading');
+
+  var plan = aiGeneratedPlan;
+
+  // Step 1: create block
+  sb.from('blocks').insert({
+    name: plan.block.name,
+    description: plan.block.description || null,
+    sort_order: 0,
+    created_by: ME.id
+  }).select().single()
+  .then(function(r) {
+    if (r.error) throw new Error('Blocco: ' + r.error.message);
+    var blockId = r.data.id;
+    aiSetUploadStatus('Blocco creato. Creo settimane...', 'loading');
+
+    // Step 2: create week templates in sequence
+    var weekTemplates = plan.week_templates || [];
+    var weekIdx = 0;
+
+    function nextWeek() {
+      if (weekIdx >= weekTemplates.length) {
+        aiSetUploadStatus('✓ Programma caricato con successo!', 'ok');
+        btn.disabled = false;
+        btn.textContent = '✓ Caricato!';
+        setTimeout(function(){ sv('prog'); pTab('blk'); loadBlk(); }, 1500);
+        return;
+      }
+      var wk = weekTemplates[weekIdx];
+      aiSetUploadStatus('Creo settimana ' + (weekIdx+1) + '/' + weekTemplates.length + '...', 'loading');
+
+      sb.from('week_templates').insert({
+        block_id: blockId,
+        name: wk.name || ('Settimana ' + (weekIdx+1)),
+        week_type: wk.week_type || 'blast',
+        sort_order: wk.sort_order || weekIdx,
+        notes: wk.notes || null
+      }).select().single()
+      .then(function(wr) {
+        if (wr.error) throw new Error('Settimana: ' + wr.error.message);
+        var wtId = wr.data.id;
+        var days = (wk.days || []).filter(function(d){ return d.session_id; });
+        if (!days.length) { weekIdx++; nextWeek(); return; }
+
+        // Insert week_days
+        var dayRows = days.map(function(d) {
+          return { week_template_id: wtId, day_of_week: d.day_of_week, session_id: d.session_id, notes: d.notes || null };
+        });
+        return sb.from('week_days').insert(dayRows).then(function(dr) {
+          if (dr.error) throw new Error('Giorni: ' + dr.error.message);
+          weekIdx++; nextWeek();
+        });
+      })
+      .catch(function(e) {
+        btn.disabled = false;
+        btn.textContent = '⬆ Carica su Supabase';
+        aiSetUploadStatus('Errore: ' + e.message, 'err');
+      });
+    }
+    nextWeek();
+  })
+  .catch(function(e) {
+    btn.disabled = false;
+    btn.textContent = '⬆ Carica su Supabase';
+    aiSetUploadStatus('Errore: ' + e.message, 'err');
+  });
+}
 
 // ── BOOT ─────────────────────────────────────────────────────
 function boot() {
