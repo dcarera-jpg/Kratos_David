@@ -274,7 +274,7 @@ function boot() {
 
 // ─── LOAD ATHLETES ───────────────────────────────────────────────────
 function loadAthletes() {
-  sb.from('profiles').select('*').eq('role','athlete').eq('coach_id', adminUser.id)
+  sb.from('profiles').select('*').eq('role','athlete')
     .order('full_name').then(function(r) {
       athletes = r.data || [];
       document.getElementById('loadingScreen').style.display = 'none';
