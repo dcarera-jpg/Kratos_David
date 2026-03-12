@@ -408,38 +408,103 @@ function loadAthProgInfo(a) {
 }
 
 // ── ASSIGN MODAL ──────────────────────────────────────────────
+var assignTargetAth = null;
+
 function openAssignModal(ath) {
-  if (allBlk.length === 0) { alert('Prima crea almeno un blocco nella sezione Programmi.'); return; }
-  var blkNames = allBlk.map(function(b, i) { return (i+1) + '. ' + b.name; }).join('\n');
-  var bc = prompt('Seleziona blocco:\n\n' + blkNames + '\n\nNumero (0 = rimuovi programma):');
-  if (bc === null) return;
-  var bi = parseInt(bc) - 1;
-  if (bc === '0') {
-    sb.from('profiles').update({ current_block_id: null, current_week_id: null }).eq('id', ath.id)
-      .then(function() { alert('Programma rimosso.'); loadAthletes(); }).catch(function(){});
-    return;
-  }
-  if (isNaN(bi) || bi < 0 || bi >= allBlk.length) { alert('Scelta non valida'); return; }
-  var blk = allBlk[bi];
-  // Load weeks for this block
-  sb.from('week_templates').select('*').eq('block_id', blk.id).order('sort_order')
+  assignTargetAth = ath;
+  var overlay = document.getElementById('assign-overlay');
+  var nameEl  = document.getElementById('assign-athlete-name');
+  var blkSel  = document.getElementById('assign-blk-sel');
+  var wkSel   = document.getElementById('assign-wk-sel');
+  var msg     = document.getElementById('assign-msg');
+  if (!overlay) return;
+
+  nameEl.textContent = 'Atleta: ' + (ath.full_name || ath.email || '?');
+  blkSel.innerHTML = '<option value="">— Caricamento... —</option>';
+  wkSel.innerHTML  = '<option value="">— Prima seleziona blocco —</option>';
+  msg.style.display = 'none';
+  overlay.style.display = 'flex';
+
+  // Load blocks fresh from DB
+  sb.from('blocks').select('id, name').order('sort_order')
+    .then(function(r) {
+      var blocks = r.data || [];
+      blkSel.innerHTML = '<option value="">— Seleziona blocco —</option>';
+      blocks.forEach(function(b) {
+        var o = document.createElement('option');
+        o.value = b.id;
+        o.textContent = b.name;
+        if (ath.current_block_id && String(ath.current_block_id) === String(b.id)) o.selected = true;
+        blkSel.appendChild(o);
+      });
+      // Pre-load weeks if block already assigned
+      if (ath.current_block_id) { onBlkChange(); }
+    }).catch(function(e) {
+      blkSel.innerHTML = '<option value="">Errore caricamento blocchi</option>';
+    });
+}
+
+function onBlkChange() {
+  var blkSel = document.getElementById('assign-blk-sel');
+  var wkSel  = document.getElementById('assign-wk-sel');
+  var blkId  = blkSel.value;
+  if (!blkId) { wkSel.innerHTML = '<option value="">— Prima seleziona blocco —</option>'; return; }
+  wkSel.innerHTML = '<option value="">— Caricamento... —</option>';
+  sb.from('week_templates').select('id, name, week_type').eq('block_id', blkId).order('sort_order')
     .then(function(r) {
       var weeks = r.data || [];
+      wkSel.innerHTML = '<option value="">— Seleziona settimana —</option>';
+      weeks.forEach(function(w) {
+        var o = document.createElement('option');
+        o.value = w.id;
+        o.textContent = w.name + ' (' + (w.week_type||'blast') + ')';
+        if (assignTargetAth && String(assignTargetAth.current_week_id) === String(w.id)) o.selected = true;
+        wkSel.appendChild(o);
+      });
       if (!weeks.length) {
-        sb.from('profiles').update({ current_block_id: blk.id, current_week_id: null }).eq('id', ath.id)
-          .then(function() { alert('Blocco assegnato (nessuna settimana ancora). Crea le settimane tipo nella sezione Blocchi.'); loadAthletes(); })
-          .catch(function(){});
-        return;
+        wkSel.innerHTML = '<option value="">Nessuna settimana in questo blocco</option>';
       }
-      var wkNames = weeks.map(function(w, i) { return (i+1) + '. ' + w.name; }).join('\n');
-      var wc = prompt('Settimana corrente:\n\n' + wkNames + '\n\nNumero:');
-      if (wc === null) return;
-      var wi = parseInt(wc) - 1;
-      if (isNaN(wi) || wi < 0 || wi >= weeks.length) { alert('Scelta non valida'); return; }
-      sb.from('profiles').update({ current_block_id: blk.id, current_week_id: weeks[wi].id }).eq('id', ath.id)
-        .then(function() { alert('Programma assegnato!'); loadAthletes(); })
-        .catch(function(){});
-    }).catch(function(){});
+    }).catch(function() {
+      wkSel.innerHTML = '<option value="">Errore caricamento</option>';
+    });
+}
+
+function confirmAssign() {
+  if (!assignTargetAth) return;
+  var blkId = document.getElementById('assign-blk-sel').value;
+  var wkId  = document.getElementById('assign-wk-sel').value;
+  var msg   = document.getElementById('assign-msg');
+  var btn   = document.getElementById('assign-confirm-btn');
+  if (!blkId) { showAssignMsg('Seleziona un blocco', false); return; }
+  if (!wkId)  { showAssignMsg('Seleziona una settimana', false); return; }
+  btn.textContent = 'Salvataggio...'; btn.disabled = true;
+  sb.from('profiles').update({
+    current_block_id: parseInt(blkId),
+    current_week_id:  parseInt(wkId)
+  }).eq('id', assignTargetAth.id)
+    .then(function(r) {
+      btn.textContent = 'Assegna'; btn.disabled = false;
+      if (r.error) { showAssignMsg('Errore: ' + r.error.message, false); return; }
+      showAssignMsg('Programma assegnato!', true);
+      setTimeout(function() { closeAssignModal(); loadAthletes(); }, 1200);
+    }).catch(function(e) {
+      btn.textContent = 'Assegna'; btn.disabled = false;
+      showAssignMsg('Errore di rete', false);
+    });
+}
+
+function showAssignMsg(text, ok) {
+  var el = document.getElementById('assign-msg');
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.background = ok ? 'rgba(16,185,129,.12)' : 'rgba(232,17,42,.12)';
+  el.style.color = ok ? '#10B981' : '#ff6b6b';
+}
+
+function closeAssignModal() {
+  var overlay = document.getElementById('assign-overlay');
+  if (overlay) overlay.style.display = 'none';
+  assignTargetAth = null;
 }
 
 function loadAthMessages(aid) {
@@ -938,5 +1003,30 @@ function doLogout() {
 
 boot();
 </script>
+
+<!-- ── ASSIGN MODAL ── -->
+<div id="assign-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center" onclick="closeAssignModal()">
+  <div id="assign-panel" onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 16px 32px;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.1em;color:#E8112A">ASSEGNA PROGRAMMA</div>
+      <button onclick="closeAssignModal()" style="background:none;border:none;color:#555;font-size:1.2rem;cursor:pointer">&#10005;</button>
+    </div>
+    <div id="assign-athlete-name" style="font-size:.75rem;color:#888;margin-bottom:14px"></div>
+
+    <div style="font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#555;margin-bottom:8px">BLOCCO</div>
+    <select id="assign-blk-sel" class="inp" style="margin-bottom:14px" onchange="onBlkChange()">
+      <option value="">— Seleziona blocco —</option>
+    </select>
+
+    <div style="font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#555;margin-bottom:8px">SETTIMANA CORRENTE</div>
+    <select id="assign-wk-sel" class="inp" style="margin-bottom:20px">
+      <option value="">— Prima seleziona blocco —</option>
+    </select>
+
+    <button class="btn-red" id="assign-confirm-btn" onclick="confirmAssign()">Assegna</button>
+    <div id="assign-msg" style="display:none;margin-top:10px;font-size:.78rem;padding:8px 12px;border-radius:8px"></div>
+  </div>
+</div>
+
 </body>
 </html>
