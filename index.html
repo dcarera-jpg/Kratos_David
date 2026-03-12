@@ -1356,14 +1356,9 @@ function aiSetUploadStatus(msg,type) {
 }
 function aiTestConnection() {
   aiSetStatus('Test in corso...', 'loading');
-  fetch('https://api.anthropic.com/v1/messages', {
+  fetch('https://kratos-ai.dcarera.workers.dev', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': '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',
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
+    headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 10,
@@ -1465,14 +1460,9 @@ function aiGenerate() {
         '. Cardio: '+cardioStr+
         (note ? '. Note importanti: '+note : '');
 
-      fetch('https://api.anthropic.com/v1/messages',{
+      fetch('https://kratos-ai.dcarera.workers.dev',{
         method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'x-api-key':'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',
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true'
-        },
+        headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:4000,system:sys,messages:[{role:'user',content:usr}]})
       })
       .then(function(r){ return r.json(); })
