@@ -248,208 +248,242 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);font-size:15px;
   </button>
 </nav>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────────────
-const SUPABASE_URL = 'https://tzkokgpxqjeyuvyvmqtt.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6a29rZ3B4cWpleXV2eXZtcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjg2ODEsImV4cCI6MjA4ODg0NDY4MX0.sIqJgyh1bAsKNHlFU5Q7LgpaoEJrZlgMlIH4EQx0hyo';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var SUPABASE_URL = 'https://tzkokgpxqjeyuvyvmqtt.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6a29rZ3B4cWpleXV2eXZtcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjg2ODEsImV4cCI6MjA4ODg0NDY4MX0.sIqJgyh1bAsKNHlFU5Q7LgpaoEJrZlgMlIH4EQx0hyo';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let adminUser = null;
-let athletes  = [];
-let selectedAthleteId = null;
+var adminUser = null;
+var athletes  = [];
 
 // ─── BOOT ────────────────────────────────────────────────────────────
-async function boot() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
-  adminUser = session.user;
+function boot() {
+  sb.auth.getSession().then(function(res) {
+    if (!res.data || !res.data.session) { window.location.href = 'index.html'; return; }
+    adminUser = res.data.session.user;
 
-  const { data: profile } = await sb.from('profiles')
-    .select('role').eq('id', adminUser.id).single();
-  if (profile?.role !== 'admin') { window.location.href = 'athlete.html'; return; }
-
-  await loadAthletes();
-  document.getElementById('loadingScreen').style.display = 'none';
+    sb.from('profiles').select('role').eq('id', adminUser.id).single()
+      .then(function(r) {
+        if (!r.data || r.data.role !== 'admin') { window.location.href = 'athlete.html'; return; }
+        loadAthletes();
+      }).catch(function() { window.location.href = 'index.html'; });
+  }).catch(function() { window.location.href = 'index.html'; });
 }
 
 // ─── LOAD ATHLETES ───────────────────────────────────────────────────
-async function loadAthletes() {
-  const { data } = await sb.from('profiles')
-    .select('*')
-    .eq('role', 'athlete')
-    .eq('coach_id', adminUser.id)
-    .order('full_name');
-
-  athletes = data || [];
-  renderAthletes();
-  renderMsgAthletes();
+function loadAthletes() {
+  sb.from('profiles').select('*').eq('role','athlete').eq('coach_id', adminUser.id)
+    .order('full_name').then(function(r) {
+      athletes = r.data || [];
+      document.getElementById('loadingScreen').style.display = 'none';
+      renderAthletes();
+      renderMsgAthletes();
+    }).catch(function() {
+      document.getElementById('loadingScreen').style.display = 'none';
+    });
 }
 
 function renderAthletes() {
-  const c = document.getElementById('athleteList');
+  var c = document.getElementById('athleteList');
   c.innerHTML = '';
 
   if (athletes.length === 0) {
-    c.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted2);font-size:0.82rem;">
-      Nessun atleta ancora.<br>Tocca <strong style="color:var(--text)">+ Nuovo</strong> per aggiungere il primo.
-    </div>`;
+    c.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted2);font-size:0.82rem;">' +
+      'Nessun atleta ancora.<br>Tocca <strong style="color:var(--text)">+ Nuovo</strong> per aggiungere il primo.' +
+      '</div>';
     return;
   }
 
-  athletes.forEach((a, idx) => {
-    const card = document.createElement('div');
-    card.className = 'athlete-card fade-in';
-    card.style.animationDelay = (idx*0.06)+'s';
-    card.id = `acard-${a.id}`;
+  for (var idx = 0; idx < athletes.length; idx++) {
+    (function(a, i) {
+      var card = document.createElement('div');
+      card.className = 'athlete-card fade-in';
+      card.style.animationDelay = (i * 0.06) + 's';
+      card.id = 'acard-' + a.id;
 
-    const initials = (a.full_name||a.email||'?')
-      .split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      var nameParts = (a.full_name || a.email || '?').split(' ');
+      var initials = '';
+      for (var p = 0; p < Math.min(nameParts.length, 2); p++) {
+        if (nameParts[p]) initials += nameParts[p][0].toUpperCase();
+      }
 
-    card.innerHTML = `
-      <div class="ac-head" onclick="toggleAthleteCard('${a.id}')">
-        <div class="ac-avatar">${initials}</div>
-        <div class="ac-info">
-          <div class="ac-name">${a.full_name || '—'}</div>
-          <div class="ac-email">${a.email || ''}</div>
-          <div class="ac-stats">
-            <span class="ac-stat" style="background:var(--bike-dim);color:var(--bike);">${a.program_id||'Nessun programma'}</span>
-          </div>
-        </div>
-        <span style="color:var(--muted);font-size:1rem;">›</span>
-      </div>
-      <div class="ac-body" id="abody-${a.id}">
-        <!-- STATS -->
-        <div class="stats-grid" id="stats-${a.id}">
-          <div class="stat-box"><div class="stat-val" id="sw-${a.id}">—</div><div class="stat-lbl">Sett. attiva</div></div>
-          <div class="stat-box"><div class="stat-val" id="ex-${a.id}">—</div><div class="stat-lbl">Esercizi</div></div>
-          <div class="stat-box"><div class="stat-val" id="msg-${a.id}">—</div><div class="stat-lbl">Messaggi</div></div>
-        </div>
-        <!-- ASSIGN PROGRAM -->
-        <div class="section-label" style="margin-top:4px;">Programma assegnato</div>
-        <div class="assign-row">
-          <select class="assign-select" id="prog-select-${a.id}">
-            <option value="kratos_w1" ${a.program_id==='kratos_w1'?'selected':''}>Kratos — Sett 1-2</option>
-            <option value="kratos_w3" ${a.program_id==='kratos_w3'?'selected':''}>Kratos — Sett 3-4</option>
-            <option value="kratos_w5" ${a.program_id==='kratos_w5'?'selected':''}>Kratos — Sett 5-6</option>
-            <option value="kratos_w7" ${a.program_id==='kratos_w7'?'selected':''}>Kratos — Sett 7</option>
-            <option value="kratos_deload" ${a.program_id==='kratos_deload'?'selected':''}>Kratos — Deload</option>
-          </select>
-          <button class="assign-btn" onclick="assignProgram('${a.id}')">Assegna</button>
-        </div>
-        <!-- MESSAGES -->
-        <div class="section-label">Messaggi recenti</div>
-        <div id="msgprev-${a.id}" style="max-height:120px;overflow-y:auto;"></div>
-        <div class="msg-compose">
-          <textarea id="msgtxt-${a.id}" placeholder="Scrivi a ${a.full_name||'atleta'}..." rows="2"></textarea>
-          <button onclick="sendToAthlete('${a.id}')">↑</button>
-        </div>
-      </div>`;
+      var selOptions =
+        '<option value="kratos_w1"' + (a.program_id==='kratos_w1'?' selected':'') + '>Kratos \u2014 Sett 1-2</option>' +
+        '<option value="kratos_w3"' + (a.program_id==='kratos_w3'?' selected':'') + '>Kratos \u2014 Sett 3-4</option>' +
+        '<option value="kratos_w5"' + (a.program_id==='kratos_w5'?' selected':'') + '>Kratos \u2014 Sett 5-6</option>' +
+        '<option value="kratos_w7"' + (a.program_id==='kratos_w7'?' selected':'') + '>Kratos \u2014 Sett 7</option>' +
+        '<option value="kratos_deload"' + (a.program_id==='kratos_deload'?' selected':'') + '>Kratos \u2014 Deload</option>';
 
-    c.appendChild(card);
-    loadAthleteStats(a.id);
-    loadAthleteMessages(a.id);
-  });
-}
+      card.innerHTML =
+        '<div class="ac-head" onclick="toggleAthleteCard(\'' + a.id + '\')">' +
+          '<div class="ac-avatar">' + initials + '</div>' +
+          '<div class="ac-info">' +
+            '<div class="ac-name">' + (a.full_name || '\u2014') + '</div>' +
+            '<div class="ac-email">' + (a.email || '') + '</div>' +
+            '<div class="ac-stats">' +
+              '<span class="ac-stat" style="background:var(--bike-dim);color:var(--bike);">' +
+                (a.program_id || 'Nessun programma') + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<span style="color:var(--muted);font-size:1rem;">\u203a</span>' +
+        '</div>' +
+        '<div class="ac-body" id="abody-' + a.id + '">' +
+          '<div class="stats-grid" id="stats-' + a.id + '">' +
+            '<div class="stat-box"><div class="stat-val" id="sw-' + a.id + '">\u2014</div><div class="stat-lbl">Sett. attiva</div></div>' +
+            '<div class="stat-box"><div class="stat-val" id="ex-' + a.id + '">\u2014</div><div class="stat-lbl">Esercizi</div></div>' +
+            '<div class="stat-box"><div class="stat-val" id="msg-' + a.id + '">\u2014</div><div class="stat-lbl">Messaggi</div></div>' +
+          '</div>' +
+          '<div class="section-label" style="margin-top:4px;padding:0 16px;">Programma assegnato</div>' +
+          '<div class="assign-row">' +
+            '<select class="assign-select" id="prog-select-' + a.id + '">' + selOptions + '</select>' +
+            '<button class="assign-btn" onclick="assignProgram(\'' + a.id + '\')">Assegna</button>' +
+          '</div>' +
+          '<div class="section-label" style="padding:0 16px;">Messaggi recenti</div>' +
+          '<div id="msgprev-' + a.id + '" style="max-height:120px;overflow-y:auto;padding:0 14px;"></div>' +
+          '<div class="msg-compose" style="padding:0 14px 14px;">' +
+            '<textarea id="msgtxt-' + a.id + '" placeholder="Scrivi a ' + (a.full_name||'atleta') + '..." rows="2"></textarea>' +
+            '<button onclick="sendToAthlete(\'' + a.id + '\')">&#8593;</button>' +
+          '</div>' +
+        '</div>';
 
-async function toggleAthleteCard(id) {
-  const card = document.getElementById(`acard-${id}`);
-  const isOpen = card.classList.contains('open');
-  document.querySelectorAll('.athlete-card.open').forEach(c => c.classList.remove('open'));
-  if (!isOpen) card.classList.add('open');
-}
-
-async function loadAthleteStats(id) {
-  const [{ count: exCount }, { count: msgCount }] = await Promise.all([
-    sb.from('logbook').select('*', { count:'exact', head:true }).eq('athlete_id', id).eq('done', true),
-    sb.from('messages').select('*', { count:'exact', head:true }).eq('athlete_id', id),
-  ]);
-  const { data: prof } = await sb.from('profiles').select('current_week').eq('id', id).single();
-  document.getElementById(`sw-${id}`)?.textContent && (document.getElementById(`sw-${id}`).textContent = prof?.current_week || 1);
-  document.getElementById(`ex-${id}`)?.textContent && (document.getElementById(`ex-${id}`).textContent = exCount || 0);
-  document.getElementById(`msg-${id}`)?.textContent && (document.getElementById(`msg-${id}`).textContent = msgCount || 0);
-}
-
-async function loadAthleteMessages(id) {
-  const { data: msgs } = await sb.from('messages')
-    .select('*').eq('athlete_id', id)
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  const container = document.getElementById(`msgprev-${id}`);
-  if (!container) return;
-  container.innerHTML = '';
-  (msgs || []).reverse().forEach(m => {
-    const div = document.createElement('div');
-    div.className = `msg-mini ${m.sender_role==='admin'?'coach-sent':'athlete-sent'}`;
-    div.innerHTML = `<div class="msg-mini-meta">${m.sender_role==='admin'?'Tu (coach)':'Atleta'} · ${fmtDate(m.created_at)}</div>${m.text}`;
-    container.appendChild(div);
-  });
-  container.scrollTop = container.scrollHeight;
-}
-
-// ─── ASSIGN PROGRAM ──────────────────────────────────────────────────
-async function assignProgram(athleteId) {
-  const progId = document.getElementById(`prog-select-${athleteId}`)?.value;
-  const { error } = await sb.from('profiles')
-    .update({ program_id: progId }).eq('id', athleteId);
-  if (!error) {
-    const card = document.getElementById(`acard-${athleteId}`);
-    const pill = card?.querySelector('.ac-stat');
-    if (pill) { pill.textContent = progId; }
-    // Quick flash
-    const btn = card?.querySelector('.assign-btn');
-    if (btn) { btn.textContent = '✓'; btn.style.background='var(--green)';
-      setTimeout(() => { btn.textContent='Assegna'; btn.style.background='var(--red)'; }, 1500); }
+      c.appendChild(card);
+      loadAthleteStats(a.id);
+      loadAthleteMessages(a.id);
+    })(athletes[idx], idx);
   }
 }
 
+function toggleAthleteCard(id) {
+  var card = document.getElementById('acard-' + id);
+  var isOpen = card.classList.contains('open');
+  var openCards = document.querySelectorAll('.athlete-card.open');
+  for (var i = 0; i < openCards.length; i++) openCards[i].classList.remove('open');
+  if (!isOpen) card.classList.add('open');
+}
+
+function loadAthleteStats(id) {
+  sb.from('logbook').select('*', { count:'exact', head:true })
+    .eq('athlete_id', id).eq('done', true)
+    .then(function(r) {
+      var el = document.getElementById('ex-' + id);
+      if (el) el.textContent = r.count || 0;
+    }).catch(function(){});
+
+  sb.from('messages').select('*', { count:'exact', head:true })
+    .eq('athlete_id', id)
+    .then(function(r) {
+      var el = document.getElementById('msg-' + id);
+      if (el) el.textContent = r.count || 0;
+    }).catch(function(){});
+
+  sb.from('profiles').select('current_week').eq('id', id).single()
+    .then(function(r) {
+      var el = document.getElementById('sw-' + id);
+      if (el) el.textContent = (r.data && r.data.current_week) || 1;
+    }).catch(function(){});
+}
+
+function loadAthleteMessages(id) {
+  sb.from('messages').select('*').eq('athlete_id', id)
+    .order('created_at', { ascending: false }).limit(5)
+    .then(function(r) {
+      var container = document.getElementById('msgprev-' + id);
+      if (!container) return;
+      container.innerHTML = '';
+      var msgs = (r.data || []).reverse();
+      for (var i = 0; i < msgs.length; i++) {
+        var m = msgs[i];
+        var div = document.createElement('div');
+        div.className = 'msg-mini ' + (m.sender_role === 'admin' ? 'coach-sent' : 'athlete-sent');
+        div.innerHTML = '<div class="msg-mini-meta">' +
+          (m.sender_role === 'admin' ? 'Tu (coach)' : 'Atleta') +
+          ' \u00b7 ' + fmtDate(m.created_at) + '</div>' + m.text;
+        container.appendChild(div);
+      }
+      container.scrollTop = container.scrollHeight;
+    }).catch(function(){});
+}
+
+// ─── ASSIGN PROGRAM ──────────────────────────────────────────────────
+function assignProgram(athleteId) {
+  var sel = document.getElementById('prog-select-' + athleteId);
+  if (!sel) return;
+  var progId = sel.value;
+  sb.from('profiles').update({ program_id: progId }).eq('id', athleteId)
+    .then(function(r) {
+      if (!r.error) {
+        var card = document.getElementById('acard-' + athleteId);
+        var pill = card ? card.querySelector('.ac-stat') : null;
+        if (pill) pill.textContent = progId;
+        var btn  = card ? card.querySelector('.assign-btn') : null;
+        if (btn) {
+          btn.textContent = '\u2713';
+          btn.style.background = 'var(--green)';
+          setTimeout(function() {
+            btn.textContent = 'Assegna';
+            btn.style.background = 'var(--red)';
+          }, 1500);
+        }
+      }
+    }).catch(function(){});
+}
+
 // ─── SEND MESSAGE ────────────────────────────────────────────────────
-async function sendToAthlete(athleteId) {
-  const input = document.getElementById(`msgtxt-${athleteId}`);
-  const text = input?.value.trim();
+function sendToAthlete(athleteId) {
+  var input = document.getElementById('msgtxt-' + athleteId);
+  if (!input) return;
+  var text = input.value.trim();
   if (!text) return;
   input.value = '';
 
-  await sb.from('messages').insert({
+  sb.from('messages').insert({
     athlete_id: athleteId,
     recipient_id: athleteId,
-    text, sender_role: 'admin',
+    text: text,
+    sender_role: 'admin',
     created_at: new Date().toISOString()
-  });
-
-  await loadAthleteMessages(athleteId);
+  }).then(function() {
+    loadAthleteMessages(athleteId);
+  }).catch(function(){});
 }
 
-// ─── RENDER MSG ATHLETES (view messaggi) ────────────────────────────
+// ─── RENDER MSG ATHLETES ─────────────────────────────────────────────
 function renderMsgAthletes() {
-  const c = document.getElementById('allAthletesMsgList');
+  var c = document.getElementById('allAthletesMsgList');
   c.innerHTML = '';
-  athletes.forEach(a => {
-    const btn = document.createElement('div');
-    btn.className = 'athlete-card';
-    btn.style.cursor = 'pointer';
-    const ini = (a.full_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    btn.innerHTML = `<div class="ac-head">
-      <div class="ac-avatar">${ini}</div>
-      <div class="ac-info"><div class="ac-name">${a.full_name||'—'}</div></div>
-      <span style="color:var(--muted);">›</span></div>`;
-    btn.onclick = () => { switchView('athletes'); toggleAthleteCard(a.id); };
-    c.appendChild(btn);
-  });
+  for (var i = 0; i < athletes.length; i++) {
+    (function(a) {
+      var btn = document.createElement('div');
+      btn.className = 'athlete-card';
+      btn.style.cursor = 'pointer';
+      var nameParts = (a.full_name || '?').split(' ');
+      var ini = '';
+      for (var p = 0; p < Math.min(nameParts.length, 2); p++) {
+        if (nameParts[p]) ini += nameParts[p][0].toUpperCase();
+      }
+      btn.innerHTML = '<div class="ac-head">' +
+        '<div class="ac-avatar">' + ini + '</div>' +
+        '<div class="ac-info"><div class="ac-name">' + (a.full_name || '\u2014') + '</div></div>' +
+        '<span style="color:var(--muted);">\u203a</span></div>';
+      btn.onclick = function() { switchView('athletes'); toggleAthleteCard(a.id); };
+      c.appendChild(btn);
+    })(athletes[i]);
+  }
 }
 
 // ─── CREATE ATHLETE ──────────────────────────────────────────────────
-async function createAthlete() {
-  const name  = document.getElementById('na-name').value.trim();
-  const email = document.getElementById('na-email').value.trim();
-  const pass  = document.getElementById('na-password').value;
-  const prog  = document.getElementById('na-program').value;
-  const btn   = document.getElementById('createBtn');
-  const succ  = document.getElementById('successMsg');
+function createAthlete() {
+  var name  = document.getElementById('na-name').value.trim();
+  var email = document.getElementById('na-email').value.trim();
+  var pass  = document.getElementById('na-password').value;
+  var prog  = document.getElementById('na-program').value;
+  var btn   = document.getElementById('createBtn');
+  var succ  = document.getElementById('successMsg');
 
   if (!name || !email || !pass || pass.length < 6) {
-    succ.textContent = '⚠️ Compila tutti i campi (password min 6 caratteri)';
+    succ.textContent = '\u26A0\uFE0F Compila tutti i campi (password min 6 caratteri)';
     succ.style.background = 'var(--red-dim)';
     succ.style.color = '#ff6b6b';
     succ.style.borderColor = 'rgba(232,17,42,0.2)';
@@ -459,63 +493,77 @@ async function createAthlete() {
 
   btn.disabled = true; btn.textContent = 'Creazione...';
 
-  // Create auth user via Supabase Admin API
-  // In produzione usa una Edge Function per creare utenti con ruolo
-  // Qui usiamo signUp che crea l'utente e poi aggiorniamo il profilo
-  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  sb.auth.signUp({ email: email, password: pass })
+    .then(function(res) {
+      if (res.error) {
+        btn.disabled = false; btn.textContent = 'Crea account \u2713';
+        succ.textContent = '\u26A0\uFE0F ' + res.error.message;
+        succ.style.background = 'var(--red-dim)';
+        succ.style.color = '#ff6b6b';
+        succ.classList.add('visible');
+        return;
+      }
 
-  if (error) {
-    btn.disabled = false; btn.textContent = 'Crea account ✓';
-    succ.textContent = '⚠️ ' + error.message;
-    succ.style.background = 'var(--red-dim)';
-    succ.style.color = '#ff6b6b';
-    succ.classList.add('visible');
-    return;
-  }
+      var upsertPromise = (res.data && res.data.user)
+        ? sb.from('profiles').upsert({
+            id: res.data.user.id,
+            full_name: name,
+            email: email,
+            role: 'athlete',
+            coach_id: adminUser.id,
+            program_id: prog === 'custom' ? null : prog,
+            current_week: 1
+          })
+        : Promise.resolve();
 
-  // Insert profile (triggered also by DB trigger, but we set extra fields)
-  if (data.user) {
-    await sb.from('profiles').upsert({
-      id: data.user.id,
-      full_name: name,
-      email: email,
-      role: 'athlete',
-      coach_id: adminUser.id,
-      program_id: prog === 'custom' ? null : prog,
-      current_week: 1,
+      upsertPromise.then(function() {
+        btn.disabled = false; btn.textContent = 'Crea account \u2713';
+        succ.textContent = '\u2705 Account creato per ' + name + '! Accede con: ' + email;
+        succ.style.background = 'var(--green-dim)';
+        succ.style.color = 'var(--green)';
+        succ.style.borderColor = 'rgba(16,185,129,0.2)';
+        succ.classList.add('visible');
+        document.getElementById('na-name').value = '';
+        document.getElementById('na-email').value = '';
+        document.getElementById('na-password').value = '';
+        loadAthletes();
+      }).catch(function() {
+        btn.disabled = false; btn.textContent = 'Crea account \u2713';
+      });
+    }).catch(function(err) {
+      btn.disabled = false; btn.textContent = 'Crea account \u2713';
+      succ.textContent = '\u26A0\uFE0F Errore: ' + err.message;
+      succ.classList.add('visible');
     });
-  }
-
-  btn.disabled = false; btn.textContent = 'Crea account ✓';
-  succ.textContent = `✅ Account creato per ${name}! Può accedere con: ${email}`;
-  succ.style.background = 'var(--green-dim)';
-  succ.style.color = 'var(--green)';
-  succ.style.borderColor = 'rgba(16,185,129,0.2)';
-  succ.classList.add('visible');
-
-  // Clear form
-  ['na-name','na-email','na-password'].forEach(id => document.getElementById(id).value='');
-
-  // Reload
-  await loadAthletes();
 }
 
 // ─── UTILS ───────────────────────────────────────────────────────────
 function fmtDate(iso) {
-  const d = new Date(iso);
+  var d = new Date(iso);
   return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}) + ' ' +
          d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
 }
+
 function switchView(name) {
-  document.querySelectorAll('.view').forEach(v=>{v.classList.remove('active');v.style.display='none';});
-  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
-  const v = document.getElementById('view-'+name);
-  v.style.display='flex'; v.classList.add('active');
-  document.getElementById('nav-'+name)?.classList.add('active');
+  var views = document.querySelectorAll('.view');
+  for (var i = 0; i < views.length; i++) {
+    views[i].classList.remove('active');
+    views[i].style.display = 'none';
+  }
+  var bnavs = document.querySelectorAll('.bnav-item');
+  for (var j = 0; j < bnavs.length; j++) bnavs[j].classList.remove('active');
+  var v = document.getElementById('view-' + name);
+  if (v) { v.style.display = 'flex'; v.classList.add('active'); }
+  var nav = document.getElementById('nav-' + name);
+  if (nav) nav.classList.add('active');
 }
-async function doLogout(){
-  await sb.auth.signOut();
-  window.location.href='index.html';
+
+function doLogout() {
+  sb.auth.signOut().then(function() {
+    window.location.href = 'index.html';
+  }).catch(function() {
+    window.location.href = 'index.html';
+  });
 }
 
 boot();
