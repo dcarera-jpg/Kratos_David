@@ -1385,10 +1385,7 @@ function aiGenerate() {
       var cardioStr = cardioNote.length ? cardioNote.join(' + ') + ' ogni 10 giorni' : 'nessun cardio';
 
       var sys = [
-        'Sei un coach di bodybuilding esperto con 15+ anni di esperienza nella preparazione di atleti intermedi e avanzati.',
-        'Filosofia: periodizzazione ondulata, tecniche di intensificazione mirate (myo-reps, drop set, rest-pause, cluster set),',
-        'distribuzione volume intelligente per distretto, gestione del recupero, progressione sistematica del carico.',
-        '',
+        'Sei un coach di bodybuilding esperto. Genera programmi per atleti intermedi/avanzati.',
         'Genera un MESOCICLO COMPLETO di allenamento: 4 cicli x 10 giorni consecutivi di allenamento (no riposo fisso).',
         '',
         'ESERCIZI DISPONIBILI IN LIBRERIA (usa questi id numerici):',
@@ -1425,18 +1422,12 @@ function aiGenerate() {
         '}',
         '',
         'REGOLE CRITICHE:',
-        '- sessions: crea SOLO le sessioni necessarie per il mesociclo (palestra + cardio)',
-        '- Per sessioni cardio: session_type="cardio", exercises=[] (lista vuota)',
-        '- Per HIIT: name="Cardio HIIT", notes nel campo session con protocollo (es. 8x20sec sprint 40sec recovery)',
-        '- Per LISS: name="Cardio LISS", notes con durata e tipo (es. 40min bici/camminata inclinata Z2)',
-        '- cycles.days: usa session_name IDENTICO al name nella lista sessions',
-        '- Distretti carenti: 2-3 sessioni dedicate per ciclo, volume alto (16-20 set/settimana equivalente)',
-        '- Distretti sviluppati: 1 sessione mantenimento per ciclo, volume moderato (10-12 set)',
-        '- Ciclo 4: sempre deload, -40% volume, niente tecniche di intensificazione',
-        '- exercise_id deve essere uno degli id numerici dalla libreria esercizi',
-        '- Usa tecniche avanzate nelle notes degli esercizi per atleti intermedi/avanzati',
-        '- sets e reps come stringa (es. sets:"4", reps:"6-8" oppure reps:"12-15 cedimento")',
-        '- rest_sec come numero intero'
+        '- sessions: solo le sessioni necessarie. Cardio: session_type=cardio exercises=[].',
+        '- HIIT name="Cardio HIIT" LISS name="Cardio LISS".',
+        '- cycles.days: session_name IDENTICO al name in sessions.',
+        '- Carenti: 2-3 sessioni/ciclo volume alto. Sviluppati: 1 sessione mantenimento.',
+        '- Ciclo 4: deload -40% volume niente tecniche intensificazione.',
+        '- exercise_id: id numerico dalla libreria. sets/reps: stringhe. rest_sec: intero.'
       ].join(' ');
 
       var usr = 'Crea mesociclo completo. Livello atleta: '+livello+'. Obiettivo: '+obj+
@@ -1448,7 +1439,7 @@ function aiGenerate() {
       fetch('https://kratos-ai.dcarera.workers.dev',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:6000,system:sys,messages:[{role:'user',content:usr}]})
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:4000,system:sys,messages:[{role:'user',content:usr}]})
       })
       .then(function(r){ return r.json(); })
       .then(function(data){
@@ -1461,7 +1452,7 @@ function aiGenerate() {
           aiShowPreview(aiGeneratedPlan);
         } catch(e){ aiSetStatus('Errore parsing JSON: '+e.message+' — Raw: '+raw.substring(0,300),'err'); }
       })
-      .catch(function(e){ btn.disabled=false; btn.textContent='⚡ Genera programma completo'; aiSetStatus('Errore rete: '+String(e),'err'); });
+      .catch(function(e){ btn.disabled=false; btn.textContent='⚡ Genera programma completo'; aiSetStatus('Errore rete: '+String(e)+' — Controlla il Cloudflare Worker (timeout 30s su piano free)','err'); });
     });
 }
 
