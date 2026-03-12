@@ -2,1458 +2,715 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
 <title>KRATOS — Atleta</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --red:#E8112A; --red-dim:rgba(232,17,42,0.12);
-  --bike:#0EA5E9; --bike-dim:rgba(14,165,233,0.12);
-  --green:#10B981; --green-dim:rgba(16,185,129,0.12);
-  --orange:#F59E0B; --orange-dim:rgba(245,158,11,0.12);
-  --bg:#0A0A0A; --s1:#111; --s2:#191919; --s3:#222; --s4:#2C2C2C;
-  --border:rgba(255,255,255,0.07);
-  --text:#F0F0F0; --muted:#555; --muted2:#888;
-  --safe-bottom:env(safe-area-inset-bottom,0px);
+:root{
+  --red:#E8112A;--rdim:rgba(232,17,42,.12);
+  --blu:#0EA5E9;--bdim:rgba(14,165,233,.12);
+  --grn:#10B981;--gdim:rgba(16,185,129,.12);
+  --orn:#F59E0B;--odim:rgba(245,158,11,.12);
+  --pur:#A855F7;--pdim:rgba(168,85,247,.12);
+  --bg:#0A0A0A;--s2:#191919;--s3:#222;--s4:#2C2C2C;
+  --bdr:rgba(255,255,255,.07);--txt:#F0F0F0;--mu:#555;--mu2:#888;
+  --sb:env(safe-area-inset-bottom,0px);
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;background:var(--bg);}
-body{font-family:'DM Sans',sans-serif;color:var(--text);font-size:15px;
-  display:flex;flex-direction:column;height:100dvh;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'DM Sans',sans-serif;color:var(--txt);font-size:15px;display:flex;flex-direction:column;height:100dvh}
+#loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.15em;color:var(--red)}
+.sub{font-size:.65rem;color:var(--mu2);letter-spacing:.2em;text-transform:uppercase}
+.spin{width:24px;height:24px;border:2px solid var(--s4);border-top-color:var(--red);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.view{display:none;flex-direction:column;flex:1;overflow:hidden}
+.view.on{display:flex}
+.topbar{padding:13px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--bdr)}
+.topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.1em;color:var(--red)}
+.badge{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:20px}
+.badge-red{background:var(--rdim);color:var(--red)}
+.badge-grn{background:var(--gdim);color:var(--grn)}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 14px calc(14px + var(--sb))}
+.bnav{display:flex;background:rgba(10,10,10,.95);backdrop-filter:blur(20px);border-top:1px solid var(--bdr);padding:6px 0 calc(6px + var(--sb));flex-shrink:0}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;cursor:pointer;border:none;background:none}
+.bni-ic{font-size:1.25rem}
+.bni-lb{font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}
+.bni.on .bni-lb{color:var(--red)}
+.sec-label{font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px}
+.btn-out{padding:7px 12px;border-radius:8px;background:none;border:1px solid var(--bdr);color:var(--mu2);font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
 
-/* LOADING */
-#loadingScreen{
-  position:fixed;inset:0;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  z-index:100;gap:16px;
-}
-.ls-logo{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:0.15em;color:var(--red);}
-.ls-spinner{width:24px;height:24px;border:2px solid var(--s4);border-top-color:var(--red);
-  border-radius:50%;animation:spin 0.7s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
+/* CALENDARIO */
+.week-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.week-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.08em;color:var(--txt)}
+.week-nav{display:flex;gap:6px}
+.week-nav button{padding:5px 10px;border-radius:7px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu2);font-size:.75rem;cursor:pointer}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px}
+.cal-day{border-radius:9px;padding:7px 4px;text-align:center;cursor:pointer;border:1.5px solid transparent;transition:all .15s;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px}
+.cal-day:hover{border-color:var(--red)}
+.cal-day.today{border-color:rgba(232,17,42,.5)}
+.cal-day.selected{border-color:var(--red);background:var(--rdim)}
+.cal-day.has-gym{background:var(--s2)}
+.cal-day.has-bike{background:var(--bdim)}
+.cal-day.done{background:var(--gdim);border-color:rgba(16,185,129,.4)}
+.cal-day-name{font-size:.52rem;font-weight:700;color:var(--mu2);text-transform:uppercase}
+.cal-day-num{font-size:.85rem;font-weight:600;line-height:1}
+.cal-day-dot{width:5px;height:5px;border-radius:50%;background:var(--red);margin-top:2px}
+.cal-day-dot.bike{background:var(--blu)}
+.cal-day-dot.done{background:var(--grn)}
+.cal-sess-label{font-size:.55rem;color:var(--mu2);margin-top:2px;line-height:1.2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
 
-/* VIEWS */
-.view{display:none;flex-direction:column;flex:1;overflow:hidden;}
-.view.active{display:flex;}
+/* SESSION CARD */
+.sess-card{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.sess-head{padding:13px 14px;display:flex;align-items:center;gap:10px}
+.sess-icon{font-size:1.4rem}
+.sess-info{flex:1}
+.sess-name{font-weight:700;font-size:.95rem}
+.sess-meta{font-size:.72rem;color:var(--mu2);margin-top:2px}
+.sess-done-pill{padding:4px 10px;border-radius:12px;font-size:.65rem;font-weight:700;background:var(--gdim);color:var(--grn)}
 
-/* STATUS BAR */
-.status-bar{
-  padding:14px 18px 10px;display:flex;align-items:center;
-  justify-content:space-between;flex-shrink:0;
-  border-bottom:1px solid var(--border);
-}
-.sb-left{display:flex;flex-direction:column;}
-.sb-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.1em;color:var(--red);}
-.sb-user{font-size:0.65rem;color:var(--muted2);letter-spacing:0.05em;margin-top:1px;}
-.sb-right{display:flex;align-items:center;gap:8px;}
-.sb-pill{font-size:0.62rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
-  padding:4px 10px;border-radius:20px;border:1px solid var(--border);
-  color:var(--muted2);background:var(--s2);}
-.logout-btn{
-  padding:5px 10px;border-radius:8px;background:none;
-  border:1px solid var(--border);color:var(--muted);
-  font-size:0.65rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
-  cursor:pointer;
-}
-
-/* SCROLL */
-.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;padding:16px 16px calc(16px + var(--safe-bottom));}
-
-/* BOTTOM NAV */
-.bottom-nav{
-  display:flex;background:rgba(10,10,10,0.95);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border-top:1px solid var(--border);
-  padding:8px 0 calc(8px + var(--safe-bottom));flex-shrink:0;
-}
-.bnav-item{
-  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
-  padding:6px 0;cursor:pointer;border:none;background:none;transition:all 0.15s;
-}
-.bnav-icon{font-size:1.3rem;}
-.bnav-label{font-size:0.6rem;font-weight:600;letter-spacing:0.08em;
-  text-transform:uppercase;color:var(--muted);transition:color 0.15s;}
-.bnav-item.active .bnav-label{color:var(--red);}
-.bnav-item.active .bnav-icon{transform:scale(1.1);}
-
-/* CARDS */
-.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;
-  overflow:hidden;margin-bottom:10px;}
-.card-head{padding:14px 16px;display:flex;align-items:center;gap:12px;}
-.card-icon{font-size:1.3rem;flex-shrink:0;}
-.card-title{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;
-  letter-spacing:0.06em;line-height:1.1;flex:1;}
-.card-badge{font-size:0.6rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
-  padding:3px 8px;border-radius:20px;flex-shrink:0;}
-.badge-red{background:var(--red-dim);color:var(--red);}
-.badge-bike{background:var(--bike-dim);color:var(--bike);}
-.badge-green{background:var(--green-dim);color:var(--green);}
-.badge-muted{background:var(--s3);color:var(--muted2);}
-.badge-orange{background:var(--orange-dim);color:var(--orange);}
-.card-body{padding:0 16px 16px;border-top:1px solid var(--border);}
-
-/* SECTION LABEL */
-.section-label{font-size:0.6rem;font-weight:700;letter-spacing:0.2em;
-  text-transform:uppercase;color:var(--muted);margin:16px 0 8px;padding-left:2px;}
-
-/* WEEK STRIP */
-.week-strip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
-  padding:0 16px 4px;margin-bottom:12px;-webkit-overflow-scrolling:touch;}
-.week-strip::-webkit-scrollbar{display:none;}
-.week-chip{flex-shrink:0;padding:8px 14px;border-radius:10px;
-  background:var(--s2);border:1px solid var(--border);cursor:pointer;transition:all 0.15s;}
-.week-chip.active{background:var(--red);border-color:var(--red);}
-.week-chip.deload{border-color:var(--orange);}
-.week-chip.deload.active{background:var(--orange);border-color:var(--orange);}
-.wc-num{font-family:'Bebas Neue',sans-serif;font-size:0.8rem;letter-spacing:0.08em;
-  color:var(--muted2);display:block;line-height:1;}
-.week-chip.active .wc-num{color:rgba(255,255,255,0.7);}
-.wc-label{font-size:0.7rem;font-weight:600;color:var(--text);white-space:nowrap;
-  display:block;margin-top:2px;}
-
-/* DAY ROWS */
-.day-row{display:flex;gap:8px;align-items:center;padding:12px 14px;
-  border-radius:12px;background:var(--s2);border:1px solid var(--border);
-  margin-bottom:8px;cursor:pointer;transition:all 0.12s;}
-.day-row:active{background:var(--s3);transform:scale(0.99);}
-.dr-day{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.08em;
-  color:var(--muted2);width:32px;flex-shrink:0;}
-.dr-sessions{flex:1;display:flex;flex-direction:column;gap:3px;}
-.dr-sess{font-size:0.78rem;font-weight:500;color:var(--text);line-height:1.3;}
-.dr-sess.bike{color:var(--bike);}
-.dr-sess.rest{color:var(--muted);}
-.dr-chevron{color:var(--muted);font-size:0.9rem;flex-shrink:0;}
-
-/* DAY VIEW HEADER */
-.day-view-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.dvh-back{display:flex;align-items:center;gap:6px;color:var(--red);
-  font-size:0.8rem;font-weight:600;cursor:pointer;margin-bottom:10px;letter-spacing:0.04em;}
-.dvh-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.04em;line-height:1;}
-.dvh-sub{font-size:0.75rem;color:var(--muted2);margin-top:4px;}
-
-/* EXERCISE ITEMS */
-.ex-item{background:var(--s1);border:1px solid var(--border);
-  border-radius:12px;margin-bottom:8px;overflow:hidden;transition:border-color 0.15s;}
-.ex-item.done{border-color:rgba(16,185,129,0.3);opacity:0.7;}
-.ex-item.open{border-color:rgba(232,17,42,0.3);}
-.ex-header{display:flex;align-items:center;gap:10px;padding:13px 14px;
-  cursor:pointer;-webkit-tap-highlight-color:transparent;}
-.ex-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--s4);
-  display:flex;align-items:center;justify-content:center;
-  font-size:0.75rem;flex-shrink:0;transition:all 0.15s;}
-.ex-item.done .ex-check{background:var(--green);border-color:var(--green);}
-.ex-info{flex:1;min-width:0;}
-.ex-name{font-weight:600;font-size:0.88rem;line-height:1.3;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ex-tag{font-size:0.58rem;font-weight:700;letter-spacing:0.07em;
-  text-transform:uppercase;padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-block;}
-.tag-mec{background:var(--red-dim);color:var(--red);}
-.tag-met{background:var(--green-dim);color:var(--green);}
-.tag-pre{background:var(--orange-dim);color:var(--orange);}
-.tag-str{background:rgba(139,92,246,0.12);color:#A78BFA;}
-.ex-sets-pill{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--red);flex-shrink:0;}
-.ex-body{border-top:1px solid var(--border);padding:14px;display:none;}
-.ex-item.open .ex-body{display:block;}
-
-/* REP CHIPS */
-.rep-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
-.rep-chip{flex:1;min-width:80px;padding:8px 10px;background:var(--s3);border-radius:8px;text-align:center;}
-.rc-label{font-size:0.58rem;font-weight:700;letter-spacing:0.1em;
-  text-transform:uppercase;color:var(--muted);display:block;margin-bottom:2px;}
-.rc-val{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--text);display:block;}
-
-.ex-inst{font-size:0.78rem;color:var(--muted2);line-height:1.65;
-  padding:10px 12px;background:var(--s2);border-radius:8px;
-  border-left:2px solid var(--red);margin-bottom:12px;}
+/* EXERCISE ITEM */
+.ex-item{border-top:1px solid var(--bdr);overflow:hidden}
+.ex-item.done .ex-header{background:rgba(16,185,129,.05)}
+.ex-header{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.ex-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0;transition:all .2s}
+.ex-item.done .ex-check{background:var(--grn);border-color:var(--grn);color:#fff}
+.ex-info{flex:1;min-width:0}
+.ex-name{font-weight:600;font-size:.88rem}
+.ex-tag{font-size:.6rem;font-weight:700;letter-spacing:.08em;padding:2px 7px;border-radius:7px}
+.t-mec{background:var(--rdim);color:var(--red)}
+.t-met{background:var(--odim);color:var(--orn)}
+.t-pre{background:var(--gdim);color:var(--grn)}
+.t-str{background:var(--bdim);color:var(--blu)}
+.ex-sets-pill{padding:4px 9px;background:var(--s3);border-radius:8px;font-size:.72rem;font-weight:700;color:var(--mu2);flex-shrink:0}
+.ex-body{display:none;padding:10px 14px 14px;background:var(--s3)}
+.ex-item.open .ex-body{display:block}
 
 /* LOGBOOK */
-.log-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
-.log-group{display:flex;align-items:center;gap:6px;background:var(--s3);
-  border-radius:8px;padding:6px 10px;flex:1;}
-.log-group label{font-size:0.62rem;color:var(--muted);font-weight:600;
-  letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;}
-.log-input{background:none;border:none;color:var(--text);
-  font-family:'Bebas Neue',sans-serif;font-size:1.2rem;width:52px;
-  text-align:center;outline:none;-moz-appearance:textfield;}
-.log-input::-webkit-outer-spin-button,.log-input::-webkit-inner-spin-button{-webkit-appearance:none;}
-.log-unit{font-size:0.62rem;color:var(--muted2);}
-
-.save-log-btn{
-  width:100%;padding:11px;border-radius:10px;
-  background:var(--bike-dim);border:1px solid rgba(14,165,233,0.2);
-  color:var(--bike);font-weight:700;font-size:0.75rem;
-  letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;
-  margin-bottom:8px;transition:all 0.15s;
-}
-.save-log-btn:active{background:rgba(14,165,233,0.2);}
-.save-log-btn.saved{background:var(--green-dim);border-color:rgba(16,185,129,0.2);color:var(--green);}
-
-.done-btn{width:100%;padding:13px;border-radius:10px;
-  background:var(--green-dim);border:1px solid rgba(16,185,129,0.2);
-  color:var(--green);font-weight:700;font-size:0.8rem;
-  letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;}
-.done-btn:active{background:rgba(16,185,129,0.2);}
-.done-btn.marked{background:var(--s3);color:var(--muted);border-color:var(--border);}
+.ex-notes{font-size:.76rem;color:var(--mu2);line-height:1.5;margin-bottom:10px;padding:8px 10px;background:var(--s4);border-radius:8px}
+.pr-banner{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--odim);border-radius:8px;margin-bottom:10px;font-size:.78rem;color:var(--orn)}
+.pr-label{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.sets-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.set-col{background:var(--s4);border-radius:9px;padding:9px 8px}
+.set-title{font-size:.62rem;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.set-row{display:flex;gap:5px;align-items:center}
+.set-inp{flex:1;padding:7px 8px;background:var(--s3);border:1px solid var(--bdr);border-radius:7px;color:var(--txt);font-family:inherit;font-size:.82rem;outline:none;text-align:center;width:0}
+.set-inp:focus{border-color:rgba(232,17,42,.4)}
+.set-sep{font-size:.65rem;color:var(--mu2)}
+.btn-save{width:100%;padding:10px;border-radius:9px;background:var(--red);border:none;color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;margin-bottom:6px}
+.btn-done{width:100%;padding:9px;border-radius:9px;background:var(--s4);border:1px solid var(--bdr);color:var(--mu2);font-size:.78rem;font-weight:700;cursor:pointer}
+.btn-done.marked{background:var(--gdim);border-color:rgba(16,185,129,.3);color:var(--grn)}
 
 /* PROGRESS */
-.progress-row{display:flex;gap:6px;margin-bottom:14px;}
-.prog-pill{flex:1;height:4px;border-radius:2px;background:var(--s4);transition:background 0.3s;}
-.prog-pill.done{background:var(--red);}
+.prog-row{display:flex;gap:5px;padding:10px 14px;border-top:1px solid var(--bdr);flex-wrap:wrap}
+.prog-dot{width:9px;height:9px;border-radius:50%;background:var(--s4);border:1.5px solid var(--bdr)}
+.prog-dot.done{background:var(--grn);border-color:var(--grn)}
 
-/* MESSAGES VIEW */
-.msg-bubble{
-  padding:12px 14px;border-radius:12px;margin-bottom:8px;
-  font-size:0.82rem;line-height:1.55;
-}
-.msg-bubble.coach{
-  background:var(--red-dim);border:1px solid rgba(232,17,42,0.15);
-  border-bottom-left-radius:4px;
-}
-.msg-bubble.athlete{
-  background:var(--s2);border:1px solid var(--border);
-  border-bottom-right-radius:4px;margin-left:20px;
-}
-.msg-meta{font-size:0.62rem;color:var(--muted2);margin-bottom:4px;
-  font-weight:600;letter-spacing:0.05em;}
-.msg-input-row{
-  display:flex;gap:8px;padding:12px 16px;
-  border-top:1px solid var(--border);flex-shrink:0;
-  background:var(--bg);
-}
-.msg-input{
-  flex:1;padding:11px 14px;background:var(--s2);
-  border:1px solid var(--border);border-radius:10px;
-  color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;
-  outline:none;resize:none;-webkit-appearance:none;
-}
-.msg-send{
-  padding:10px 16px;background:var(--red);color:white;
-  border:none;border-radius:10px;font-weight:700;font-size:0.8rem;
-  cursor:pointer;flex-shrink:0;
-}
+/* MESSAGES */
+.msg-area{max-height:300px;overflow-y:auto;padding:10px;background:var(--s3);border-radius:9px;margin-bottom:8px}
+.msg-bub{padding:7px 10px;border-radius:9px;margin-bottom:5px;font-size:.8rem;max-width:85%}
+.msg-bub.coach{background:var(--pdim);margin-left:auto;text-align:right}
+.msg-bub.mine{background:var(--s4)}
+.msg-meta{font-size:.6rem;color:var(--mu2);margin-bottom:2px}
+.msg-row{display:flex;gap:7px}
+.msg-inp{flex:1;padding:10px 12px;background:var(--s3);border:1px solid var(--bdr);border-radius:9px;color:var(--txt);font-family:inherit;font-size:.82rem;outline:none}
+.msg-send{padding:10px 14px;background:var(--pur);border:none;border-radius:9px;color:#fff;font-weight:700;cursor:pointer}
+
+/* REST DAY */
+.rest-card{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:28px 20px;text-align:center;margin-bottom:12px}
+.rest-icon{font-size:2.5rem;margin-bottom:10px}
+.rest-title{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.1em;color:var(--mu2)}
+.rest-sub{font-size:.8rem;color:var(--mu2);margin-top:6px}
 
 /* TIMER */
-.timer-big{font-family:'Bebas Neue',sans-serif;font-size:5rem;
-  letter-spacing:0.1em;color:var(--text);line-height:1;text-align:center;}
-.timer-big.running{color:var(--red);}
-.preset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;}
-.preset-btn{padding:14px 8px;background:var(--s2);border:1px solid var(--border);
-  border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;
-  color:var(--muted2);cursor:pointer;text-align:center;transition:all 0.12s;}
-.preset-btn.active{background:var(--red-dim);border-color:var(--red);color:var(--red);}
-.tc-btn{flex:1;padding:16px;border-radius:14px;font-weight:700;font-size:0.9rem;
-  letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;border:none;}
-.tc-btn:active{transform:scale(0.97);}
-.tc-start{background:var(--red);color:white;}
-.tc-reset{background:var(--s3);color:var(--muted2);}
+.timer-wrap{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:16px;text-align:center;margin-bottom:10px}
+.timer-disp{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.1em;color:var(--txt);transition:color .3s}
+.timer-disp.running{color:var(--red)}
+.timer-presets{display:flex;gap:6px;justify-content:center;margin:10px 0 12px}
+.pre-btn{padding:6px 12px;border-radius:8px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu2);font-size:.75rem;cursor:pointer}
+.pre-btn.on{background:var(--rdim);border-color:rgba(232,17,42,.3);color:var(--red)}
+.timer-btns{display:flex;gap:8px}
+.t-start{flex:2;padding:10px;border-radius:9px;background:var(--red);border:none;color:#fff;font-weight:700;cursor:pointer}
+.t-reset{flex:1;padding:10px;border-radius:9px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu2);cursor:pointer}
 
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-.fade-in{animation:fadeUp 0.2s ease both;}
+/* no program */
+.no-prog{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:32px 20px;text-align:center}
+.no-prog-icon{font-size:2rem;margin-bottom:10px}
+.no-prog-title{font-weight:700;font-size:1rem;margin-bottom:6px}
+.no-prog-sub{font-size:.8rem;color:var(--mu2)}
 </style>
 </head>
 <body>
-
-<!-- LOADING -->
-<div id="loadingScreen">
-  <div class="ls-logo">KRATOS</div>
-  <div class="ls-spinner"></div>
+<div id="loader">
+  <div class="logo">KRATOS</div>
+  <div class="sub">Caricamento...</div>
+  <div class="spin"></div>
 </div>
 
-<!-- ── VIEW: PIANO ── -->
-<div class="view" id="view-piano">
-  <div class="status-bar">
-    <div class="sb-left">
-      <div class="sb-logo">KRATOS</div>
-      <div class="sb-user" id="userLabel">—</div>
+<!-- VIEW: SETTIMANA (calendario) -->
+<div class="view on" id="v-week">
+  <div class="topbar">
+    <div class="topbar-logo">KRATOS</div>
+    <span class="badge badge-red" id="topbar-week">—</span>
+    <button class="btn-out" onclick="doLogout()">Esci</button>
+  </div>
+  <div class="scroll">
+    <div class="week-header">
+      <div class="week-title" id="cal-week-label">Settimana</div>
     </div>
-    <div class="sb-right">
-      <span class="sb-pill" id="phasePill">—</span>
-      <button class="logout-btn" onclick="doLogout()">Esci</button>
-    </div>
-  </div>
-  <div class="week-strip" id="weekStrip"></div>
-  <div class="scroll-area" id="dayList"></div>
-</div>
-
-<!-- ── VIEW: GIORNO ── -->
-<div class="view" id="view-giorno">
-  <div class="day-view-header">
-    <div class="dvh-back" onclick="goBack()">‹ Piano</div>
-    <div class="dvh-title" id="dvTitle">—</div>
-    <div class="dvh-sub" id="dvSub">—</div>
-  </div>
-  <div class="scroll-area" id="dayContent"></div>
-</div>
-
-<!-- ── VIEW: MESSAGGI ── -->
-<div class="view" id="view-msg" style="display:none;flex-direction:column;">
-  <div class="status-bar">
-    <div class="sb-left">
-      <div class="sb-logo">KRATOS</div>
-      <div class="sb-user">Messaggi Coach</div>
-    </div>
-  </div>
-  <div class="scroll-area" id="msgList" style="flex:1;"></div>
-  <div class="msg-input-row">
-    <textarea class="msg-input" id="msgInput" placeholder="Scrivi al coach..." rows="1"
-      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-    <button class="msg-send" onclick="sendMessage()">↑</button>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div id="day-session-area"></div>
   </div>
 </div>
 
-<!-- ── VIEW: TIMER ── -->
-<div class="view" id="view-timer">
-  <div class="status-bar">
-    <div class="sb-logo">KRATOS</div>
-    <span style="font-size:0.72rem;color:var(--muted2);">Timer Recupero</span>
-  </div>
-  <div class="scroll-area">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:20px;padding:20px 0;">
-      <div class="timer-big" id="timerDisplay">00:00</div>
-      <div style="width:100%;">
-        <div class="section-label">Preset recupero</div>
-        <div class="preset-grid">
-          <div class="preset-btn" onclick="setPreset(60)">1'</div>
-          <div class="preset-btn" onclick="setPreset(90)">90''</div>
-          <div class="preset-btn" onclick="setPreset(180)">3'</div>
-          <div class="preset-btn" onclick="setPreset(300)">5'</div>
-        </div>
+<!-- VIEW: TIMER -->
+<div class="view" id="v-timer">
+  <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-red">Timer</span></div>
+  <div class="scroll">
+    <div class="timer-wrap">
+      <div class="timer-disp" id="timerDisp">02:00</div>
+      <div class="timer-presets">
+        <button class="pre-btn" onclick="setPreset(60)">1'</button>
+        <button class="pre-btn on" onclick="setPreset(90)">1'30"</button>
+        <button class="pre-btn" onclick="setPreset(120)">2'</button>
+        <button class="pre-btn" onclick="setPreset(180)">3'</button>
+        <button class="pre-btn" onclick="setPreset(300)">5'</button>
       </div>
-      <div style="display:flex;gap:10px;width:100%;">
-        <button class="tc-btn tc-start" id="timerBtn" onclick="toggleTimer()">START</button>
-        <button class="tc-btn tc-reset" onclick="resetTimer()">RESET</button>
-      </div>
-      <div style="font-size:0.74rem;color:var(--muted);text-align:center;line-height:1.6;">
-        Meccanici: <strong style="color:var(--text)">3–5 min</strong><br>
-        Metabolici: <strong style="color:var(--text)">90''–2 min</strong>
+      <div class="timer-btns">
+        <button class="t-start" id="timerBtn" onclick="toggleTimer()">START</button>
+        <button class="t-reset" onclick="resetTimer()">Reset</button>
       </div>
     </div>
+    <div style="font-size:.75rem;color:var(--mu2);text-align:center;padding-top:8px">Tocca START dopo ogni serie per il recupero</div>
   </div>
 </div>
 
-<!-- BOTTOM NAV -->
-<nav class="bottom-nav">
-  <button class="bnav-item active" id="nav-piano" onclick="switchView('piano')">
-    <span class="bnav-icon">📅</span><span class="bnav-label">Piano</span>
-  </button>
-  <button class="bnav-item" id="nav-msg" onclick="switchView('msg')">
-    <span class="bnav-icon">💬</span><span class="bnav-label">Coach</span>
-  </button>
-  <button class="bnav-item" id="nav-timer" onclick="switchView('timer')">
-    <span class="bnav-icon">⏱️</span><span class="bnav-label">Timer</span>
-  </button>
+<!-- VIEW: MESSAGGI -->
+<div class="view" id="v-msgs">
+  <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-red">Coach</span></div>
+  <div class="scroll">
+    <div class="msg-area" id="msg-area"></div>
+    <div class="msg-row">
+      <input class="msg-inp" id="msg-inp" placeholder="Scrivi al coach...">
+      <button class="msg-send" onclick="sendMsg()">Invia</button>
+    </div>
+  </div>
+</div>
+
+<nav class="bnav">
+  <button class="bni on" id="bn-week"  onclick="sv('week')"><span class="bni-ic">&#128197;</span><span class="bni-lb">Settimana</span></button>
+  <button class="bni"    id="bn-timer" onclick="sv('timer')"><span class="bni-ic">&#9201;</span><span class="bni-lb">Timer</span></button>
+  <button class="bni"    id="bn-msgs"  onclick="sv('msgs')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Coach</span></button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-// ─── CONFIG ──────────────────────────────────────────────────────────
 var SUPABASE_URL = 'https://tzkokgpxqjeyuvyvmqtt.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6a29rZ3B4cWpleXV2eXZtcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjg2ODEsImV4cCI6MjA4ODg0NDY4MX0.sIqJgyh1bAsKNHlFU5Q7LgpaoEJrZlgMlIH4EQx0hyo';
-var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ─── STATE ───────────────────────────────────────────────────────────
-var currentUser = null;
-var currentProfile = null;
-var currentProgram = null;
-var currentWeekIdx = 0;
-var currentDayIdx = null;
-var currentView = 'piano';
-var timerSecs = 0, timerRunning = false, timerInterval = null, activePreset = null;
-var doneMap = {};
+var ME = null;
+var myProfile = null;
+var currentWeek = null;   // week_template object with days
+var logbookCache = {};    // seId -> latest logbook row
+var prCache = {};         // seId -> previous best
+var selectedDay = null;   // day_of_week number currently shown
+var today = new Date();
+var todayDow = today.getDay() === 0 ? 7 : today.getDay(); // 1=Mon, 7=Sun
 
-// ─── BOOT ────────────────────────────────────────────────────────────
+// TIMER
+var timerSecs = 90, timerRunning = false, timerInterval = null, activePreset = 90;
+
+var DAY_NAMES = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+
+// ── BOOT ─────────────────────────────────────────────────────
 function boot() {
-  sb.auth.getSession().then(function(res) {
-    if (!res.data || !res.data.session) {
-      window.location.href = 'index.html';
+  sb.auth.getSession().then(function(r) {
+    if (!r.data.session) { location.href = 'index.html'; return; }
+    ME = r.data.session.user;
+    return sb.from('profiles').select('*').eq('id', ME.id).single();
+  }).then(function(r) {
+    if (!r || r.error) { location.href = 'index.html'; return; }
+    myProfile = r.data;
+    document.getElementById('loader').style.display = 'none';
+    if (!myProfile.current_week_id) {
+      renderNoProg();
       return;
     }
-    currentUser = res.data.session.user;
-
-    sb.from('profiles').select('*').eq('id', currentUser.id).single()
-      .then(function(r) {
-        currentProfile = r.data || {};
-        if (currentProfile.role === 'admin') {
-          window.location.href = 'admin.html';
-          return;
-        }
-        document.getElementById('userLabel').textContent =
-          currentProfile.full_name || currentUser.email;
-
-        // Load logbook
-        sb.from('logbook').select('*').eq('athlete_id', currentUser.id)
-          .then(function(lr) {
-            (lr.data || []).forEach(function(l) { doneMap[l.key] = l; });
-            currentProgram = getDefaultProgram();
-            document.getElementById('loadingScreen').style.display = 'none';
-            renderWeekStrip();
-            renderDayList();
-            loadMessages();
-          }).catch(function() {
-            currentProgram = getDefaultProgram();
-            document.getElementById('loadingScreen').style.display = 'none';
-            renderWeekStrip();
-            renderDayList();
-          });
-      }).catch(function() {
-        window.location.href = 'index.html';
-      });
-  }).catch(function() {
-    window.location.href = 'index.html';
-  });
+    loadWeek();
+    loadMessages();
+  }).catch(function() { location.href = 'index.html'; });
 }
 
-// ─── PROGRAM DEFAULT (se non assegnato) ──────────────────────────────
-function getDefaultProgram() {
-  return {
-    weeks: [
-      { id:1, label:'Sett 1–2', phase:'Blocco 1 · Rot 1', type:'blast',
-        days: [
-          { day:'Lunedì',    am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 1'}, pm:{type:'rest'}, note:'✅ Fatto' },
-          { day:'Martedì',   am:{type:'gym', ref:'PETTO - Rot 1'},           pm:{type:'rest'}, note:'✅ Fatto' },
-          { day:'Mercoledì', am:{type:'rest'},  pm:{type:'bike', ref:'VO2max - Interval'},  note:'OGGI' },
-          { day:'Giovedì',   am:{type:'gym', ref:'SCHIENA - Rot 1'},         pm:{type:'rest'} },
-          { day:'Venerdì',   am:{type:'gym', ref:'GAMBE - Rot 1'},           pm:{type:'rest'} },
-          { day:'Sabato',    am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'rest'} },
-          { day:'Domenica',  am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 2'}, pm:{type:'gym', ref:'PETTO - Rot 2'} },
-        ]
-      },
-      { id:2, label:'Sett 3–4', phase:'Blocco 1 · Cluster', type:'blast',
-        days: [
-          { day:'Lunedì',    am:{type:'gym', ref:'PETTO - Rot 2'},           pm:{type:'rest'} },
-          { day:'Martedì',   am:{type:'gym', ref:'SCHIENA - Rot 2'},         pm:{type:'bike', ref:'VO2max - Interval'} },
-          { day:'Mercoledì', am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 2'}, pm:{type:'rest'} },
-          { day:'Giovedì',   am:{type:'gym', ref:'GAMBE - Rot 2'},           pm:{type:'bike', ref:'SFR - Forza'} },
-          { day:'Venerdì',   am:{type:'gym', ref:'PETTO - Rot 3'},           pm:{type:'rest'} },
-          { day:'Sabato',    am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'gym', ref:'SCHIENA - Rot 3'} },
-          { day:'Domenica',  am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 3'}, pm:{type:'rest'} },
-        ]
-      },
-      { id:3, label:'Sett 5–6', phase:'Intensità ++', type:'blast',
-        days: [
-          { day:'Lunedì',    am:{type:'gym', ref:'SCHIENA - Rot 1'},         pm:{type:'rest'} },
-          { day:'Martedì',   am:{type:'gym', ref:'PETTO - Rot 1'},           pm:{type:'bike', ref:'SFR - Forza'} },
-          { day:'Mercoledì', am:{type:'gym', ref:'GAMBE - Rot 3'},           pm:{type:'rest'} },
-          { day:'Giovedì',   am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 1'}, pm:{type:'bike', ref:'VO2max - Interval'} },
-          { day:'Venerdì',   am:{type:'gym', ref:'RICHIAMO - Petto e Spalle'}, pm:{type:'rest'} },
-          { day:'Sabato',    am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'rest'} },
-          { day:'Domenica',  am:{type:'gym', ref:'RICHIAMO - Schiena e Braccia'}, pm:{type:'rest'} },
-        ]
-      },
-      { id:4, label:'Sett 7', phase:'Push Finale', type:'blast',
-        days: [
-          { day:'Lunedì',    am:{type:'gym', ref:'PETTO - Rot 3'},           pm:{type:'rest'} },
-          { day:'Martedì',   am:{type:'gym', ref:'SCHIENA - Rot 3'},         pm:{type:'bike', ref:'VO2max - Interval'} },
-          { day:'Mercoledì', am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 3'}, pm:{type:'rest'} },
-          { day:'Giovedì',   am:{type:'gym', ref:'GAMBE - Rot 1'},           pm:{type:'bike', ref:'SFR - Forza'} },
-          { day:'Venerdì',   am:{type:'gym', ref:'RICHIAMO - Petto e Spalle'}, pm:{type:'rest'} },
-          { day:'Sabato',    am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'rest'} },
-          { day:'Domenica',  am:{type:'gym', ref:'RICHIAMO - Schiena e Braccia'}, pm:{type:'rest'} },
-        ]
-      },
-      { id:5, label:'Sett 8–9', phase:'Deload + Taper', type:'deload',
-        days: [
-          { day:'Lunedì',    am:{type:'gym', ref:'RICHIAMO - Petto e Spalle'}, pm:{type:'rest'} },
-          { day:'Martedì',   am:{type:'rest'},                                pm:{type:'bike', ref:'VO2max - Interval'} },
-          { day:'Mercoledì', am:{type:'gym', ref:'RICHIAMO - Schiena e Braccia'}, pm:{type:'rest'} },
-          { day:'Giovedì',   am:{type:'rest'},                                pm:{type:'bike', ref:'SFR - Forza'} },
-          { day:'Venerdì',   am:{type:'rest'},                                pm:{type:'rest'} },
-          { day:'Sabato',    am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'rest'} },
-          { day:'Domenica',  am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'rest'} },
-        ]
-      },
-    ]
-  };
-}
-
-// ─── RENDER WEEK STRIP ───────────────────────────────────────────────
-function renderWeekStrip() {
-  var weeks = currentProgram.weeks;
-  var c = document.getElementById('weekStrip');
-  c.innerHTML = '';
-  for (var i = 0; i < weeks.length; i++) {
-    (function(w, idx) {
-      var chip = document.createElement('div');
-      chip.className = 'week-chip' + (w.type === 'deload' ? ' deload' : '') + (idx === currentWeekIdx ? ' active' : '');
-      chip.innerHTML = '<span class="wc-num">' + w.phase.split('\u00b7')[0].trim() + '</span><span class="wc-label">' + w.label + '</span>';
-      chip.onclick = function() { currentWeekIdx = idx; renderWeekStrip(); renderDayList(); };
-      c.appendChild(chip);
-    })(weeks[i], i);
-  }
-  document.getElementById('phasePill').textContent = weeks[currentWeekIdx].phase;
-}
-
-// ─── RENDER DAY LIST ─────────────────────────────────────────────────
-function renderDayList() {
-  var week = currentProgram.weeks[currentWeekIdx];
-  var c = document.getElementById('dayList');
-  c.innerHTML = '';
-
-  var lbl = document.createElement('div');
-  lbl.className = 'section-label';
-  lbl.textContent = week.label + ' \u2014 ' + week.phase;
-  c.appendChild(lbl);
-
-  for (var i = 0; i < week.days.length; i++) {
-    (function(d, idx) {
-      var isDone  = d.note && d.note.indexOf('\u2705') === 0;
-      var isToday = d.note === 'OGGI';
-      var amType  = d.am ? d.am.type : 'rest';
-      var pmType  = d.pm ? d.pm.type : 'rest';
-      var hasGym  = amType === 'gym'  || pmType === 'gym';
-      var hasBike = amType === 'bike' || pmType === 'bike';
-
-      var row = document.createElement('div');
-      row.className = 'day-row fade-in';
-      row.style.animationDelay = (idx * 0.04) + 's';
-      if (isDone)  row.style.opacity = '0.5';
-      if (isToday) row.style.borderColor = 'var(--bike)';
-
-      var sessHTML = '';
-      if (amType === 'gym')  sessHTML += '<div class="dr-sess">'  + d.am.ref + '</div>';
-      if (amType === 'bike') sessHTML += '<div class="dr-sess bike">\uD83D\uDEB5 ' + d.am.ref + '</div>';
-      if (pmType === 'gym')  sessHTML += '<div class="dr-sess">'  + d.pm.ref + '</div>';
-      if (pmType === 'bike') sessHTML += '<div class="dr-sess bike">\uD83D\uDEB5 ' + d.pm.ref + '</div>';
-      if (!hasGym && !hasBike) sessHTML = '<div class="dr-sess rest">Riposo</div>';
-
-      var badge = isDone
-        ? '<span style="font-size:0.65rem;color:var(--green);font-weight:700;">\u2705</span>'
-        : isToday
-          ? '<span style="font-size:0.65rem;color:var(--bike);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">OGGI</span>'
-          : '<span class="dr-chevron">\u203a</span>';
-
-      row.innerHTML =
-        '<div class="dr-day" style="' + (isToday ? 'color:var(--bike)' : '') + '">' +
-          d.day.slice(0,3).toUpperCase() +
-        '</div>' +
-        '<div class="dr-sessions">' + sessHTML + '</div>' +
-        badge;
-
-      row.onclick = function() { openDay(idx); };
-      c.appendChild(row);
-    })(week.days[i], i);
-  }
-}
-
-// ─── OPEN DAY ────────────────────────────────────────────────────────
-function openDay(dayIdx) {
-  currentDayIdx = dayIdx;
-  const week = currentProgram.weeks[currentWeekIdx];
-  const day  = week.days[dayIdx];
-
-  document.getElementById('dvTitle').textContent = day.day.toUpperCase();
-  document.getElementById('dvSub').textContent   = week.label + ' · ' + week.phase;
-
-  const area = document.getElementById('dayContent');
-  area.innerHTML = '';
-  area.scrollTop = 0;
-
-  renderSession(area, day.am, 'Mattina', dayIdx, 'am');
-  renderSession(area, day.pm, 'Sera',    dayIdx, 'pm');
-
-  document.getElementById('view-piano').classList.remove('active');
-  document.getElementById('view-giorno').classList.add('active');
-  document.getElementById('view-giorno').style.display = 'flex';
-}
-
-function goBack() {
-  document.getElementById('view-giorno').classList.remove('active');
-  document.getElementById('view-piano').classList.add('active');
-}
-
-// ─── RENDER SESSION ──────────────────────────────────────────────────
-function renderSession(container, sess, label, dayIdx, part) {
-  if (!sess) return;
-  const block = document.createElement('div');
-
-  const lbl = document.createElement('div');
-  lbl.className = 'section-label';
-  lbl.textContent = label;
-  block.appendChild(lbl);
-
-  if (sess.type === 'rest') {
-    var rc = document.createElement('div');
-    rc.className = 'card';
-    rc.innerHTML = '<div class="card-head"><div class="card-icon">\uD83D\uDCA4</div>' +
-      '<div class="card-title" style="color:var(--muted2)">Riposo</div>' +
-      '<span class="card-badge badge-muted">Recovery</span></div>';
-    block.appendChild(rc);
-    container.appendChild(block);
-    return;
-  }
-
-  if (sess.type === 'gym') {
-    var hdr = document.createElement('div');
-    hdr.className = 'card';
-    hdr.innerHTML = '<div class="card-head"><div class="card-icon">\uD83C\uDFCB\uFE0F</div>' +
-      '<div class="card-title">' + sess.ref + '</div>' +
-      '<span class="card-badge badge-red">GYM</span></div>';
-    block.appendChild(hdr);
-    block.id = 'sessblock-' + dayIdx + '-' + part;
-    // Carica esercizi da Supabase in modo asincrono
-    loadAndRenderSession(container, sess, label, dayIdx, part);
-  }
-
-  if (sess.type === 'bike') {
-    var bc = document.createElement('div');
-    bc.className = 'card';
-    bc.innerHTML = '<div class="card-head"><div class="card-icon">\uD83D\uDEB5</div>' +
-      '<div class="card-title">' + sess.ref + '</div>' +
-      '<span class="card-badge badge-bike">BICI</span></div>' +
-      '<div class="card-body" style="padding-top:12px;">' +
-        '<div style="font-size:0.8rem;color:var(--muted2);line-height:1.7;">' +
-          getBikeDesc(sess.ref) +
-        '</div>' +
-      '</div>';
-    block.appendChild(bc);
-  }
-
-  container.appendChild(block);
-}
-
-function renderExercise(container, ex, dayIdx, part, ei) {
-  var key    = currentWeekIdx + '-' + dayIdx + '-' + part + '-' + ei;
-  var log    = doneMap[key];
-  var isDone = log && log.done;
-  var tagMap = {mec:'tag-mec', met:'tag-met', pre:'tag-pre', str:'tag-str'};
-  var tagClass = tagMap[ex.tag] || 'tag-met';
-
-  var item = document.createElement('div');
-  item.className = 'ex-item' + (isDone ? ' done' : '');
-  item.id = 'ex-' + dayIdx + '-' + part + '-' + ei;
-
-  var chipsHTML = '';
-  for (var ci = 0; ci < ex.chips.length; ci++) {
-    chipsHTML += '<div class="rep-chip">' +
-      '<span class="rc-label">' + ex.chips[ci].l + '</span>' +
-      '<span class="rc-val">' + ex.chips[ci].v + '</span>' +
-      '</div>';
-  }
-
-  var hdr = document.createElement('div');
-  hdr.className = 'ex-header';
-  hdr.dataset.day = dayIdx;
-  hdr.dataset.part = part;
-  hdr.dataset.ei = ei;
-  hdr.onclick = function() { toggleEx(this.dataset.day, this.dataset.part, parseInt(this.dataset.ei)); };
-  hdr.innerHTML =
-    '<div class="ex-check">' + (isDone ? '\u2713' : '') + '</div>' +
-    '<div class="ex-info">' +
-      '<div class="ex-name">' + ex.name + '</div>' +
-      '<span class="ex-tag ' + tagClass + '">' + ex.tagLabel + '</span>' +
-    '</div>' +
-    '<div class="ex-sets-pill">' + ex.sets + '\u00d7</div>';
-
-  var exBody = document.createElement('div');
-  exBody.className = 'ex-body';
-  exBody.id = 'exb-' + dayIdx + '-' + part + '-' + ei;
-  exBody.innerHTML =
-    '<div class="rep-chips">' + chipsHTML + '</div>' +
-    '<div class="ex-inst">' + ex.inst + '</div>' +
-    '<div class="log-row">' +
-      '<div class="log-group"><label>S1</label>' +
-        '<input type="number" class="log-input" inputmode="decimal" placeholder="kg"' +
-          ' id="k1-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s1_kg) || '') + '">' +
-        '<span class="log-unit">kg \u00d7</span>' +
-        '<input type="number" class="log-input" inputmode="numeric" placeholder="rep"' +
-          ' id="r1-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s1_reps) || '') + '">' +
-      '</div>' +
-      '<div class="log-group"><label>S2</label>' +
-        '<input type="number" class="log-input" inputmode="decimal" placeholder="kg"' +
-          ' id="k2-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s2_kg) || '') + '">' +
-        '<span class="log-unit">kg \u00d7</span>' +
-        '<input type="number" class="log-input" inputmode="numeric" placeholder="rep"' +
-          ' id="r2-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s2_reps) || '') + '">' +
-      '</div>' +
+function renderNoProg() {
+  document.getElementById('loader').style.display = 'none';
+  var area = document.getElementById('day-session-area');
+  area.innerHTML =
+    '<div class="no-prog">' +
+      '<div class="no-prog-icon">&#128203;</div>' +
+      '<div class="no-prog-title">Nessun programma assegnato</div>' +
+      '<div class="no-prog-sub">Il tuo coach ti assegner&agrave; presto un programma. Torna a controllare!</div>' +
     '</div>';
-
-  var saveBtn = document.createElement('button');
-  saveBtn.className = 'save-log-btn';
-  saveBtn.id = 'savebtn-' + dayIdx + '-' + part + '-' + ei;
-  saveBtn.textContent = 'Salva logbook';
-  saveBtn.dataset.day = dayIdx;
-  saveBtn.dataset.part = part;
-  saveBtn.dataset.ei = ei;
-  saveBtn.onclick = function() { saveLog(this.dataset.day, this.dataset.part, parseInt(this.dataset.ei)); };
-
-  var doneBtn = document.createElement('button');
-  doneBtn.className = 'done-btn' + (isDone ? ' marked' : '');
-  doneBtn.textContent = isDone ? 'Completato' : 'Segna come fatto';
-  doneBtn.dataset.day = dayIdx;
-  doneBtn.dataset.part = part;
-  doneBtn.dataset.ei = ei;
-  doneBtn.onclick = function() { toggleDone(this.dataset.day, this.dataset.part, parseInt(this.dataset.ei)); };
-
-  exBody.appendChild(saveBtn);
-  exBody.appendChild(doneBtn);
-  item.appendChild(hdr);
-  item.appendChild(exBody);
-
-  container.appendChild(item);
+  renderCalEmpty();
 }
 
-// ─── LOGBOOK SAVE ────────────────────────────────────────────────────
-function saveLog(dayIdx, part, ei) {
-  var key    = currentWeekIdx + '-' + dayIdx + '-' + part + '-' + ei;
-  var s1kg   = (document.getElementById('k1-'+dayIdx+'-'+part+'-'+ei)||{}).value;
-  var s1reps = (document.getElementById('r1-'+dayIdx+'-'+part+'-'+ei)||{}).value;
-  var s2kg   = (document.getElementById('k2-'+dayIdx+'-'+part+'-'+ei)||{}).value;
-  var s2reps = (document.getElementById('r2-'+dayIdx+'-'+part+'-'+ei)||{}).value;
-  var btn    = document.getElementById('savebtn-'+dayIdx+'-'+part+'-'+ei);
-  if (btn) btn.textContent = '...';
-
-  sb.from('logbook').upsert({
-    athlete_id: currentUser.id,
-    key: key,
-    s1_kg: s1kg||null, s1_reps: s1reps||null,
-    s2_kg: s2kg||null, s2_reps: s2reps||null,
-    done: (doneMap[key] && doneMap[key].done) || false,
-    updated_at: new Date().toISOString()
-  }, { onConflict: 'athlete_id,key' }).then(function(r) {
-    if (!r.error) {
-      if (btn) { btn.textContent = '✓ Salvato'; btn.classList.add('saved'); }
-      doneMap[key] = Object.assign({}, doneMap[key],
-        {s1_kg:s1kg, s1_reps:s1reps, s2_kg:s2kg, s2_reps:s2reps});
-      setTimeout(function() {
-        if (btn) { btn.textContent = '💾 Salva logbook'; btn.classList.remove('saved'); }
-      }, 1500);
-    } else {
-      if (btn) btn.textContent = '💾 Salva logbook';
-    }
-  });
-}
-
-// ─── TOGGLE DONE ────────────────────────────────────────────────────
-function toggleDone(dayIdx, part, ei) {
-  var key    = currentWeekIdx + '-' + dayIdx + '-' + part + '-' + ei;
-  var item   = document.getElementById('ex-'+dayIdx+'-'+part+'-'+ei);
-  var btn    = item ? item.querySelector('.done-btn') : null;
-  var chk    = item ? item.querySelector('.ex-check') : null;
-  var dot    = document.getElementById('dot-'+dayIdx+'-'+part+'-'+ei);
-  var wasDone = doneMap[key] && doneMap[key].done;
-
-  doneMap[key] = Object.assign({}, doneMap[key], {done: !wasDone});
-
-  if (!wasDone) {
-    if (item) item.classList.add('done');
-    if (btn)  { btn.textContent='✓ Completato'; btn.classList.add('marked'); }
-    if (chk)  chk.textContent='✓';
-    if (dot)  dot.classList.add('done');
-    if (item) item.classList.remove('open');
-    var bd = document.getElementById('exb-'+dayIdx+'-'+part+'-'+ei);
-    if (bd) bd.style.display='none';
-  } else {
-    if (item) item.classList.remove('done');
-    if (btn)  { btn.textContent='Segna come fatto ✓'; btn.classList.remove('marked'); }
-    if (chk)  chk.textContent='';
-    if (dot)  dot.classList.remove('done');
-  }
-
-  sb.from('logbook').upsert({
-    athlete_id: currentUser.id,
-    key: key,
-    done: !wasDone,
-    updated_at: new Date().toISOString()
-  }, { onConflict: 'athlete_id,key' }).catch(function() {});
-}
-
-function toggleEx(dayIdx, part, ei) {
-  var body = document.getElementById('exb-' + dayIdx + '-' + part + '-' + ei);
-  var item = document.getElementById('ex-'  + dayIdx + '-' + part + '-' + ei);
-  if (!body) return;
-  var isOpen = item.classList.contains('open');
-  var openItems = document.querySelectorAll('.ex-item.open');
-  for (var i = 0; i < openItems.length; i++) {
-    openItems[i].classList.remove('open');
-    var bd = openItems[i].querySelector('.ex-body');
-    if (bd) bd.style.display = 'none';
-  }
-  if (!isOpen) { item.classList.add('open'); body.style.display = 'block'; }
-}
-
-// ─── MESSAGES ────────────────────────────────────────────────────────
-function loadMessages() {
-  sb.from('messages')
-    .select('*')
-    .or('athlete_id.eq.' + currentUser.id + ',recipient_id.eq.' + currentUser.id)
-    .order('created_at', { ascending: true })
-    .then(function(r) {
-      renderMessages(r.data || []);
-      // Realtime
-      sb.channel('messages').on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
-        function(payload) {
-          var msg = payload.new;
-          if (msg.athlete_id === currentUser.id || msg.recipient_id === currentUser.id) {
-            appendMessage(msg);
-            scrollMsgs();
-          }
-        }
-      ).subscribe();
-    }).catch(function() {});
-}
-
-function renderMessages(msgs) {
-  var list = document.getElementById('msgList');
-  list.innerHTML = '';
-  for (var i = 0; i < msgs.length; i++) appendMessage(msgs[i], false);
-  scrollMsgs();
-}
-
-function appendMessage(msg, scroll) {
-  if (scroll === undefined) scroll = true;
-  var isCoach = msg.sender_role === 'admin';
-  var list = document.getElementById('msgList');
-  const div = document.createElement('div');
-  div.className = 'msg-bubble ' + (isCoach ? 'coach' : 'athlete');
-  div.innerHTML = '<div class="msg-meta">' + (isCoach ? '\uD83D\uDC64 Coach' : 'Tu') + ' \u00b7 ' + fmtDate(msg.created_at) + '</div>' + msg.text;
-  list.appendChild(div);
-  if (scroll) scrollMsgs();
-}
-
-function scrollMsgs() {
-  var list = document.getElementById('msgList');
-  list.scrollTop = list.scrollHeight;
-}
-
-function sendMessage() {
-  var input = document.getElementById('msgInput');
-  var text = input ? input.value.trim() : '';
-  if (!text) return;
-  input.value = '';
-  input.style.height = 'auto';
-
-  sb.from('messages').insert({
-    athlete_id: currentUser.id,
-    recipient_id: (currentProfile && currentProfile.coach_id) || null,
-    text: text,
-    sender_role: 'athlete',
-    created_at: new Date().toISOString()
-  }).catch(function() {});
-}
-
-function fmtDate(iso) {
-  var d = new Date(iso);
-  return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}) + ' ' +
-         d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-}
-
-// ─── VIEW SWITCHING ──────────────────────────────────────────────────
-function switchView(name) {
-  var views = document.querySelectorAll('.view');
-  for (var i = 0; i < views.length; i++) {
-    views[i].classList.remove('active');
-    views[i].style.display = 'none';
-  }
-  var bnavs = document.querySelectorAll('.bnav-item');
-  for (var j = 0; j < bnavs.length; j++) bnavs[j].classList.remove('active');
-
-  var view = document.getElementById('view-'+name);
-  if (view) { view.style.display = 'flex'; view.classList.add('active'); }
-  var nav = document.getElementById('nav-'+name);
-  if (nav) nav.classList.add('active');
-  currentView = name;
-  if (name === 'msg') setTimeout(scrollMsgs, 100);
-}
-
-// ─── TIMER ───────────────────────────────────────────────────────────
-function pad(n){ return String(n).padStart(2,'0'); }
-function updateTimerDisplay(){
-  var d = document.getElementById('timerDisplay');
-  d.textContent = pad(Math.floor(timerSecs/60)) + ':' + pad(timerSecs%60);
-}
-function setPreset(s){
-  resetTimer(); timerSecs = s; activePreset = s; updateTimerDisplay();
-  var presets = document.querySelectorAll('.preset-btn');
-  for (var i = 0; i < presets.length; i++) presets[i].classList.remove('active');
-  var idx = [60,90,180,300].indexOf(s);
-  if (idx >= 0) presets[idx].classList.add('active');
-  toggleTimer();
-}
-function toggleTimer(){
-  const btn=document.getElementById('timerBtn');
-  const disp=document.getElementById('timerDisplay');
-  if(timerRunning){
-    clearInterval(timerInterval);timerRunning=false;
-    btn.textContent='START';disp.classList.remove('running');
-  } else {
-    if(timerSecs===0&&activePreset) timerSecs=activePreset;
-    timerInterval=setInterval(()=>{
-      if(timerSecs>0){timerSecs--;updateTimerDisplay();}
-      else{clearInterval(timerInterval);timerRunning=false;
-        btn.textContent='START';disp.classList.remove('running');}
-    },1000);
-    timerRunning=true;btn.textContent='STOP';disp.classList.add('running');
+function renderCalEmpty() {
+  var grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  for (var d = 1; d <= 7; d++) {
+    var cell = document.createElement('div');
+    cell.className = 'cal-day' + (d === todayDow ? ' today' : '');
+    cell.innerHTML = '<div class="cal-day-name">' + DAY_NAMES[d-1] + '</div>' +
+                     '<div class="cal-day-num">' + getDayOfMonth(d) + '</div>';
+    grid.appendChild(cell);
   }
 }
-function resetTimer(){
-  clearInterval(timerInterval);timerRunning=false;
-  timerSecs=activePreset||0;updateTimerDisplay();
-  document.getElementById('timerBtn').textContent='START';
-  document.getElementById('timerDisplay').classList.remove('running');
-}
 
-// ─── LOGOUT ──────────────────────────────────────────────────────────
-function doLogout() {
-  sb.auth.signOut().then(function() {
-    window.location.href = 'index.html';
-  }).catch(function() {
-    window.location.href = 'index.html';
-  });
-}
-
-// ─── BIKE DESCRIPTIONS ───────────────────────────────────────────────
-function getBikeDesc(ref){
-  var map={
-    'VO2max - Interval':'<strong>5 x 4 min Z5</strong> - 4 min recupero Z1<br>Riscaldamento 15 min Z2 + Defaticamento 15 min Z1 - Totale 70 min<br>Cadenza 90-100 rpm negli intervalli',
-    'SFR - Forza':'<strong>4-6 x 8 min Z3-Z4</strong> - cadenza 50-55 rpm<br>Forza specifica salita - Riscaldamento 15 min + Defaticamento 15 min',
-    'Lungo Z2':'<strong>2-3h Z2 puro</strong> - FC 65-75% FCmax<br>60-80g carbo/h - Parla in frasi brevi - se non riesci, rallenta',
-  };
-  return map[ref]||ref;
-}
-
-// ─── EXERCISE DATA (da Supabase) ────────────────────────────────────
-var sessionCache = {};  // cache: sessione name -> lista esercizi
-
-function getExercises(ref, callback) {
-  // Se gia' in cache, usa quella
-  if (sessionCache[ref]) {
-    if (callback) callback(sessionCache[ref]);
-    return sessionCache[ref];
-  }
-  // Altrimenti carica da Supabase
-  sb.from('sessions')
-    .select('id, name, session_type, session_exercises(id, sort_order, sets, chips, instructions, exercises(id,name,tag,tag_label))')
-    .eq('name', ref)
+// ── LOAD WEEK ─────────────────────────────────────────────────
+function loadWeek() {
+  sb.from('week_templates')
+    .select('*, week_days(*, sessions(id, name, session_type, session_exercises(id, sort_order, sets, reps, rest_sec, notes, exercises(id, name, tag, tag_label, notes))))')
+    .eq('id', myProfile.current_week_id)
     .single()
     .then(function(r) {
-      if (r.error || !r.data) {
-        sessionCache[ref] = [];
-        if (callback) callback([]);
-        return;
-      }
-      var sexs = (r.data.session_exercises || []).sort(function(a,b){ return a.sort_order - b.sort_order; });
-      var list = sexs.map(function(se) {
-        var ex = se.exercises || {};
-        var chips = se.chips || [];
-        // Default chips se vuoti
-        if (!chips.length) {
-          chips = [{l:'Serie',v: se.sets || '2'},{l:'Rec',v:'2 min'}];
-        }
-        return {
-          name: ex.name || 'Esercizio',
-          sets: se.sets || ex.default_sets || '2',
-          chips: chips,
-          tag: ex.tag || 'mec',
-          tagLabel: ex.tag_label || 'Meccanico',
-          inst: se.instructions || ''
-        };
-      });
-      sessionCache[ref] = list;
-      if (callback) callback(list);
-    }).catch(function() {
-      sessionCache[ref] = [];
-      if (callback) callback([]);
+      if (r.error || !r.data) { renderNoProg(); return; }
+      currentWeek = r.data;
+      currentWeek.week_days = (currentWeek.week_days || []).sort(function(a,b){return a.day_of_week-b.day_of_week;});
+      // Load logbook for this week
+      return loadLogbook();
+    }).catch(function() { renderNoProg(); });
+}
+
+function loadLogbook() {
+  return sb.from('logbook')
+    .select('*')
+    .eq('athlete_id', ME.id)
+    .eq('week_template_id', currentWeek.id)
+    .then(function(r) {
+      var rows = r.data || [];
+      logbookCache = {};
+      rows.forEach(function(row) { logbookCache[row.session_exercise_id] = row; });
+      return loadPRs();
     });
-  return null; // async, usa callback
 }
 
-// Versione che carica e poi re-renderizza il blocco
-function loadAndRenderSession(container, sess, label, dayIdx, part) {
-  getExercises(sess.ref, function(exList) {
-    // Trova e aggiorna il blocco gia' creato
-    var block = document.getElementById('sessblock-' + dayIdx + '-' + part);
-    if (!block) return;
-    // Rimuovi contenuto precedente eccetto label e header card
-    // Aggiungi progress dots e esercizi
-    var prog = document.createElement('div');
-    prog.className = 'progress-row';
-    for (var ei2 = 0; ei2 < exList.length; ei2++) {
-      var dot = document.createElement('div');
-      var dkey = currentWeekIdx + '-' + dayIdx + '-' + part + '-' + ei2;
-      dot.className = 'prog-pill' + (doneMap[dkey] ? ' done' : '');
-      dot.id = 'dot-' + dayIdx + '-' + part + '-' + ei2;
-      prog.appendChild(dot);
-    }
-    block.appendChild(prog);
-    for (var ei3 = 0; ei3 < exList.length; ei3++) {
-      renderExercise(block, exList[ei3], dayIdx, part, ei3);
-    }
-  });
-}
-
-// ─── BOOT ────────────────────────────────────────────────────────────
-function boot() {
-  sb.auth.getSession().then(function(res) {
-    if (!res.data || !res.data.session) {
-      window.location.href = 'index.html';
-      return;
-    }
-    currentUser = res.data.session.user;
-
-    sb.from('profiles').select('*').eq('id', currentUser.id).single()
-      .then(function(r) {
-        currentProfile = r.data || {};
-        if (currentProfile.role === 'admin') {
-          window.location.href = 'admin.html';
-          return;
-        }
-        document.getElementById('userLabel').textContent =
-          currentProfile.full_name || currentUser.email;
-
-        // Load logbook
-        sb.from('logbook').select('*').eq('athlete_id', currentUser.id)
-          .then(function(lr) {
-            (lr.data || []).forEach(function(l) { doneMap[l.key] = l; });
-            currentProgram = getDefaultProgram();
-            document.getElementById('loadingScreen').style.display = 'none';
-            renderWeekStrip();
-            renderDayList();
-            loadMessages();
-          }).catch(function() {
-            currentProgram = getDefaultProgram();
-            document.getElementById('loadingScreen').style.display = 'none';
-            renderWeekStrip();
-            renderDayList();
+function loadPRs() {
+  // Load best previous logbook entries (from any week before current)
+  return sb.from('logbook')
+    .select('session_exercise_id, set1_kg, set1_reps, set2_kg, set2_reps, set3_kg, set3_reps, logged_date')
+    .eq('athlete_id', ME.id)
+    .neq('week_template_id', currentWeek.id)
+    .order('logged_date', {ascending: false})
+    .then(function(r) {
+      prCache = {};
+      (r.data || []).forEach(function(row) {
+        if (!prCache[row.session_exercise_id]) {
+          // Find best set
+          var best = 0;
+          [[row.set1_kg, row.set1_reps],[row.set2_kg, row.set2_reps],[row.set3_kg, row.set3_reps]].forEach(function(s) {
+            if (s[0] && s[1]) best = Math.max(best, s[0]);
           });
-      }).catch(function() {
-        window.location.href = 'index.html';
+          prCache[row.session_exercise_id] = { kg: row.set1_kg, reps: row.set1_reps, kg2: row.set2_kg, reps2: row.set2_reps, kg3: row.set3_kg, reps3: row.set3_reps, date: row.logged_date };
+        }
       });
-  }).catch(function() {
-    window.location.href = 'index.html';
-  });
+      renderWeek();
+    });
 }
 
-// ─── PROGRAM DEFAULT (se non assegnato) ──────────────────────────────
-function getDefaultProgram() {
-  return {
-    weeks: [
-      { id:1, label:'Sett 1–2', phase:'Blocco 1 · Rot 1', type:'blast',
-        days: [
-          { day:'Lunedì',    am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 1'}, pm:{type:'rest'}, note:'✅ Fatto' },
-          { day:'Martedì',   am:{type:'gym', ref:'PETTO - Rot 1'},           pm:{type:'rest'}, note:'✅ Fatto' },
-          { day:'Mercoledì', am:{type:'rest'},  pm:{type:'bike', ref:'VO2max - Interval'},  note:'OGGI' },
-          { day:'Giovedì',   am:{type:'gym', ref:'SCHIENA - Rot 1'},         pm:{type:'rest'} },
-          { day:'Venerdì',   am:{type:'gym', ref:'GAMBE - Rot 1'},           pm:{type:'rest'} },
-          { day:'Sabato',    am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'rest'} },
-          { day:'Domenica',  am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 2'}, pm:{type:'gym', ref:'PETTO - Rot 2'} },
-        ]
-      },
-      { id:2, label:'Sett 3–4', phase:'Blocco 1 · Cluster', type:'blast',
-        days: [
-          { day:'Lunedì',    am:{type:'gym', ref:'PETTO - Rot 2'},           pm:{type:'rest'} },
-          { day:'Martedì',   am:{type:'gym', ref:'SCHIENA - Rot 2'},         pm:{type:'bike', ref:'VO2max - Interval'} },
-          { day:'Mercoledì', am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 2'}, pm:{type:'rest'} },
-          { day:'Giovedì',   am:{type:'gym', ref:'GAMBE - Rot 2'},           pm:{type:'bike', ref:'SFR - Forza'} },
-          { day:'Venerdì',   am:{type:'gym', ref:'PETTO - Rot 3'},           pm:{type:'rest'} },
-          { day:'Sabato',    am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'gym', ref:'SCHIENA - Rot 3'} },
-          { day:'Domenica',  am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 3'}, pm:{type:'rest'} },
-        ]
-      },
-      { id:3, label:'Sett 5–6', phase:'Intensità ++', type:'blast',
-        days: [
-          { day:'Lunedì',    am:{type:'gym', ref:'SCHIENA - Rot 1'},         pm:{type:'rest'} },
-          { day:'Martedì',   am:{type:'gym', ref:'PETTO - Rot 1'},           pm:{type:'bike', ref:'SFR - Forza'} },
-          { day:'Mercoledì', am:{type:'gym', ref:'GAMBE - Rot 3'},           pm:{type:'rest'} },
-          { day:'Giovedì',   am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 1'}, pm:{type:'bike', ref:'VO2max - Interval'} },
-          { day:'Venerdì',   am:{type:'gym', ref:'RICHIAMO - Petto e Spalle'}, pm:{type:'rest'} },
-          { day:'Sabato',    am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'rest'} },
-          { day:'Domenica',  am:{type:'gym', ref:'RICHIAMO - Schiena e Braccia'}, pm:{type:'rest'} },
-        ]
-      },
-      { id:4, label:'Sett 7', phase:'Push Finale', type:'blast',
-        days: [
-          { day:'Lunedì',    am:{type:'gym', ref:'PETTO - Rot 3'},           pm:{type:'rest'} },
-          { day:'Martedì',   am:{type:'gym', ref:'SCHIENA - Rot 3'},         pm:{type:'bike', ref:'VO2max - Interval'} },
-          { day:'Mercoledì', am:{type:'gym', ref:'BRACCIA & SPALLE - Rot 3'}, pm:{type:'rest'} },
-          { day:'Giovedì',   am:{type:'gym', ref:'GAMBE - Rot 1'},           pm:{type:'bike', ref:'SFR - Forza'} },
-          { day:'Venerdì',   am:{type:'gym', ref:'RICHIAMO - Petto e Spalle'}, pm:{type:'rest'} },
-          { day:'Sabato',    am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'rest'} },
-          { day:'Domenica',  am:{type:'gym', ref:'RICHIAMO - Schiena e Braccia'}, pm:{type:'rest'} },
-        ]
-      },
-      { id:5, label:'Sett 8–9', phase:'Deload + Taper', type:'deload',
-        days: [
-          { day:'Lunedì',    am:{type:'gym', ref:'RICHIAMO - Petto e Spalle'}, pm:{type:'rest'} },
-          { day:'Martedì',   am:{type:'rest'},                                pm:{type:'bike', ref:'VO2max - Interval'} },
-          { day:'Mercoledì', am:{type:'gym', ref:'RICHIAMO - Schiena e Braccia'}, pm:{type:'rest'} },
-          { day:'Giovedì',   am:{type:'rest'},                                pm:{type:'bike', ref:'SFR - Forza'} },
-          { day:'Venerdì',   am:{type:'rest'},                                pm:{type:'rest'} },
-          { day:'Sabato',    am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'rest'} },
-          { day:'Domenica',  am:{type:'bike', ref:'Lungo Z2'},               pm:{type:'rest'} },
-        ]
-      },
-    ]
-  };
-}
+// ── RENDER WEEK ───────────────────────────────────────────────
+function renderWeek() {
+  // Update topbar
+  document.getElementById('topbar-week').textContent = currentWeek.name;
+  document.getElementById('cal-week-label').textContent = currentWeek.name;
 
-// ─── RENDER WEEK STRIP ───────────────────────────────────────────────
-function renderWeekStrip() {
-  var weeks = currentProgram.weeks;
-  var c = document.getElementById('weekStrip');
-  c.innerHTML = '';
-  for (var i = 0; i < weeks.length; i++) {
-    (function(w, idx) {
-      var chip = document.createElement('div');
-      chip.className = 'week-chip' + (w.type === 'deload' ? ' deload' : '') + (idx === currentWeekIdx ? ' active' : '');
-      chip.innerHTML = '<span class="wc-num">' + w.phase.split('\u00b7')[0].trim() + '</span><span class="wc-label">' + w.label + '</span>';
-      chip.onclick = function() { currentWeekIdx = idx; renderWeekStrip(); renderDayList(); };
-      c.appendChild(chip);
-    })(weeks[i], i);
+  // Build calendar
+  var grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  for (var d = 1; d <= 7; d++) {
+    var dayData = getDayData(d);
+    var cell = document.createElement('div');
+    var hasSess = dayData && dayData.sessions;
+    var sessType = hasSess ? dayData.sessions.session_type : 'rest';
+    var isDone = isDayDone(dayData);
+    var cls = 'cal-day';
+    if (d === todayDow) cls += ' today';
+    if (d === selectedDay) cls += ' selected';
+    if (isDone) cls += ' done';
+    else if (hasSess && sessType === 'bike') cls += ' has-bike';
+    else if (hasSess && sessType === 'gym') cls += ' has-gym';
+    cell.className = cls;
+    var dotClass = isDone ? 'done' : (sessType === 'bike' ? 'bike' : '');
+    cell.innerHTML =
+      '<div class="cal-day-name">' + DAY_NAMES[d-1] + '</div>' +
+      '<div class="cal-day-num">' + getDayOfMonth(d) + '</div>' +
+      (hasSess ? '<div class="cal-day-dot ' + dotClass + '"></div>' : '') +
+      (hasSess ? '<div class="cal-sess-label">' + escHtml(shortSessName(dayData.sessions.name)) + '</div>' : '');
+    cell.onclick = (function(dow) { return function() { selectDay(dow); }; })(d);
+    grid.appendChild(cell);
   }
-  document.getElementById('phasePill').textContent = weeks[currentWeekIdx].phase;
-}
 
-// ─── RENDER DAY LIST ─────────────────────────────────────────────────
-function renderDayList() {
-  var week = currentProgram.weeks[currentWeekIdx];
-  var c = document.getElementById('dayList');
-  c.innerHTML = '';
-
-  var lbl = document.createElement('div');
-  lbl.className = 'section-label';
-  lbl.textContent = week.label + ' \u2014 ' + week.phase;
-  c.appendChild(lbl);
-
-  for (var i = 0; i < week.days.length; i++) {
-    (function(d, idx) {
-      var isDone  = d.note && d.note.indexOf('\u2705') === 0;
-      var isToday = d.note === 'OGGI';
-      var amType  = d.am ? d.am.type : 'rest';
-      var pmType  = d.pm ? d.pm.type : 'rest';
-      var hasGym  = amType === 'gym'  || pmType === 'gym';
-      var hasBike = amType === 'bike' || pmType === 'bike';
-
-      var row = document.createElement('div');
-      row.className = 'day-row fade-in';
-      row.style.animationDelay = (idx * 0.04) + 's';
-      if (isDone)  row.style.opacity = '0.5';
-      if (isToday) row.style.borderColor = 'var(--bike)';
-
-      var sessHTML = '';
-      if (amType === 'gym')  sessHTML += '<div class="dr-sess">'  + d.am.ref + '</div>';
-      if (amType === 'bike') sessHTML += '<div class="dr-sess bike">\uD83D\uDEB5 ' + d.am.ref + '</div>';
-      if (pmType === 'gym')  sessHTML += '<div class="dr-sess">'  + d.pm.ref + '</div>';
-      if (pmType === 'bike') sessHTML += '<div class="dr-sess bike">\uD83D\uDEB5 ' + d.pm.ref + '</div>';
-      if (!hasGym && !hasBike) sessHTML = '<div class="dr-sess rest">Riposo</div>';
-
-      var badge = isDone
-        ? '<span style="font-size:0.65rem;color:var(--green);font-weight:700;">\u2705</span>'
-        : isToday
-          ? '<span style="font-size:0.65rem;color:var(--bike);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">OGGI</span>'
-          : '<span class="dr-chevron">\u203a</span>';
-
-      row.innerHTML =
-        '<div class="dr-day" style="' + (isToday ? 'color:var(--bike)' : '') + '">' +
-          d.day.slice(0,3).toUpperCase() +
-        '</div>' +
-        '<div class="dr-sessions">' + sessHTML + '</div>' +
-        badge;
-
-      row.onclick = function() { openDay(idx); };
-      c.appendChild(row);
-    })(week.days[i], i);
+  // Default: select today if it has a session, else first session day
+  if (!selectedDay) {
+    var defaultDay = todayDow;
+    if (!getDayData(defaultDay) || !(getDayData(defaultDay) && getDayData(defaultDay).sessions)) {
+      for (var dd = 1; dd <= 7; dd++) {
+        var ddData = getDayData(dd);
+        if (ddData && ddData.sessions) { defaultDay = dd; break; }
+      }
+    }
+    selectDay(defaultDay);
+  } else {
+    renderDaySession(selectedDay);
   }
 }
 
-// ─── OPEN DAY ────────────────────────────────────────────────────────
-function openDay(dayIdx) {
-  currentDayIdx = dayIdx;
-  const week = currentProgram.weeks[currentWeekIdx];
-  const day  = week.days[dayIdx];
+function selectDay(dow) {
+  selectedDay = dow;
+  // Update grid selection
+  var cells = document.querySelectorAll('.cal-day');
+  for (var i = 0; i < cells.length; i++) {
+    cells[i].classList.toggle('selected', i + 1 === dow);
+  }
+  renderDaySession(dow);
+}
 
-  document.getElementById('dvTitle').textContent = day.day.toUpperCase();
-  document.getElementById('dvSub').textContent   = week.label + ' · ' + week.phase;
-
-  const area = document.getElementById('dayContent');
+// ── RENDER DAY SESSION ────────────────────────────────────────
+function renderDaySession(dow) {
+  var area = document.getElementById('day-session-area');
   area.innerHTML = '';
-  area.scrollTop = 0;
+  var dayData = getDayData(dow);
 
-  renderSession(area, day.am, 'Mattina', dayIdx, 'am');
-  renderSession(area, day.pm, 'Sera',    dayIdx, 'pm');
-
-  document.getElementById('view-piano').classList.remove('active');
-  document.getElementById('view-giorno').classList.add('active');
-  document.getElementById('view-giorno').style.display = 'flex';
-}
-
-function goBack() {
-  document.getElementById('view-giorno').classList.remove('active');
-  document.getElementById('view-piano').classList.add('active');
-}
-
-// ─── RENDER SESSION ──────────────────────────────────────────────────
-function renderSession(container, sess, label, dayIdx, part) {
-  if (!sess) return;
-  const block = document.createElement('div');
-
-  const lbl = document.createElement('div');
-  lbl.className = 'section-label';
-  lbl.textContent = label;
-  block.appendChild(lbl);
-
-  if (sess.type === 'rest') {
-    var rc = document.createElement('div');
-    rc.className = 'card';
-    rc.innerHTML = '<div class="card-head"><div class="card-icon">\uD83D\uDCA4</div>' +
-      '<div class="card-title" style="color:var(--muted2)">Riposo</div>' +
-      '<span class="card-badge badge-muted">Recovery</span></div>';
-    block.appendChild(rc);
-    container.appendChild(block);
+  if (!dayData || !dayData.sessions) {
+    var restCard = document.createElement('div');
+    restCard.className = 'rest-card';
+    restCard.innerHTML =
+      '<div class="rest-icon">&#128164;</div>' +
+      '<div class="rest-title">Giorno di Riposo</div>' +
+      '<div class="rest-sub">Recupera, dormi bene, mangia pulito.</div>';
+    area.appendChild(restCard);
     return;
   }
 
-  if (sess.type === 'gym') {
-    var hdr = document.createElement('div');
-    hdr.className = 'card';
-    hdr.innerHTML = '<div class="card-head"><div class="card-icon">\uD83C\uDFCB\uFE0F</div>' +
-      '<div class="card-title">' + sess.ref + '</div>' +
-      '<span class="card-badge badge-red">GYM</span></div>';
-    block.appendChild(hdr);
-    block.id = 'sessblock-' + dayIdx + '-' + part;
-    // Carica esercizi da Supabase in modo asincrono
-    loadAndRenderSession(container, sess, label, dayIdx, part);
+  var sess = dayData.sessions;
+  var sexs = (sess.session_exercises || []).sort(function(a,b){return a.sort_order-b.sort_order;});
+  var doneCount = sexs.filter(function(se) { return logbookCache[se.id] && logbookCache[se.id].done; }).length;
+
+  // Session card
+  var card = document.createElement('div');
+  card.className = 'sess-card';
+  var icon = sess.session_type === 'bike' ? '&#128693;' : '&#127947;';
+
+  var sHead = document.createElement('div');
+  sHead.className = 'sess-head';
+  sHead.innerHTML =
+    '<div class="sess-icon">' + icon + '</div>' +
+    '<div class="sess-info">' +
+      '<div class="sess-name">' + escHtml(sess.name) + '</div>' +
+      '<div class="sess-meta">' + doneCount + ' / ' + sexs.length + ' esercizi completati</div>' +
+    '</div>' +
+    (doneCount === sexs.length && sexs.length > 0 ? '<div class="sess-done-pill">&#10003; Completata</div>' : '');
+
+  // Progress dots
+  var progRow = document.createElement('div');
+  progRow.className = 'prog-row';
+  sexs.forEach(function(se) {
+    var dot = document.createElement('div');
+    dot.className = 'prog-dot' + ((logbookCache[se.id] && logbookCache[se.id].done) ? ' done' : '');
+    dot.id = 'dot-' + se.id;
+    progRow.appendChild(dot);
+  });
+
+  card.appendChild(sHead);
+  card.appendChild(progRow);
+
+  // Exercise items
+  if (sess.session_type === 'bike') {
+    var bikeDiv = document.createElement('div');
+    bikeDiv.style.cssText = 'padding:14px;border-top:1px solid var(--bdr);font-size:.85rem;color:var(--mu2);line-height:1.7';
+    bikeDiv.innerHTML = '<strong style="color:var(--txt)">Sessione ciclismo</strong><br>' + escHtml(sess.name);
+    card.appendChild(bikeDiv);
+  } else {
+    sexs.forEach(function(se) { card.appendChild(buildExItem(se, dow)); });
   }
 
-  if (sess.type === 'bike') {
-    var bc = document.createElement('div');
-    bc.className = 'card';
-    bc.innerHTML = '<div class="card-head"><div class="card-icon">\uD83D\uDEB5</div>' +
-      '<div class="card-title">' + sess.ref + '</div>' +
-      '<span class="card-badge badge-bike">BICI</span></div>' +
-      '<div class="card-body" style="padding-top:12px;">' +
-        '<div style="font-size:0.8rem;color:var(--muted2);line-height:1.7;">' +
-          getBikeDesc(sess.ref) +
-        '</div>' +
-      '</div>';
-    block.appendChild(bc);
-  }
-
-  container.appendChild(block);
+  area.appendChild(card);
 }
 
-function renderExercise(container, ex, dayIdx, part, ei) {
-  var key    = currentWeekIdx + '-' + dayIdx + '-' + part + '-' + ei;
-  var log    = doneMap[key];
-  var isDone = log && log.done;
-  var tagMap = {mec:'tag-mec', met:'tag-met', pre:'tag-pre', str:'tag-str'};
-  var tagClass = tagMap[ex.tag] || 'tag-met';
+function buildExItem(se, dow) {
+  var log = logbookCache[se.id] || {};
+  var pr  = prCache[se.id];
+  var ex  = se.exercises || {};
+  var isDone = log.done || false;
+  var numSets = parseInt(se.sets) || 3;
 
   var item = document.createElement('div');
   item.className = 'ex-item' + (isDone ? ' done' : '');
-  item.id = 'ex-' + dayIdx + '-' + part + '-' + ei;
+  item.id = 'exi-' + se.id;
 
-  var chipsHTML = '';
-  for (var ci = 0; ci < ex.chips.length; ci++) {
-    chipsHTML += '<div class="rep-chip">' +
-      '<span class="rc-label">' + ex.chips[ci].l + '</span>' +
-      '<span class="rc-val">' + ex.chips[ci].v + '</span>' +
-      '</div>';
-  }
-
+  // Header
   var hdr = document.createElement('div');
   hdr.className = 'ex-header';
-  hdr.dataset.day = dayIdx;
-  hdr.dataset.part = part;
-  hdr.dataset.ei = ei;
-  hdr.onclick = function() { toggleEx(this.dataset.day, this.dataset.part, parseInt(this.dataset.ei)); };
   hdr.innerHTML =
-    '<div class="ex-check">' + (isDone ? '\u2713' : '') + '</div>' +
+    '<div class="ex-check" id="chk-' + se.id + '">' + (isDone ? '&#10003;' : '') + '</div>' +
     '<div class="ex-info">' +
-      '<div class="ex-name">' + ex.name + '</div>' +
-      '<span class="ex-tag ' + tagClass + '">' + ex.tagLabel + '</span>' +
+      '<div class="ex-name">' + escHtml(ex.name || '?') + '</div>' +
+      '<span class="ex-tag t-' + (ex.tag||'mec') + '">' + escHtml(ex.tag_label||'Mec') + '</span>' +
     '</div>' +
-    '<div class="ex-sets-pill">' + ex.sets + '\u00d7</div>';
+    '<div class="ex-sets-pill">' + se.sets + '&#215;' + (se.reps||'8-10') + '</div>';
+  hdr.onclick = (function(id) { return function() { toggleEx(id); }; })(se.id);
 
-  var exBody = document.createElement('div');
-  exBody.className = 'ex-body';
-  exBody.id = 'exb-' + dayIdx + '-' + part + '-' + ei;
-  exBody.innerHTML =
-    '<div class="rep-chips">' + chipsHTML + '</div>' +
-    '<div class="ex-inst">' + ex.inst + '</div>' +
-    '<div class="log-row">' +
-      '<div class="log-group"><label>S1</label>' +
-        '<input type="number" class="log-input" inputmode="decimal" placeholder="kg"' +
-          ' id="k1-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s1_kg) || '') + '">' +
-        '<span class="log-unit">kg \u00d7</span>' +
-        '<input type="number" class="log-input" inputmode="numeric" placeholder="rep"' +
-          ' id="r1-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s1_reps) || '') + '">' +
-      '</div>' +
-      '<div class="log-group"><label>S2</label>' +
-        '<input type="number" class="log-input" inputmode="decimal" placeholder="kg"' +
-          ' id="k2-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s2_kg) || '') + '">' +
-        '<span class="log-unit">kg \u00d7</span>' +
-        '<input type="number" class="log-input" inputmode="numeric" placeholder="rep"' +
-          ' id="r2-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s2_reps) || '') + '">' +
-      '</div>' +
-    '</div>';
+  // Body
+  var body = document.createElement('div');
+  body.className = 'ex-body';
+  body.id = 'exb-' + se.id;
 
+  // Notes
+  var notesStr = (ex.notes || '') + (se.notes ? (ex.notes ? ' &bull; ' : '') + se.notes : '');
+  if (notesStr) {
+    var notesEl = document.createElement('div');
+    notesEl.className = 'ex-notes';
+    notesEl.innerHTML = notesStr;
+    body.appendChild(notesEl);
+  }
+
+  // PR Banner
+  if (pr) {
+    var prEl = document.createElement('div');
+    prEl.className = 'pr-banner';
+    var prText = '&#127942; Record precedente: ';
+    if (pr.kg) prText += pr.kg + 'kg &times; ' + (pr.reps||'?') + ' reps';
+    if (pr.kg2) prText += ', ' + pr.kg2 + 'kg &times; ' + (pr.reps2||'?');
+    if (pr.kg3) prText += ', ' + pr.kg3 + 'kg &times; ' + (pr.reps3||'?');
+    prEl.innerHTML = prText;
+    body.appendChild(prEl);
+  }
+
+  // Sets grid
+  var sGrid = document.createElement('div');
+  sGrid.className = 'sets-grid';
+  var maxSets = Math.max(numSets, 3);
+  for (var si = 1; si <= maxSets; si++) {
+    var setCol = document.createElement('div');
+    setCol.className = 'set-col';
+    var prevKg   = log['set' + si + '_kg'] || '';
+    var prevReps = log['set' + si + '_reps'] || '';
+    setCol.innerHTML =
+      '<div class="set-title">S' + si + '</div>' +
+      '<div class="set-row">' +
+        '<input class="set-inp" type="number" id="kg' + si + '-' + se.id + '" placeholder="kg" value="' + prevKg + '" inputmode="decimal">' +
+        '<span class="set-sep">&#215;</span>' +
+        '<input class="set-inp" type="number" id="rp' + si + '-' + se.id + '" placeholder="rep" value="' + prevReps + '" inputmode="numeric">' +
+      '</div>';
+    sGrid.appendChild(setCol);
+  }
+  body.appendChild(sGrid);
+
+  // Save button
   var saveBtn = document.createElement('button');
-  saveBtn.className = 'save-log-btn';
-  saveBtn.id = 'savebtn-' + dayIdx + '-' + part + '-' + ei;
+  saveBtn.className = 'btn-save';
+  saveBtn.id = 'sbtn-' + se.id;
   saveBtn.textContent = 'Salva logbook';
-  saveBtn.dataset.day = dayIdx;
-  saveBtn.dataset.part = part;
-  saveBtn.dataset.ei = ei;
-  saveBtn.onclick = function() { saveLog(this.dataset.day, this.dataset.part, parseInt(this.dataset.ei)); };
+  saveBtn.onclick = (function(seId, wid) { return function() { saveLog(seId, wid); }; })(se.id, currentWeek.id);
 
+  // Done button
   var doneBtn = document.createElement('button');
-  doneBtn.className = 'done-btn' + (isDone ? ' marked' : '');
-  doneBtn.textContent = isDone ? 'Completato' : 'Segna come fatto';
-  doneBtn.dataset.day = dayIdx;
-  doneBtn.dataset.part = part;
-  doneBtn.dataset.ei = ei;
-  doneBtn.onclick = function() { toggleDone(this.dataset.day, this.dataset.part, parseInt(this.dataset.ei)); };
+  doneBtn.className = 'btn-done' + (isDone ? ' marked' : '');
+  doneBtn.id = 'dbtn-' + se.id;
+  doneBtn.textContent = isDone ? '&#10003; Completato' : 'Segna come fatto';
+  doneBtn.onclick = (function(seId, wid) { return function() { toggleDone(seId, wid); }; })(se.id, currentWeek.id);
 
-  exBody.appendChild(saveBtn);
-  exBody.appendChild(doneBtn);
+  body.appendChild(saveBtn);
+  body.appendChild(doneBtn);
+
   item.appendChild(hdr);
-  item.appendChild(exBody);
-
-  container.appendChild(item);
+  item.appendChild(body);
+  return item;
 }
 
-// ─── LOGBOOK SAVE ────────────────────────────────────────────────────
-function saveLog(dayIdx, part, ei) {
-  var key    = currentWeekIdx + '-' + dayIdx + '-' + part + '-' + ei;
-  var s1kg   = (document.getElementById('k1-'+dayIdx+'-'+part+'-'+ei)||{}).value;
-  var s1reps = (document.getElementById('r1-'+dayIdx+'-'+part+'-'+ei)||{}).value;
-  var s2kg   = (document.getElementById('k2-'+dayIdx+'-'+part+'-'+ei)||{}).value;
-  var s2reps = (document.getElementById('r2-'+dayIdx+'-'+part+'-'+ei)||{}).value;
-  var btn    = document.getElementById('savebtn-'+dayIdx+'-'+part+'-'+ei);
-  if (btn) btn.textContent = '...';
+function toggleEx(seId) {
+  var item = document.getElementById('exi-' + seId);
+  if (item) item.classList.toggle('open');
+}
 
-  sb.from('logbook').upsert({
-    athlete_id: currentUser.id,
-    key: key,
-    s1_kg: s1kg||null, s1_reps: s1reps||null,
-    s2_kg: s2kg||null, s2_reps: s2reps||null,
-    done: (doneMap[key] && doneMap[key].done) || false,
-    updated_at: new Date().toISOString()
-  }, { onConflict: 'athlete_id,key' }).then(function(r) {
-    if (!r.error) {
-      if (btn) { btn.textContent = '✓ Salvato'; btn.classList.add('saved'); }
-      doneMap[key] = Object.assign({}, doneMap[key],
-        {s1_kg:s1kg, s1_reps:s1reps, s2_kg:s2kg, s2_reps:s2reps});
-      setTimeout(function() {
-        if (btn) { btn.textContent = '💾 Salva logbook'; btn.classList.remove('saved'); }
-      }, 1500);
-    } else {
-      if (btn) btn.textContent = '💾 Salva logbook';
+// ── LOGBOOK SAVE ──────────────────────────────────────────────
+function saveLog(seId, wid) {
+  var btn = document.getElementById('sbtn-' + seId);
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
+
+  var data = {
+    athlete_id: ME.id,
+    session_exercise_id: seId,
+    week_template_id: wid,
+    logged_date: today.toISOString().split('T')[0]
+  };
+  for (var si = 1; si <= 3; si++) {
+    var kEl = document.getElementById('kg' + si + '-' + seId);
+    var rEl = document.getElementById('rp' + si + '-' + seId);
+    data['set' + si + '_kg']   = kEl && kEl.value ? parseFloat(kEl.value) : null;
+    data['set' + si + '_reps'] = rEl && rEl.value ? parseInt(rEl.value) : null;
+  }
+  // Preserve done state
+  if (logbookCache[seId]) data.done = logbookCache[seId].done;
+
+  var existing = logbookCache[seId];
+  var promise = existing && existing.id
+    ? sb.from('logbook').update(data).eq('id', existing.id)
+    : sb.from('logbook').insert(data).select().single();
+
+  promise.then(function(r) {
+    if (r.error) {
+      if (btn) { btn.textContent = 'Errore!'; btn.disabled = false; }
+      return;
     }
+    var row = r.data || existing;
+    if (row) logbookCache[seId] = row;
+    if (btn) { btn.textContent = '&#10003; Salvato'; setTimeout(function() { if (btn) { btn.textContent = 'Salva logbook'; btn.disabled = false; } }, 2000); }
+  }).catch(function() {
+    if (btn) { btn.textContent = 'Errore'; btn.disabled = false; }
   });
 }
 
-// ─── TOGGLE DONE ────────────────────────────────────────────────────
-function toggleDone(dayIdx, part, ei) {
-  var key    = currentWeekIdx + '-' + dayIdx + '-' + part + '-' + ei;
-  var item   = document.getElementById('ex-'+dayIdx+'-'+part+'-'+ei);
-  var btn    = item ? item.querySelector('.done-btn') : null;
-  var chk    = item ? item.querySelector('.ex-check') : null;
-  var dot    = document.getElementById('dot-'+dayIdx+'-'+part+'-'+ei);
-  var wasDone = doneMap[key] && doneMap[key].done;
-
-  doneMap[key] = Object.assign({}, doneMap[key], {done: !wasDone});
-
-  if (!wasDone) {
-    if (item) item.classList.add('done');
-    if (btn)  { btn.textContent='✓ Completato'; btn.classList.add('marked'); }
-    if (chk)  chk.textContent='✓';
-    if (dot)  dot.classList.add('done');
-    if (item) item.classList.remove('open');
-    var bd = document.getElementById('exb-'+dayIdx+'-'+part+'-'+ei);
-    if (bd) bd.style.display='none';
-  } else {
-    if (item) item.classList.remove('done');
-    if (btn)  { btn.textContent='Segna come fatto ✓'; btn.classList.remove('marked'); }
-    if (chk)  chk.textContent='';
-    if (dot)  dot.classList.remove('done');
+function toggleDone(seId, wid) {
+  var existing = logbookCache[seId];
+  var newDone = !(existing && existing.done);
+  var data = {
+    athlete_id: ME.id, session_exercise_id: seId,
+    week_template_id: wid, done: newDone,
+    logged_date: today.toISOString().split('T')[0]
+  };
+  // Carry over kg/reps if exist
+  if (existing) {
+    data.set1_kg = existing.set1_kg; data.set1_reps = existing.set1_reps;
+    data.set2_kg = existing.set2_kg; data.set2_reps = existing.set2_reps;
+    data.set3_kg = existing.set3_kg; data.set3_reps = existing.set3_reps;
   }
 
-  sb.from('logbook').upsert({
-    athlete_id: currentUser.id,
-    key: key,
-    done: !wasDone,
-    updated_at: new Date().toISOString()
-  }, { onConflict: 'athlete_id,key' }).catch(function() {});
+  var promise = existing && existing.id
+    ? sb.from('logbook').update({ done: newDone }).eq('id', existing.id).select().single()
+    : sb.from('logbook').insert(data).select().single();
+
+  promise.then(function(r) {
+    if (!r || r.error) return;
+    logbookCache[seId] = r.data || { done: newDone };
+    // Update UI
+    var item = document.getElementById('exi-' + seId);
+    var chk  = document.getElementById('chk-' + seId);
+    var btn  = document.getElementById('dbtn-' + seId);
+    var dot  = document.getElementById('dot-' + seId);
+    if (item) item.classList.toggle('done', newDone);
+    if (chk)  chk.innerHTML = newDone ? '&#10003;' : '';
+    if (btn)  { btn.className = 'btn-done' + (newDone ? ' marked' : ''); btn.textContent = newDone ? '&#10003; Completato' : 'Segna come fatto'; }
+    if (dot)  dot.className = 'prog-dot' + (newDone ? ' done' : '');
+  }).catch(function(){});
 }
 
-function toggleEx(dayIdx, part, ei) {
-  var body = document.getElementById('exb-' + dayIdx + '-' + part + '-' + ei);
-  var item = document.getElementById('ex-'  + dayIdx + '-' + part + '-' + ei);
-  if (!body) return;
-  var isOpen = item.classList.contains('open');
-  var openItems = document.querySelectorAll('.ex-item.open');
-  for (var i = 0; i < openItems.length; i++) {
-    openItems[i].classList.remove('open');
-    var bd = openItems[i].querySelector('.ex-body');
-    if (bd) bd.style.display = 'none';
-  }
-  if (!isOpen) { item.classList.add('open'); body.style.display = 'block'; }
-}
-
-// ─── MESSAGES ────────────────────────────────────────────────────────
+// ── MESSAGES ─────────────────────────────────────────────────
 function loadMessages() {
-  sb.from('messages')
-    .select('*')
-    .or('athlete_id.eq.' + currentUser.id + ',recipient_id.eq.' + currentUser.id)
-    .order('created_at', { ascending: true })
+  var area = document.getElementById('msg-area');
+  if (!area) return;
+  sb.from('messages').select('*').eq('athlete_id', ME.id).order('created_at', {ascending: true})
     .then(function(r) {
-      renderMessages(r.data || []);
-      // Realtime
-      sb.channel('messages').on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
-        function(payload) {
-          var msg = payload.new;
-          if (msg.athlete_id === currentUser.id || msg.recipient_id === currentUser.id) {
-            appendMessage(msg);
-            scrollMsgs();
-          }
-        }
-      ).subscribe();
-    }).catch(function() {});
+      area.innerHTML = '';
+      (r.data || []).forEach(function(m) {
+        var b = document.createElement('div');
+        b.className = 'msg-bub ' + (m.sender_role === 'admin' ? 'coach' : 'mine');
+        b.innerHTML = '<div class="msg-meta">' + (m.sender_role === 'admin' ? '&#128100; Coach' : 'Tu') + ' &middot; ' + fmtDate(m.created_at) + '</div>' + escHtml(m.text);
+        area.appendChild(b);
+      });
+      area.scrollTop = area.scrollHeight;
+    }).catch(function(){});
 }
 
-function renderMessages(msgs) {
-  var list = document.getElementById('msgList');
-  list.innerHTML = '';
-  for (var i = 0; i < msgs.length; i++) appendMessage(msgs[i], false);
-  scrollMsgs();
+function sendMsg() {
+  var inp = document.getElementById('msg-inp');
+  if (!inp) return;
+  var t = inp.value.trim();
+  if (!t) return;
+  inp.value = '';
+  // Find admin/coach id
+  sb.from('profiles').select('id').eq('role','admin').limit(1).single()
+    .then(function(r) {
+      var coachId = r.data ? r.data.id : ME.id;
+      return sb.from('messages').insert({ athlete_id: ME.id, sender_id: ME.id, sender_role: 'athlete', text: t });
+    }).then(function() { loadMessages(); }).catch(function(){});
 }
 
-function appendMessage(msg, scroll) {
-  if (scroll === undefined) scroll = true;
-  var isCoach = msg.sender_role === 'admin';
-  var list = document.getElementById('msgList');
-  const div = document.createElement('div');
-  div.className = 'msg-bubble ' + (isCoach ? 'coach' : 'athlete');
-  div.innerHTML = '<div class="msg-meta">' + (isCoach ? '\uD83D\uDC64 Coach' : 'Tu') + ' \u00b7 ' + fmtDate(msg.created_at) + '</div>' + msg.text;
-  list.appendChild(div);
-  if (scroll) scrollMsgs();
+// ── TIMER ─────────────────────────────────────────────────────
+function pad(n) { return String(n).padStart(2,'0'); }
+function updateTimerDisp() {
+  var d = document.getElementById('timerDisp');
+  if (d) d.textContent = pad(Math.floor(timerSecs/60)) + ':' + pad(timerSecs%60);
+}
+function setPreset(s) {
+  resetTimer(); timerSecs = s; activePreset = s; updateTimerDisp();
+  document.querySelectorAll('.pre-btn').forEach(function(b) { b.classList.remove('on'); });
+  var presets = [60,90,120,180,300];
+  var idx = presets.indexOf(s);
+  var btns = document.querySelectorAll('.pre-btn');
+  if (idx >= 0 && btns[idx]) btns[idx].classList.add('on');
+  toggleTimer();
+}
+function toggleTimer() {
+  var btn = document.getElementById('timerBtn');
+  var disp = document.getElementById('timerDisp');
+  if (timerRunning) {
+    clearInterval(timerInterval); timerRunning = false;
+    if (btn) btn.textContent = 'START'; if (disp) disp.classList.remove('running');
+  } else {
+    if (timerSecs === 0 && activePreset) timerSecs = activePreset;
+    timerInterval = setInterval(function() {
+      if (timerSecs > 0) { timerSecs--; updateTimerDisp(); }
+      else { clearInterval(timerInterval); timerRunning = false; if (btn) { btn.textContent = 'START'; } if (disp) disp.classList.remove('running'); }
+    }, 1000);
+    timerRunning = true;
+    if (btn) btn.textContent = 'STOP'; if (disp) disp.classList.add('running');
+  }
+}
+function resetTimer() {
+  clearInterval(timerInterval); timerRunning = false;
+  timerSecs = activePreset || 90; updateTimerDisp();
+  var btn = document.getElementById('timerBtn'); var disp = document.getElementById('timerDisp');
+  if (btn) btn.textContent = 'START'; if (disp) disp.classList.remove('running');
 }
 
-function scrollMsgs() {
-  var list = document.getElementById('msgList');
-  list.scrollTop = list.scrollHeight;
+// ── VIEW SWITCH ───────────────────────────────────────────────
+function sv(name) {
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('on'); v.style.display = 'none'; });
+  document.querySelectorAll('.bni').forEach(function(b) { b.classList.remove('on'); });
+  var v = document.getElementById('v-' + name);
+  var b = document.getElementById('bn-' + name);
+  if (v) { v.style.display = 'flex'; v.classList.add('on'); }
+  if (b) b.classList.add('on');
+  if (name === 'msgs') loadMessages();
 }
 
-function sendMessage() {
-  var input = document.getElementById('msgInput');
-  var text = input ? input.value.trim() : '';
-  if (!text) return;
-  input.value = '';
-  input.style.height = 'auto';
+// ── HELPERS ───────────────────────────────────────────────────
+function getDayData(dow) {
+  if (!currentWeek) return null;
+  var found = null;
+  currentWeek.week_days.forEach(function(d) { if (d.day_of_week === dow) found = d; });
+  return found;
+}
 
-  sb.from('messages').insert({
-    athlete_id: currentUser.id,
-    recipient_id: (currentProfile && currentProfile.coach_id) || null,
-    text: text,
-    sender_role: 'athlete',
-    created_at: new Date().toISOString()
-  }).catch(function() {});
+function isDayDone(dayData) {
+  if (!dayData || !dayData.sessions) return false;
+  var sexs = dayData.sessions.session_exercises || [];
+  if (!sexs.length) return false;
+  return sexs.every(function(se) { return logbookCache[se.id] && logbookCache[se.id].done; });
+}
+
+function getDayOfMonth(dow) {
+  // Calculate date for this day of week in current week
+  var d = new Date(today);
+  var diff = dow - todayDow;
+  d.setDate(d.getDate() + diff);
+  return d.getDate();
+}
+
+function shortSessName(name) {
+  if (!name) return '';
+  return name.length > 10 ? name.substring(0, 9) + '...' : name;
 }
 
 function fmtDate(iso) {
@@ -1462,112 +719,15 @@ function fmtDate(iso) {
          d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
 }
 
-// ─── VIEW SWITCHING ──────────────────────────────────────────────────
-function switchView(name) {
-  var views = document.querySelectorAll('.view');
-  for (var i = 0; i < views.length; i++) {
-    views[i].classList.remove('active');
-    views[i].style.display = 'none';
-  }
-  var bnavs = document.querySelectorAll('.bnav-item');
-  for (var j = 0; j < bnavs.length; j++) bnavs[j].classList.remove('active');
-
-  var view = document.getElementById('view-'+name);
-  if (view) { view.style.display = 'flex'; view.classList.add('active'); }
-  var nav = document.getElementById('nav-'+name);
-  if (nav) nav.classList.add('active');
-  currentView = name;
-  if (name === 'msg') setTimeout(scrollMsgs, 100);
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ─── TIMER ───────────────────────────────────────────────────────────
-function pad(n){ return String(n).padStart(2,'0'); }
-function updateTimerDisplay(){
-  var d = document.getElementById('timerDisplay');
-  d.textContent = pad(Math.floor(timerSecs/60)) + ':' + pad(timerSecs%60);
-}
-function setPreset(s){
-  resetTimer(); timerSecs = s; activePreset = s; updateTimerDisplay();
-  var presets = document.querySelectorAll('.preset-btn');
-  for (var i = 0; i < presets.length; i++) presets[i].classList.remove('active');
-  var idx = [60,90,180,300].indexOf(s);
-  if (idx >= 0) presets[idx].classList.add('active');
-  toggleTimer();
-}
-function toggleTimer(){
-  const btn=document.getElementById('timerBtn');
-  const disp=document.getElementById('timerDisplay');
-  if(timerRunning){
-    clearInterval(timerInterval);timerRunning=false;
-    btn.textContent='START';disp.classList.remove('running');
-  } else {
-    if(timerSecs===0&&activePreset) timerSecs=activePreset;
-    timerInterval=setInterval(()=>{
-      if(timerSecs>0){timerSecs--;updateTimerDisplay();}
-      else{clearInterval(timerInterval);timerRunning=false;
-        btn.textContent='START';disp.classList.remove('running');}
-    },1000);
-    timerRunning=true;btn.textContent='STOP';disp.classList.add('running');
-  }
-}
-function resetTimer(){
-  clearInterval(timerInterval);timerRunning=false;
-  timerSecs=activePreset||0;updateTimerDisplay();
-  document.getElementById('timerBtn').textContent='START';
-  document.getElementById('timerDisplay').classList.remove('running');
-}
-
-// ─── LOGOUT ──────────────────────────────────────────────────────────
 function doLogout() {
-  sb.auth.signOut().then(function() {
-    window.location.href = 'index.html';
-  }).catch(function() {
-    window.location.href = 'index.html';
-  });
+  sb.auth.signOut().then(function() { location.href = 'index.html'; }).catch(function() { location.href = 'index.html'; });
 }
 
-// ─── BIKE DESCRIPTIONS ───────────────────────────────────────────────
-function getBikeDesc(ref){
-  var map={
-    'VO2max - Interval':'<strong>5 x 4 min Z5</strong> - 4 min recupero Z1<br>Riscaldamento 15 min Z2 + Defaticamento 15 min Z1 - Totale 70 min<br>Cadenza 90-100 rpm negli intervalli',
-    'SFR - Forza':'<strong>4-6 x 8 min Z3-Z4</strong> - cadenza 50-55 rpm<br>Forza specifica salita - Riscaldamento 15 min + Defaticamento 15 min',
-    'Lungo Z2':'<strong>2-3h Z2 puro</strong> - FC 65-75% FCmax<br>60-80g carbo/h - Parla in frasi brevi - se non riesci, rallenta',
-  };
-  return map[ref]||ref;
-}
-
-// ─── EXERCISE DATA (inline) ───────────────────────────────────────────
-// In produzione questo viene dalla tabella "exercises" su Supabase.
-// Per ora usiamo un set inline di esempio.
-function getExercises(ref){
-  var db={
-    'PETTO - Rot 1':[
-      {name:'Smith Incline Press',sets:'2',chips:[{l:'Top Set',v:'6-8 reps'},{l:'Backoff',v:'10-12 reps'},{l:'Rec',v:'3-5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Warm-up. Top set a cedimento. Scendi 2 sec, esplodi su. Backoff -20%.'},
-      {name:'Distensioni Manubri 15-30 gradi',sets:'2',chips:[{l:'Top Set',v:'6-8 reps'},{l:'Backoff',v:'12+ reps'},{l:'Rec',v:'3 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Top set esplosivo. Non rimbalzare in basso. Backoff -20%.'},
-      {name:'Machine Flyes - 3 sec squeeze',sets:'2',chips:[{l:'Rep',v:'10 x 3 sec sq'},{l:'Rec',v:'60 sec'}],tag:'met',tagLabel:'Metabolico',inst:'Carico leggero. 3 sec squeeze in chiusura. Pump puro.'},
-    ],
-    'BRACCIA & SPALLE - Rot 1':[
-      {name:'Smith Super Incline Press 85 gradi',sets:'2',chips:[{l:'Top Set',v:'6-8 reps'},{l:'Backoff',v:'10 x 5 sec exc'},{l:'Rec',v:'3 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Inclinazione quasi verticale. Backoff: 5 sec eccentrica ad ogni rep.'},
-      {name:'Single Delts - Muscle Round',sets:'1',chips:[{l:'Struttura',v:'6 x 4 reps'},{l:'Rec cl.',v:'10 sec'}],tag:'mec',tagLabel:'Meccanico',inst:'15RM. 6 cluster x 4 reps, 10 sec recupero. Un braccio alla volta.'},
-      {name:'Cross Incline Laterals',sets:'3',chips:[{l:'S1',v:'10 reps'},{l:'S2',v:'8 reps'},{l:'S3',v:'20 reps'}],tag:'met',tagLabel:'Metabolico',inst:'Carichi diversi. Cedimento ogni set.'},
-      {name:'Curl ai Cavi Alti',sets:'2',chips:[{l:'Top Set',v:'8-10 reps'},{l:'Backoff',v:'15 reps'},{l:'Rec',v:'90 sec'}],tag:'met',tagLabel:'Metabolico',inst:'Squeeze in concentrica. Backoff -20%.'},
-    ],
-    'SCHIENA - Rot 1':[
-      {name:'Pulley Unilaterale',sets:'2',chips:[{l:'Top Set',v:'8-10 reps'},{l:'Backoff',v:'15+ reps'},{l:'Rec',v:'2 min'}],tag:'pre',tagLabel:'Pre-Attivazione',inst:'Inclinato lateralmente. 1 sec squeeze.'},
-      {name:'RDL - Stacco Romeno',sets:'2',chips:[{l:'Top Set',v:'6-8 reps'},{l:'Backoff',v:'10-12 reps'},{l:'Rec',v:'3-5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Eccentrica 2-3 sec. Fino a meta tibia. Femorali in stretch.'},
-      {name:'Stretchers al Pulley',sets:'2',chips:[{l:'Top Set',v:'8-10 reps'},{l:'Backoff',v:'12+5+5+5 Myo'},{l:'Rec',v:'2 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Backoff: Myo Reps. 12 - 10 sec - 5 x 3.'},
-    ],
-    'GAMBE - Rot 1':[
-      {name:'Leg Curl Seduto - Drop',sets:'2',chips:[{l:'S1',v:'10-12 stop'},{l:'S2',v:'Drop x 3'},{l:'Rec',v:'2 min'}],tag:'pre',tagLabel:'Pre-Affaticamento',inst:'S2: 12 - 20% - 12 - 20% - 12.'},
-      {name:'Pressa',sets:'2',chips:[{l:'Top Set',v:'8-10 reps'},{l:'Backoff',v:'Max x 5 sec exc'},{l:'Rec',v:'3-5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Backoff: max reps con 5 sec eccentrica. Batti il record.'},
-      {name:'Smith Squat',sets:'2',chips:[{l:'S1',v:'10-12 reps'},{l:'S2',v:'6-8 reps'},{l:'Rec',v:'3-5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'S1 con elastici. S2 carico maggiore.'},
-    ],
-  };
-  return db[ref] || [];
-}
-
-
-// ─── BOOT ────────────────────────────────────────────────────────────
 boot();
 </script>
 </body>

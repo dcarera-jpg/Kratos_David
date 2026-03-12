@@ -2,948 +2,938 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>KRATOS — Admin</title>
+<title>KRATOS — Coach</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --red:#E8112A; --red-dim:rgba(232,17,42,0.12);
-  --bike:#0EA5E9; --bike-dim:rgba(14,165,233,0.12);
-  --green:#10B981; --green-dim:rgba(16,185,129,0.12);
-  --orange:#F59E0B; --orange-dim:rgba(245,158,11,0.12);
-  --purple:#A855F7; --purple-dim:rgba(168,85,247,0.12);
-  --bg:#0A0A0A; --s1:#111; --s2:#191919; --s3:#222; --s4:#2C2C2C;
-  --border:rgba(255,255,255,0.07);
-  --text:#F0F0F0; --muted:#555; --muted2:#888;
-  --safe-bottom:env(safe-area-inset-bottom,0px);
+:root{
+  --red:#E8112A;--rdim:rgba(232,17,42,.12);
+  --blu:#0EA5E9;--bdim:rgba(14,165,233,.12);
+  --grn:#10B981;--gdim:rgba(16,185,129,.12);
+  --orn:#F59E0B;--odim:rgba(245,158,11,.12);
+  --pur:#A855F7;--pdim:rgba(168,85,247,.12);
+  --bg:#0A0A0A;--s2:#191919;--s3:#222;--s4:#2C2C2C;
+  --bdr:rgba(255,255,255,.07);--txt:#F0F0F0;--mu:#555;--mu2:#888;
+  --sb:env(safe-area-inset-bottom,0px);
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;background:var(--bg);}
-body{font-family:'DM Sans',sans-serif;color:var(--text);font-size:15px;
-  display:flex;flex-direction:column;height:100dvh;}
-
-#loadingScreen{position:fixed;inset:0;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  z-index:100;gap:16px;}
-.ls-logo{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:0.15em;color:var(--red);}
-.ls-sub{font-size:0.65rem;color:var(--muted2);letter-spacing:0.2em;text-transform:uppercase;}
-.ls-spinner{width:24px;height:24px;border:2px solid var(--s4);border-top-color:var(--red);
-  border-radius:50%;animation:spin 0.7s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-
-.view{display:none;flex-direction:column;flex:1;overflow:hidden;}
-.view.active{display:flex;}
-.status-bar{padding:14px 18px 10px;display:flex;align-items:center;
-  justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--border);}
-.sb-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.1em;color:var(--red);}
-.sb-badge{font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
-  padding:4px 10px;border-radius:20px;background:var(--purple-dim);color:var(--purple);}
-.logout-btn{padding:5px 10px;border-radius:8px;background:none;
-  border:1px solid var(--border);color:var(--muted);
-  font-size:0.65rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;}
-.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;padding:16px 16px calc(16px + var(--safe-bottom));}
-
-.bottom-nav{display:flex;background:rgba(10,10,10,0.95);backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);
-  padding:8px 0 calc(8px + var(--safe-bottom));flex-shrink:0;}
-.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
-  padding:6px 0;cursor:pointer;border:none;background:none;}
-.bnav-icon{font-size:1.3rem;}
-.bnav-label{font-size:0.6rem;font-weight:600;letter-spacing:0.08em;
-  text-transform:uppercase;color:var(--muted);}
-.bnav-item.active .bnav-label{color:var(--red);}
-
-.section-label{font-size:0.65rem;font-weight:700;letter-spacing:0.15em;
-  text-transform:uppercase;color:var(--muted2);margin-bottom:12px;}
-
-.athlete-card{background:var(--s2);border:1px solid var(--border);
-  border-radius:14px;margin-bottom:12px;overflow:hidden;}
-.ac-head{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;}
-.ac-avatar{width:38px;height:38px;border-radius:50%;background:var(--purple-dim);
-  display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--purple);flex-shrink:0;}
-.ac-info{flex:1;min-width:0;}
-.ac-name{font-weight:600;font-size:0.9rem;}
-.ac-email{font-size:0.72rem;color:var(--muted2);margin-top:1px;}
-.ac-body{display:none;border-top:1px solid var(--border);padding:14px 16px;}
-.athlete-card.open .ac-body{display:block;}
-
-.stat-row{display:flex;gap:8px;margin-bottom:12px;}
-.stat-box{flex:1;background:var(--s3);border-radius:10px;padding:10px 12px;}
-.stat-val{font-size:1.1rem;font-weight:700;}
-.stat-lbl{font-size:0.65rem;color:var(--muted2);margin-top:2px;}
-
-.assign-btn{width:100%;padding:10px;border-radius:10px;background:var(--purple-dim);
-  border:1px solid rgba(168,85,247,0.2);color:var(--purple);
-  font-size:0.78rem;font-weight:600;cursor:pointer;margin-bottom:10px;}
-
-.msg-area{max-height:180px;overflow-y:auto;margin-bottom:10px;
-  background:var(--s3);border-radius:10px;padding:10px;}
-.msg-bubble{padding:7px 10px;border-radius:10px;margin-bottom:6px;font-size:0.8rem;max-width:85%;}
-.msg-bubble.coach{background:var(--purple-dim);margin-left:auto;}
-.msg-bubble.athlete{background:var(--s4);}
-.msg-meta{font-size:0.62rem;color:var(--muted2);margin-bottom:2px;}
-.msg-input-row{display:flex;gap:8px;}
-.msg-input{flex:1;padding:9px 12px;background:var(--s3);border:1px solid var(--border);
-  border-radius:10px;color:var(--text);font-family:inherit;font-size:0.82rem;outline:none;}
-.msg-send{padding:9px 14px;background:var(--purple);border:none;border-radius:10px;
-  color:white;font-weight:700;cursor:pointer;}
-
-.form-card{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:18px;}
-.field{margin-bottom:14px;}
-.field label{display:block;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;
-  text-transform:uppercase;color:var(--muted2);margin-bottom:6px;}
-.field input,.field select,.field textarea{width:100%;padding:11px 13px;background:var(--s3);
-  border:1px solid var(--border);border-radius:10px;color:var(--text);
-  font-family:inherit;font-size:0.88rem;outline:none;}
-.field-input{width:100%;padding:11px 13px;background:var(--s3);
-  border:1px solid var(--border);border-radius:10px;
-  color:var(--text);font-family:inherit;font-size:0.88rem;outline:none;}
-.create-btn{width:100%;padding:13px;border-radius:12px;background:var(--red);
-  border:none;color:white;font-size:0.85rem;font-weight:700;cursor:pointer;margin-top:4px;}
-.notice{margin-top:10px;font-size:0.78rem;padding:10px 14px;border-radius:10px;display:none;}
-
-.prog-tab{padding:8px 16px;border-radius:20px;border:1px solid var(--border);
-  background:var(--s2);color:var(--muted2);font-size:0.72rem;
-  font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
-  cursor:pointer;white-space:nowrap;}
-.prog-tab.active{background:var(--red);color:white;border-color:var(--red);}
-
-.ex-card{background:var(--s2);border:1px solid var(--border);border-radius:12px;
-  padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
-.ex-card-info{flex:1;min-width:0;}
-.ex-card-name{font-weight:600;font-size:0.88rem;}
-.ex-card-meta{font-size:0.7rem;color:var(--muted2);margin-top:2px;}
-.tag-badge{font-size:0.62rem;font-weight:700;letter-spacing:0.1em;padding:3px 8px;border-radius:10px;}
-.tag-mec{background:var(--red-dim);color:var(--red);}
-.tag-met{background:var(--orange-dim);color:var(--orange);}
-.tag-pre{background:var(--green-dim);color:var(--green);}
-.tag-str{background:var(--bike-dim);color:var(--bike);}
-.del-btn{padding:5px 10px;border-radius:8px;background:var(--s4);
-  border:none;color:var(--muted2);font-size:0.7rem;cursor:pointer;}
-
-.sess-card{background:var(--s2);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
-.sess-head{padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;}
-.sess-body{display:none;border-top:1px solid var(--border);padding:12px 14px;}
-.type-badge{font-size:0.6rem;font-weight:700;letter-spacing:0.1em;padding:3px 8px;border-radius:10px;}
-.type-gym{background:var(--red-dim);color:var(--red);}
-.type-bike{background:var(--bike-dim);color:var(--bike);}
-.type-rest{background:var(--s4);color:var(--muted2);}
-
-.prog-card{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;}
-
-.inline-form{background:var(--s2);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border);}
-.inline-title{font-size:0.7rem;font-weight:700;letter-spacing:0.12em;color:var(--muted2);margin-bottom:12px;}
-.btn-row{display:flex;gap:8px;margin-top:8px;}
-.form-msg{display:none;margin-top:8px;font-size:0.75rem;padding:8px;border-radius:8px;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'DM Sans',sans-serif;color:var(--txt);font-size:15px;display:flex;flex-direction:column;height:100dvh}
+#loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.15em;color:var(--red)}
+.sub{font-size:.65rem;color:var(--mu2);letter-spacing:.2em;text-transform:uppercase}
+.spin{width:24px;height:24px;border:2px solid var(--s4);border-top-color:var(--red);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.view{display:none;flex-direction:column;flex:1;overflow:hidden}
+.view.on{display:flex}
+.topbar{padding:13px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--bdr)}
+.topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.1em;color:var(--red)}
+.badge{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:var(--pdim);color:var(--pur)}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 14px calc(14px + var(--sb))}
+.bnav{display:flex;background:rgba(10,10,10,.95);backdrop-filter:blur(20px);border-top:1px solid var(--bdr);padding:6px 0 calc(6px + var(--sb));flex-shrink:0}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;cursor:pointer;border:none;background:none}
+.bni-ic{font-size:1.25rem}
+.bni-lb{font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}
+.bni.on .bni-lb{color:var(--red)}
+/* cards */
+.card{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.card-head{padding:13px 14px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.card-body{display:none;border-top:1px solid var(--bdr);padding:12px 14px}
+.card.open .card-body{display:block}
+.sec-label{font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px}
+/* inputs */
+.inp{width:100%;padding:10px 12px;background:var(--s3);border:1px solid var(--bdr);border-radius:10px;color:var(--txt);font-family:inherit;font-size:.85rem;outline:none}
+.inp:focus{border-color:rgba(232,17,42,.4)}
+.inp-sm{padding:8px 10px;font-size:.8rem}
+select.inp{cursor:pointer}
+/* buttons */
+.btn-red{padding:11px;border-radius:10px;background:var(--red);border:none;color:#fff;font-size:.82rem;font-weight:700;cursor:pointer;width:100%}
+.btn-out{padding:7px 12px;border-radius:8px;background:none;border:1px solid var(--bdr);color:var(--mu2);font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.btn-del{padding:5px 9px;border-radius:7px;background:var(--s4);border:none;color:var(--mu2);font-size:.68rem;cursor:pointer}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+/* tags */
+.tag{font-size:.6rem;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:8px}
+.t-mec{background:var(--rdim);color:var(--red)}
+.t-met{background:var(--odim);color:var(--orn)}
+.t-pre{background:var(--gdim);color:var(--grn)}
+.t-str{background:var(--bdim);color:var(--blu)}
+/* inline form */
+.iform{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:14px}
+.iform-title{font-size:.65rem;font-weight:700;letter-spacing:.12em;color:var(--mu2);text-transform:uppercase;margin-bottom:12px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:5px}
+.fmsg{font-size:.74rem;padding:7px 10px;border-radius:8px;display:none;margin-top:8px}
+/* tabs */
+.tabs{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+.tab{padding:7px 14px;border-radius:18px;border:1px solid var(--bdr);background:var(--s2);color:var(--mu2);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.tab.on{background:var(--red);color:#fff;border-color:var(--red)}
+/* week calendar */
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:14px}
+.day-cell{background:var(--s3);border-radius:8px;padding:6px 4px;text-align:center;min-height:54px;cursor:pointer;border:1px solid var(--bdr);transition:border-color .15s}
+.day-cell:hover{border-color:var(--red)}
+.day-cell.has-sess{border-color:rgba(232,17,42,.3);background:var(--rdim)}
+.day-cell.has-bike{border-color:rgba(14,165,233,.3);background:var(--bdim)}
+.day-cell.has-rest{background:var(--s4)}
+.day-name{font-size:.55rem;font-weight:700;color:var(--mu2);text-transform:uppercase;margin-bottom:4px}
+.day-sess{font-size:.6rem;color:var(--txt);line-height:1.3}
+/* athlete card */
+.ath-card{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.ath-head{padding:12px 14px;display:flex;align-items:center;gap:11px;cursor:pointer}
+.ath-av{width:36px;height:36px;border-radius:50%;background:var(--pdim);display:flex;align-items:center;justify-content:center;font-size:.95rem;color:var(--pur);flex-shrink:0;font-weight:700}
+.ath-info{flex:1;min-width:0}
+.ath-name{font-weight:600;font-size:.88rem}
+.ath-email{font-size:.7rem;color:var(--mu2);margin-top:1px}
+.ath-body{display:none;border-top:1px solid var(--bdr)}
+.ath-card.open .ath-body{display:block}
+/* stats */
+.stat-row{display:flex;gap:6px;padding:12px 14px;border-bottom:1px solid var(--bdr)}
+.stat-box{flex:1;background:var(--s3);border-radius:9px;padding:9px 10px}
+.stat-val{font-size:1.05rem;font-weight:700}
+.stat-lb{font-size:.62rem;color:var(--mu2);margin-top:1px}
+/* messages */
+.msg-area{max-height:160px;overflow-y:auto;padding:10px;background:var(--s3);border-radius:9px;margin-bottom:8px}
+.msg-bub{padding:7px 10px;border-radius:9px;margin-bottom:5px;font-size:.79rem;max-width:84%}
+.msg-bub.coach{background:var(--pdim);margin-left:auto}
+.msg-bub.athlete{background:var(--s4)}
+.msg-meta{font-size:.6rem;color:var(--mu2);margin-bottom:2px}
+.msg-row{display:flex;gap:7px}
+.msg-inp{flex:1;padding:9px 11px;background:var(--s3);border:1px solid var(--bdr);border-radius:9px;color:var(--txt);font-family:inherit;font-size:.82rem;outline:none}
+.msg-send{padding:9px 13px;background:var(--pur);border:none;border-radius:9px;color:#fff;font-weight:700;cursor:pointer}
+/* prog week day pill */
+.day-pill{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s3);border-radius:9px;margin-bottom:6px}
+.day-pill-name{font-size:.72rem;font-weight:700;color:var(--mu2);width:28px;flex-shrink:0}
+.day-pill-sess{flex:1;font-size:.8rem}
+.day-pill-edit{padding:4px 8px;border-radius:6px;background:var(--s4);border:none;color:var(--mu2);font-size:.65rem;cursor:pointer}
 </style>
 </head>
 <body>
-
-<div id="loadingScreen">
-  <div class="ls-logo">KRATOS</div>
-  <div class="ls-sub">Coach Panel</div>
-  <div class="ls-spinner"></div>
+<div id="loader">
+  <div class="logo">KRATOS</div>
+  <div class="sub">Coach Panel</div>
+  <div class="spin"></div>
 </div>
 
-<!-- VIEW: ATLETI -->
-<div class="view active" id="view-athletes">
-  <div class="status-bar">
-    <div class="sb-logo">KRATOS</div>
-    <span class="sb-badge">Coach</span>
-    <button class="logout-btn" onclick="doLogout()">Esci</button>
+<!-- ── ATLETI ── -->
+<div class="view on" id="v-athletes">
+  <div class="topbar">
+    <div class="topbar-logo">KRATOS</div>
+    <span class="badge">COACH</span>
+    <button class="btn-out" onclick="doLogout()">Esci</button>
   </div>
-  <div class="scroll-area">
-    <div class="section-label">I tuoi atleti</div>
-    <div id="athletesList"></div>
-  </div>
-</div>
-
-<!-- VIEW: NUOVO ATLETA -->
-<div class="view" id="view-new">
-  <div class="status-bar">
-    <div class="sb-logo">KRATOS</div>
-    <span class="sb-badge">Nuovo Atleta</span>
-  </div>
-  <div class="scroll-area">
-    <div class="form-card">
-      <div class="field">
-        <label>Nome completo</label>
-        <input type="text" id="na-name" placeholder="Mario Rossi">
-      </div>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="na-email" placeholder="atleta@email.com" inputmode="email">
-      </div>
-      <div class="field">
-        <label>Password temporanea</label>
-        <input type="text" id="na-password" placeholder="minimo 6 caratteri">
-      </div>
-      <button class="create-btn" id="createBtn" onclick="createAthlete()">Crea account</button>
-      <div class="notice" id="createNotice"></div>
-    </div>
-    <div style="font-size:0.72rem;color:var(--muted2);padding:12px 2px;line-height:1.6;">
-      L'atleta accede con email e password da te impostati.
-    </div>
+  <div class="scroll" id="ath-list-wrap">
+    <div class="sec-label">I tuoi atleti</div>
+    <div id="ath-list"></div>
   </div>
 </div>
 
-<!-- VIEW: PROGRAMMI -->
-<div class="view" id="view-prog">
-  <div class="status-bar">
-    <div class="sb-logo">KRATOS</div>
-    <span class="sb-badge">Programmi</span>
+<!-- ── NUOVO ATLETA ── -->
+<div class="view" id="v-new">
+  <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge">NUOVO ATLETA</span></div>
+  <div class="scroll">
+    <div class="iform">
+      <div class="iform-title">CREA ACCOUNT ATLETA</div>
+      <div class="field"><label>Nome</label><input class="inp" id="na-name" placeholder="Mario Rossi"></div>
+      <div class="field"><label>Email</label><input class="inp" type="email" id="na-email" placeholder="atleta@email.com" inputmode="email"></div>
+      <div class="field"><label>Password temporanea</label><input class="inp" id="na-pass" placeholder="min. 6 caratteri"></div>
+      <button class="btn-red" id="na-btn" onclick="createAthlete()">Crea account</button>
+      <div class="fmsg" id="na-msg"></div>
+    </div>
+    <div style="font-size:.71rem;color:var(--mu2);line-height:1.6;padding:0 2px;">L'atleta accede da index.html con email e password che imposti qui. Puoi assegnargli il programma dalla sezione Atleti dopo la creazione.</div>
   </div>
-  <div class="scroll-area">
-    <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;">
-      <button class="prog-tab active" id="ptab-exercises" onclick="switchProgTab('exercises')">Esercizi</button>
-      <button class="prog-tab" id="ptab-sessions" onclick="switchProgTab('sessions')">Sessioni</button>
-      <button class="prog-tab" id="ptab-programs" onclick="switchProgTab('programs')">Programmi</button>
+</div>
+
+<!-- ── PROGRAMMI ── -->
+<div class="view" id="v-prog">
+  <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge">PROGRAMMI</span></div>
+  <div class="scroll">
+    <div class="tabs">
+      <button class="tab on" id="pt-ex"   onclick="pTab('ex')">Esercizi</button>
+      <button class="tab"    id="pt-sess" onclick="pTab('sess')">Sessioni</button>
+      <button class="tab"    id="pt-blk"  onclick="pTab('blk')">Blocchi</button>
     </div>
 
-    <div id="ptab-content-exercises">
-      <div class="section-label">Libreria Esercizi</div>
-      <input id="ex-search" type="text" class="field-input" placeholder="Cerca esercizio..." oninput="filterExercises()" style="margin-bottom:12px;">
-      <button class="create-btn" style="margin-bottom:16px;" onclick="toggleForm('exForm')">+ Nuovo Esercizio</button>
-      <div id="exForm" class="inline-form" style="display:none;">
-        <div class="inline-title">NUOVO ESERCIZIO</div>
-        <div class="field"><label>Nome</label><input type="text" id="exf-name" class="field-input" placeholder="es. Panca Piana"></div>
+    <!-- TAB: ESERCIZI -->
+    <div id="pc-ex">
+      <input class="inp" id="ex-q" placeholder="Cerca esercizio..." oninput="filterEx()" style="margin-bottom:10px">
+      <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('ex-form')">+ Nuovo esercizio</button>
+      <div id="ex-form" class="iform" style="display:none">
+        <div class="iform-title">NUOVO ESERCIZIO</div>
+        <div class="field"><label>Nome *</label><input class="inp" id="exf-n" placeholder="es. Panca Piana"></div>
         <div class="field"><label>Tipo</label>
-          <select id="exf-tag" class="field-input">
-            <option value="mec">Meccanico</option>
-            <option value="met">Metabolico</option>
-            <option value="pre">Pre-Attivazione</option>
-            <option value="str">Stretching</option>
-          </select>
-        </div>
-        <div class="field"><label>Serie default</label><input type="text" id="exf-sets" class="field-input" placeholder="es. 3"></div>
-        <div class="field"><label>Istruzioni</label><textarea id="exf-notes" class="field-input" rows="2" placeholder="Tecnica, note..."></textarea></div>
+          <select class="inp" id="exf-t">
+            <option value="mec">Meccanico</option><option value="met">Metabolico</option>
+            <option value="pre">Pre-Attivazione</option><option value="str">Stretching</option>
+          </select></div>
+        <div class="field"><label>Note / istruzioni</label><textarea class="inp" id="exf-no" rows="2" placeholder="Tecnica, parametri..."></textarea></div>
         <div class="btn-row">
-          <button class="create-btn" style="flex:1;" onclick="saveExercise()">Salva</button>
-          <button class="logout-btn" style="flex:1;" onclick="toggleForm('exForm')">Annulla</button>
+          <button class="btn-red" style="flex:1" onclick="saveEx()">Salva</button>
+          <button class="btn-out" style="flex:1" onclick="toggleEl('ex-form')">Annulla</button>
         </div>
-        <div id="exf-msg" class="form-msg"></div>
+        <div class="fmsg" id="exf-msg"></div>
       </div>
-      <div id="exercises-list"></div>
+      <div id="ex-list"></div>
     </div>
 
-    <div id="ptab-content-sessions" style="display:none;">
-      <div class="section-label">Sessioni di Allenamento</div>
-      <button class="create-btn" style="margin-bottom:16px;" onclick="toggleForm('sfForm')">+ Nuova Sessione</button>
-      <div id="sfForm" class="inline-form" style="display:none;">
-        <div class="inline-title">NUOVA SESSIONE</div>
-        <div class="field"><label>Nome</label><input type="text" id="sf-name" class="field-input" placeholder="es. PETTO - Rot 1"></div>
+    <!-- TAB: SESSIONI -->
+    <div id="pc-sess" style="display:none">
+      <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('sf-form')">+ Nuova sessione</button>
+      <div id="sf-form" class="iform" style="display:none">
+        <div class="iform-title">NUOVA SESSIONE</div>
+        <div class="field"><label>Nome *</label><input class="inp" id="sff-n" placeholder="es. Petto + Tricipiti"></div>
         <div class="field"><label>Tipo</label>
-          <select id="sf-type" class="field-input">
-            <option value="gym">Palestra</option>
-            <option value="bike">Bici</option>
-            <option value="rest">Riposo</option>
-          </select>
-        </div>
+          <select class="inp" id="sff-t">
+            <option value="gym">Palestra</option><option value="bike">Bici</option><option value="rest">Riposo</option>
+          </select></div>
         <div class="btn-row">
-          <button class="create-btn" style="flex:1;" onclick="saveSession()">Salva</button>
-          <button class="logout-btn" style="flex:1;" onclick="toggleForm('sfForm')">Annulla</button>
+          <button class="btn-red" style="flex:1" onclick="saveSess()">Crea sessione</button>
+          <button class="btn-out" style="flex:1" onclick="toggleEl('sf-form')">Annulla</button>
         </div>
-        <div id="sf-msg" class="form-msg"></div>
+        <div class="fmsg" id="sff-msg"></div>
       </div>
-      <div id="sessions-list"></div>
+      <div id="sess-list"></div>
     </div>
 
-    <div id="ptab-content-programs" style="display:none;">
-      <div class="section-label">Programmi di Allenamento</div>
-      <button class="create-btn" style="margin-bottom:16px;" onclick="toggleForm('pfForm')">+ Nuovo Programma</button>
-      <div id="pfForm" class="inline-form" style="display:none;">
-        <div class="inline-title">NUOVO PROGRAMMA</div>
-        <div class="field"><label>Nome</label><input type="text" id="pf-name" class="field-input" placeholder="es. Kratos Blocco 1"></div>
-        <div class="field"><label>Descrizione</label><input type="text" id="pf-desc" class="field-input" placeholder="es. 8 settimane ipertrofia"></div>
+    <!-- TAB: BLOCCHI -->
+    <div id="pc-blk" style="display:none">
+      <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('blk-form')">+ Nuovo blocco</button>
+      <div id="blk-form" class="iform" style="display:none">
+        <div class="iform-title">NUOVO BLOCCO</div>
+        <div class="field"><label>Nome *</label><input class="inp" id="blkf-n" placeholder="es. Blocco 1 — Ipertrofia"></div>
+        <div class="field"><label>Descrizione</label><input class="inp" id="blkf-d" placeholder="es. 4 settimane volume alto"></div>
         <div class="btn-row">
-          <button class="create-btn" style="flex:1;" onclick="saveProgram()">Crea</button>
-          <button class="logout-btn" style="flex:1;" onclick="toggleForm('pfForm')">Annulla</button>
+          <button class="btn-red" style="flex:1" onclick="saveBlk()">Crea blocco</button>
+          <button class="btn-out" style="flex:1" onclick="toggleEl('blk-form')">Annulla</button>
         </div>
-        <div id="pf-msg" class="form-msg"></div>
+        <div class="fmsg" id="blkf-msg"></div>
       </div>
-      <div id="programs-list"></div>
+      <div id="blk-list"></div>
     </div>
   </div>
 </div>
 
-<!-- VIEW: MESSAGGI -->
-<div class="view" id="view-msgs">
-  <div class="status-bar">
-    <div class="sb-logo">KRATOS</div>
-    <span class="sb-badge">Messaggi</span>
-  </div>
-  <div class="scroll-area">
-    <div class="section-label">Seleziona un atleta per vedere i messaggi</div>
-    <div id="allAthletesMsgList"></div>
-  </div>
+<!-- ── MESSAGGI ── -->
+<div class="view" id="v-msgs">
+  <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge">MESSAGGI</span></div>
+  <div class="scroll"><div id="msg-ath-list"></div></div>
 </div>
 
-<!-- BOTTOM NAV -->
-<nav class="bottom-nav">
-  <button class="bnav-item active" id="nav-athletes" onclick="switchView('athletes')">
-    <span class="bnav-icon">&#128101;</span><span class="bnav-label">Atleti</span>
-  </button>
-  <button class="bnav-item" id="nav-new" onclick="switchView('new')">
-    <span class="bnav-icon">&#10133;</span><span class="bnav-label">Nuovo</span>
-  </button>
-  <button class="bnav-item" id="nav-prog" onclick="switchView('prog')">
-    <span class="bnav-icon">&#128203;</span><span class="bnav-label">Programmi</span>
-  </button>
-  <button class="bnav-item" id="nav-msgs" onclick="switchView('msgs')">
-    <span class="bnav-icon">&#128172;</span><span class="bnav-label">Messaggi</span>
-  </button>
+<nav class="bnav">
+  <button class="bni on" id="bn-athletes" onclick="sv('athletes')"><span class="bni-ic">&#128101;</span><span class="bni-lb">Atleti</span></button>
+  <button class="bni"    id="bn-new"      onclick="sv('new')"><span class="bni-ic">&#10133;</span><span class="bni-lb">Nuovo</span></button>
+  <button class="bni"    id="bn-prog"     onclick="sv('prog')"><span class="bni-ic">&#128203;</span><span class="bni-lb">Programmi</span></button>
+  <button class="bni"    id="bn-msgs"     onclick="sv('msgs')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Messaggi</span></button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 var SUPABASE_URL = 'https://tzkokgpxqjeyuvyvmqtt.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6a29rZ3B4cWpleXV2eXZtcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjg2ODEsImV4cCI6MjA4ODg0NDY4MX0.sIqJgyh1bAsKNHlFU5Q7LgpaoEJrZlgMlIH4EQx0hyo';
-
 var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-var adminUser    = null;
-var athletes     = [];
-var allExercises = [];
-var allSessions  = [];
-var allPrograms  = [];
 
-// ─── BOOT ─────────────────────────────────────────────────────────────
+var ME = null;
+var athletes = [];
+var allEx = [], allSess = [], allBlk = [];
+var DAY_NAMES = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+
+// ── BOOT ─────────────────────────────────────────────────────
 function boot() {
   sb.auth.getSession().then(function(r) {
-    if (!r.data.session) { window.location.href = 'index.html'; return; }
-    adminUser = r.data.session.user;
-    document.getElementById('loadingScreen').style.display = 'none';
+    if (!r.data.session) { location.href = 'index.html'; return; }
+    ME = r.data.session.user;
+    document.getElementById('loader').style.display = 'none';
     loadAthletes();
-  }).catch(function() { window.location.href = 'index.html'; });
+    loadEx(); // preload
+  }).catch(function() { location.href = 'index.html'; });
 }
 
-// ─── VIEW SWITCHING ───────────────────────────────────────────────────
-function switchView(name) {
-  var views = document.querySelectorAll('.view');
-  for (var i = 0; i < views.length; i++) {
-    views[i].classList.remove('active');
-    views[i].style.display = 'none';
-  }
-  var bnavs = document.querySelectorAll('.bnav-item');
-  for (var j = 0; j < bnavs.length; j++) bnavs[j].classList.remove('active');
-  var v = document.getElementById('view-' + name);
-  if (v) { v.style.display = 'flex'; v.classList.add('active'); }
-  var nav = document.getElementById('nav-' + name);
-  if (nav) nav.classList.add('active');
-  if (name === 'prog' && allExercises.length === 0) loadExercises();
+// ── VIEW SWITCH ───────────────────────────────────────────────
+function sv(name) {
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('on'); v.style.display = 'none'; });
+  document.querySelectorAll('.bni').forEach(function(b)  { b.classList.remove('on'); });
+  var v = document.getElementById('v-' + name);
+  var b = document.getElementById('bn-' + name);
+  if (v) { v.style.display = 'flex'; v.classList.add('on'); }
+  if (b) b.classList.add('on');
+  if (name === 'prog' && allEx.length === 0) loadEx();
+  if (name === 'msgs') renderMsgAthletes();
 }
 
-function toggleForm(id) {
+function toggleEl(id) {
   var el = document.getElementById(id);
-  if (!el) return;
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
-// ─── ATHLETES ─────────────────────────────────────────────────────────
+function pTab(t) {
+  ['ex','sess','blk'].forEach(function(x) {
+    document.getElementById('pt-' + x).className = 'tab' + (x === t ? ' on' : '');
+    document.getElementById('pc-' + x).style.display = x === t ? 'block' : 'none';
+  });
+  if (t === 'sess' && allSess.length === 0) loadSess();
+  if (t === 'blk'  && allBlk.length === 0)  loadBlk();
+}
+
+// ── ATHLETES ─────────────────────────────────────────────────
 function loadAthletes() {
-  sb.from('profiles').select('*').eq('role', 'athlete').order('full_name')
-    .then(function(r) {
-      athletes = r.data || [];
-      renderAthletes();
-    }).catch(function() {});
+  sb.from('profiles').select('*').eq('role','athlete').order('full_name')
+    .then(function(r) { athletes = r.data || []; renderAthletes(); })
+    .catch(function() {});
 }
 
 function renderAthletes() {
-  var c = document.getElementById('athletesList');
+  var c = document.getElementById('ath-list');
   c.innerHTML = '';
   if (!athletes.length) {
-    c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted2);">Nessun atleta ancora. Vai su Nuovo per aggiungerne uno.</div>';
+    c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--mu2);">Nessun atleta. Aggiungine uno dal tab Nuovo.</div>';
     return;
   }
-  for (var i = 0; i < athletes.length; i++) {
-    buildAthleteCard(athletes[i], c);
-  }
+  athletes.forEach(function(a) { c.appendChild(buildAthCard(a)); });
 }
 
-function buildAthleteCard(a, container) {
+function buildAthCard(a) {
   var card = document.createElement('div');
-  card.className = 'athlete-card';
-  card.id = 'acard-' + a.id;
+  card.className = 'ath-card';
+  card.id = 'ac-' + a.id;
 
-  var initials = (a.full_name || a.email || '?').charAt(0).toUpperCase();
-
-  // Head
+  var init = (a.full_name || a.email || '?').charAt(0).toUpperCase();
   var head = document.createElement('div');
-  head.className = 'ac-head';
+  head.className = 'ath-head';
   head.innerHTML =
-    '<div class="ac-avatar">' + initials + '</div>' +
-    '<div class="ac-info">' +
-      '<div class="ac-name">' + (a.full_name || 'Atleta') + '</div>' +
-      '<div class="ac-email">' + (a.email || '') + '</div>' +
+    '<div class="ath-av">' + init + '</div>' +
+    '<div class="ath-info">' +
+      '<div class="ath-name">' + (a.full_name || 'Atleta') + '</div>' +
+      '<div class="ath-email">' + (a.email || '') + '</div>' +
     '</div>' +
-    '<span style="color:var(--muted);font-size:1.1rem;">&#8250;</span>';
-  head.onclick = makeToggle(a.id);
+    '<span style="color:var(--mu);font-size:1.1rem">&#8250;</span>';
+  head.onclick = (function(id) { return function() {
+    var c = document.getElementById('ac-' + id);
+    c.classList.toggle('open');
+  }; })(a.id);
 
-  // Body
   var body = document.createElement('div');
-  body.className = 'ac-body';
-  body.id = 'acbody-' + a.id;
+  body.className = 'ath-body';
 
-  // Stats
+  // Stats row
   var stats = document.createElement('div');
   stats.className = 'stat-row';
   stats.innerHTML =
-    '<div class="stat-box"><div class="stat-val" id="sv-log-' + a.id + '">-</div><div class="stat-lbl">Log</div></div>' +
-    '<div class="stat-box"><div class="stat-val" id="sv-done-' + a.id + '">-</div><div class="stat-lbl">Completati</div></div>' +
-    '<div class="stat-box"><div class="stat-val">' + (a.current_week || 1) + '</div><div class="stat-lbl">Settimana</div></div>';
+    '<div class="stat-box"><div class="stat-val" id="sv-done-' + a.id + '">-</div><div class="stat-lb">Sessioni fatte</div></div>' +
+    '<div class="stat-box"><div class="stat-val" id="sv-ex-' + a.id + '">-</div><div class="stat-lb">Esercizi log</div></div>' +
+    '<div class="stat-box"><div class="stat-val" id="sv-blk-' + a.id + '">' + (a.current_block_id ? '&#10003;' : '-') + '</div><div class="stat-lb">Blocco</div></div>';
 
-  // Assign button
+  // Program assign section
+  var progSec = document.createElement('div');
+  progSec.style.cssText = 'padding:12px 14px;border-bottom:1px solid var(--bdr)';
+  progSec.innerHTML = '<div class="sec-label">Programmazione</div>';
+
+  var progInfo = document.createElement('div');
+  progInfo.id = 'prog-info-' + a.id;
+  progInfo.style.cssText = 'font-size:.8rem;color:var(--mu2);margin-bottom:10px';
+  progInfo.textContent = 'Nessun programma assegnato';
+
   var assignBtn = document.createElement('button');
-  assignBtn.className = 'assign-btn';
-  assignBtn.textContent = 'Assegna Programma';
-  assignBtn.onclick = makeAssign(a.id);
+  assignBtn.className = 'btn-out';
+  assignBtn.textContent = 'Assegna blocco / settimana';
+  assignBtn.onclick = (function(ath) { return function() { openAssignModal(ath); }; })(a);
 
-  // Messages
+  progSec.appendChild(progInfo);
+  progSec.appendChild(assignBtn);
+
+  // Messages section
+  var msgSec = document.createElement('div');
+  msgSec.style.cssText = 'padding:12px 14px';
   var msgTitle = document.createElement('div');
-  msgTitle.className = 'section-label';
-  msgTitle.style.marginTop = '12px';
+  msgTitle.className = 'sec-label';
   msgTitle.textContent = 'Messaggi';
-
   var msgArea = document.createElement('div');
   msgArea.className = 'msg-area';
-  msgArea.id = 'msgarea-' + a.id;
-
+  msgArea.id = 'ma-' + a.id;
   var msgRow = document.createElement('div');
-  msgRow.className = 'msg-input-row';
-
-  var msgInput = document.createElement('input');
-  msgInput.type = 'text';
-  msgInput.className = 'msg-input';
-  msgInput.id = 'msginput-' + a.id;
-  msgInput.placeholder = 'Scrivi messaggio...';
-
-  var sendBtn = document.createElement('button');
-  sendBtn.className = 'msg-send';
-  sendBtn.textContent = 'Invia';
-  sendBtn.onclick = makeSend(a.id);
-
-  msgRow.appendChild(msgInput);
-  msgRow.appendChild(sendBtn);
+  msgRow.className = 'msg-row';
+  var mi = document.createElement('input');
+  mi.type = 'text';
+  mi.className = 'msg-inp';
+  mi.id = 'mi-' + a.id;
+  mi.placeholder = 'Scrivi...';
+  var ms = document.createElement('button');
+  ms.className = 'msg-send';
+  ms.textContent = 'Invia';
+  ms.onclick = (function(id) { return function() { sendMsg(id); }; })(a.id);
+  msgRow.appendChild(mi);
+  msgRow.appendChild(ms);
+  msgSec.appendChild(msgTitle);
+  msgSec.appendChild(msgArea);
+  msgSec.appendChild(msgRow);
 
   body.appendChild(stats);
-  body.appendChild(assignBtn);
-  body.appendChild(msgTitle);
-  body.appendChild(msgArea);
-  body.appendChild(msgRow);
-
+  body.appendChild(progSec);
+  body.appendChild(msgSec);
   card.appendChild(head);
   card.appendChild(body);
-  container.appendChild(card);
 
-  loadAthleteStats(a.id);
-  loadAthleteMessages(a.id);
-}
-
-// Factory functions to avoid closure issues in loops
-function makeToggle(aid) {
-  return function() {
-    var card = document.getElementById('acard-' + aid);
-    if (card) card.classList.toggle('open');
-  };
-}
-function makeAssign(aid) {
-  return function() { assignProgram(aid); };
-}
-function makeSend(aid) {
-  return function() { sendToAthlete(aid); };
+  loadAthStats(a.id);
+  loadAthMessages(a.id);
+  loadAthProgInfo(a);
+  return card;
 }
 
-function loadAthleteStats(aid) {
-  sb.from('logbook').select('id, done').eq('athlete_id', aid)
+function loadAthStats(aid) {
+  sb.from('logbook').select('id,done').eq('athlete_id', aid)
     .then(function(r) {
       var rows = r.data || [];
       var done = rows.filter(function(x) { return x.done; }).length;
-      var el1 = document.getElementById('sv-log-' + aid);
-      var el2 = document.getElementById('sv-done-' + aid);
-      if (el1) el1.textContent = rows.length;
-      if (el2) el2.textContent = done;
+      var e1 = document.getElementById('sv-done-' + aid);
+      var e2 = document.getElementById('sv-ex-' + aid);
+      if (e1) e1.textContent = done;
+      if (e2) e2.textContent = rows.length;
+    }).catch(function(){});
+}
+
+function loadAthProgInfo(a) {
+  var el = document.getElementById('prog-info-' + a.id);
+  if (!el) return;
+  if (!a.current_block_id) { el.textContent = 'Nessun programma assegnato'; return; }
+  sb.from('blocks').select('name').eq('id', a.current_block_id).single()
+    .then(function(r) {
+      var bname = r.data ? r.data.name : '?';
+      if (a.current_week_id) {
+        sb.from('week_templates').select('name').eq('id', a.current_week_id).single()
+          .then(function(r2) {
+            el.textContent = bname + ' — ' + (r2.data ? r2.data.name : '?');
+          }).catch(function() { el.textContent = bname; });
+      } else {
+        el.textContent = bname + ' — nessuna settimana';
+      }
     }).catch(function() {});
 }
 
-function loadAthleteMessages(aid) {
-  var area = document.getElementById('msgarea-' + aid);
+// ── ASSIGN MODAL ──────────────────────────────────────────────
+function openAssignModal(ath) {
+  if (allBlk.length === 0) { alert('Prima crea almeno un blocco nella sezione Programmi.'); return; }
+  var blkNames = allBlk.map(function(b, i) { return (i+1) + '. ' + b.name; }).join('\n');
+  var bc = prompt('Seleziona blocco:\n\n' + blkNames + '\n\nNumero (0 = rimuovi programma):');
+  if (bc === null) return;
+  var bi = parseInt(bc) - 1;
+  if (bc === '0') {
+    sb.from('profiles').update({ current_block_id: null, current_week_id: null }).eq('id', ath.id)
+      .then(function() { alert('Programma rimosso.'); loadAthletes(); }).catch(function(){});
+    return;
+  }
+  if (isNaN(bi) || bi < 0 || bi >= allBlk.length) { alert('Scelta non valida'); return; }
+  var blk = allBlk[bi];
+  // Load weeks for this block
+  sb.from('week_templates').select('*').eq('block_id', blk.id).order('sort_order')
+    .then(function(r) {
+      var weeks = r.data || [];
+      if (!weeks.length) {
+        sb.from('profiles').update({ current_block_id: blk.id, current_week_id: null }).eq('id', ath.id)
+          .then(function() { alert('Blocco assegnato (nessuna settimana ancora). Crea le settimane tipo nella sezione Blocchi.'); loadAthletes(); })
+          .catch(function(){});
+        return;
+      }
+      var wkNames = weeks.map(function(w, i) { return (i+1) + '. ' + w.name; }).join('\n');
+      var wc = prompt('Settimana corrente:\n\n' + wkNames + '\n\nNumero:');
+      if (wc === null) return;
+      var wi = parseInt(wc) - 1;
+      if (isNaN(wi) || wi < 0 || wi >= weeks.length) { alert('Scelta non valida'); return; }
+      sb.from('profiles').update({ current_block_id: blk.id, current_week_id: weeks[wi].id }).eq('id', ath.id)
+        .then(function() { alert('Programma assegnato!'); loadAthletes(); })
+        .catch(function(){});
+    }).catch(function(){});
+}
+
+function loadAthMessages(aid) {
+  var area = document.getElementById('ma-' + aid);
   if (!area) return;
   sb.from('messages').select('*').eq('athlete_id', aid).order('created_at', {ascending: true})
     .then(function(r) {
       area.innerHTML = '';
-      var msgs = r.data || [];
-      for (var i = 0; i < msgs.length; i++) {
-        var m = msgs[i];
+      (r.data || []).forEach(function(m) {
         var b = document.createElement('div');
-        b.className = 'msg-bubble ' + (m.sender_role === 'admin' ? 'coach' : 'athlete');
-        b.innerHTML = '<div class="msg-meta">' + (m.sender_role === 'admin' ? 'Tu' : 'Atleta') + ' &middot; ' + fmtDate(m.created_at) + '</div>' + m.text;
+        b.className = 'msg-bub ' + (m.sender_role === 'admin' ? 'coach' : 'athlete');
+        b.innerHTML = '<div class="msg-meta">' + (m.sender_role === 'admin' ? 'Tu' : 'Atleta') + ' &middot; ' + fmtDate(m.created_at) + '</div>' + escHtml(m.text);
         area.appendChild(b);
-      }
+      });
       area.scrollTop = area.scrollHeight;
-    }).catch(function() {});
+    }).catch(function(){});
 }
 
-function sendToAthlete(aid) {
-  var input = document.getElementById('msginput-' + aid);
-  if (!input) return;
-  var text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-  sb.from('messages').insert({
-    athlete_id: aid, recipient_id: aid, sender_role: 'admin', text: text
-  }).then(function() { loadAthleteMessages(aid); }).catch(function() {});
+function sendMsg(aid) {
+  var inp = document.getElementById('mi-' + aid);
+  if (!inp) return;
+  var t = inp.value.trim();
+  if (!t) return;
+  inp.value = '';
+  sb.from('messages').insert({ athlete_id: aid, sender_id: ME.id, sender_role: 'admin', text: t })
+    .then(function() { loadAthMessages(aid); }).catch(function(){});
 }
 
-function assignProgram(aid) {
-  if (!allPrograms.length) {
-    alert('Nessun programma. Creane uno nella sezione Programmi.');
-    return;
-  }
-  var list = allPrograms.map(function(p, i) { return (i + 1) + '. ' + p.name; }).join('\n');
-  var choice = prompt('Assegna programma:\n\n' + list + '\n\nNumero:');
-  if (!choice) return;
-  var idx = parseInt(choice) - 1;
-  if (isNaN(idx) || idx < 0 || idx >= allPrograms.length) { alert('Scelta non valida'); return; }
-  sb.from('profiles').update({ training_program_id: allPrograms[idx].id }).eq('id', aid)
+function renderMsgAthletes() {
+  var c = document.getElementById('msg-ath-list');
+  c.innerHTML = '';
+  athletes.forEach(function(a) {
+    var row = document.createElement('div');
+    row.className = 'card';
+    row.style.cursor = 'pointer';
+    var init = (a.full_name || a.email || '?').charAt(0).toUpperCase();
+    row.innerHTML =
+      '<div class="card-head">' +
+        '<div class="ath-av">' + init + '</div>' +
+        '<div class="ath-info"><div class="ath-name">' + (a.full_name || 'Atleta') + '</div></div>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="msg-area" id="msgv-' + a.id + '"></div>' +
+        '<div class="msg-row">' +
+          '<input class="msg-inp" id="msgvi-' + a.id + '" placeholder="Scrivi...">' +
+          '<button class="msg-send" id="msgvs-' + a.id + '">Invia</button>' +
+        '</div>' +
+      '</div>';
+    row.querySelector('.card-head').onclick = function() {
+      row.classList.toggle('open');
+      if (row.classList.contains('open')) loadMsgView(a.id);
+    };
+    row.querySelector('#msgvs-' + a.id).onclick = function() { sendMsgView(a.id); };
+    c.appendChild(row);
+  });
+}
+
+function loadMsgView(aid) {
+  var area = document.getElementById('msgv-' + aid);
+  if (!area) return;
+  sb.from('messages').select('*').eq('athlete_id', aid).order('created_at', {ascending: true})
     .then(function(r) {
-      if (!r.error) alert('Programma assegnato!');
-      else alert('Errore: ' + r.error.message);
-    }).catch(function() {});
+      area.innerHTML = '';
+      (r.data || []).forEach(function(m) {
+        var b = document.createElement('div');
+        b.className = 'msg-bub ' + (m.sender_role === 'admin' ? 'coach' : 'athlete');
+        b.innerHTML = '<div class="msg-meta">' + (m.sender_role === 'admin' ? 'Tu' : 'Atleta') + ' &middot; ' + fmtDate(m.created_at) + '</div>' + escHtml(m.text);
+        area.appendChild(b);
+      });
+      area.scrollTop = area.scrollHeight;
+    }).catch(function(){});
 }
 
-// ─── CREATE ATHLETE ───────────────────────────────────────────────────
+function sendMsgView(aid) {
+  var inp = document.getElementById('msgvi-' + aid);
+  if (!inp) return;
+  var t = inp.value.trim();
+  if (!t) return;
+  inp.value = '';
+  sb.from('messages').insert({ athlete_id: aid, sender_id: ME.id, sender_role: 'admin', text: t })
+    .then(function() { loadMsgView(aid); }).catch(function(){});
+}
+
+// ── CREATE ATHLETE ────────────────────────────────────────────
 function createAthlete() {
   var name  = document.getElementById('na-name').value.trim();
   var email = document.getElementById('na-email').value.trim();
-  var pass  = document.getElementById('na-password').value.trim();
-  var btn   = document.getElementById('createBtn');
-  var notice = document.getElementById('createNotice');
-  if (!email || !pass) { showNotice(notice, 'Inserisci email e password', false); return; }
-  if (pass.length < 6)  { showNotice(notice, 'Password minimo 6 caratteri', false); return; }
-  btn.textContent = 'Creazione...';
-  btn.disabled = true;
+  var pass  = document.getElementById('na-pass').value.trim();
+  var btn   = document.getElementById('na-btn');
+  var msg   = document.getElementById('na-msg');
+  if (!email || !pass) { fmsg(msg, 'Inserisci email e password', false); return; }
+  if (pass.length < 6)  { fmsg(msg, 'Password minimo 6 caratteri', false); return; }
+  btn.textContent = 'Creazione...'; btn.disabled = true;
   sb.auth.admin.createUser({ email: email, password: pass, email_confirm: true })
     .then(function(r) {
-      if (r.error) { showNotice(notice, r.error.message, false); btn.textContent = 'Crea account'; btn.disabled = false; return null; }
-      var uid = r.data.user.id;
-      return sb.from('profiles').update({ full_name: name || email, role: 'athlete', coach_id: adminUser.id }).eq('id', uid);
-    })
-    .then(function(r) {
+      if (r.error) { fmsg(msg, r.error.message, false); btn.textContent = 'Crea account'; btn.disabled = false; return null; }
+      return sb.from('profiles').update({ full_name: name || email, role: 'athlete', coach_id: ME.id }).eq('id', r.data.user.id);
+    }).then(function(r) {
       if (!r) return;
-      showNotice(notice, 'Atleta creato con successo!', true);
+      fmsg(msg, 'Atleta creato!', true);
       document.getElementById('na-name').value = '';
       document.getElementById('na-email').value = '';
-      document.getElementById('na-password').value = '';
+      document.getElementById('na-pass').value = '';
       btn.textContent = 'Crea account'; btn.disabled = false;
       loadAthletes();
-    }).catch(function() {
-      showNotice(notice, 'Errore di rete', false);
-      btn.textContent = 'Crea account'; btn.disabled = false;
-    });
+    }).catch(function() { fmsg(msg, 'Errore di rete', false); btn.textContent = 'Crea account'; btn.disabled = false; });
 }
 
-// ─── PROG TABS ────────────────────────────────────────────────────────
-function switchProgTab(tab) {
-  var tabs = ['exercises', 'sessions', 'programs'];
-  for (var i = 0; i < tabs.length; i++) {
-    var t = tabs[i];
-    var btn = document.getElementById('ptab-' + t);
-    var cnt = document.getElementById('ptab-content-' + t);
-    if (btn) btn.className = 'prog-tab' + (t === tab ? ' active' : '');
-    if (cnt) cnt.style.display = t === tab ? 'block' : 'none';
-  }
-  if (tab === 'exercises' && allExercises.length === 0) loadExercises();
-  if (tab === 'sessions'  && allSessions.length === 0)  loadSessions();
-  if (tab === 'programs'  && allPrograms.length === 0)  loadPrograms();
-}
-
-// ─── EXERCISES ────────────────────────────────────────────────────────
-function loadExercises() {
+// ── EXERCISES ─────────────────────────────────────────────────
+function loadEx() {
   sb.from('exercises').select('*').order('name')
-    .then(function(r) { allExercises = r.data || []; renderExercises(allExercises); })
-    .catch(function() {});
+    .then(function(r) { allEx = r.data || []; renderEx(allEx); }).catch(function(){});
 }
 
-function filterExercises() {
-  var q = (document.getElementById('ex-search').value || '').toLowerCase();
-  renderExercises(allExercises.filter(function(e) { return e.name.toLowerCase().indexOf(q) !== -1; }));
+function filterEx() {
+  var q = document.getElementById('ex-q').value.toLowerCase();
+  renderEx(allEx.filter(function(e) { return e.name.toLowerCase().indexOf(q) !== -1; }));
 }
 
-function renderExercises(list) {
-  var c = document.getElementById('exercises-list');
+function renderEx(list) {
+  var c = document.getElementById('ex-list');
   c.innerHTML = '';
-  if (!list.length) {
-    c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted2);font-size:0.82rem;">Nessun esercizio. Clicca + Nuovo per aggiungere.</div>';
-    return;
-  }
-  var tagLabels = {mec:'Meccanico', met:'Metabolico', pre:'Pre-Attivazione', str:'Stretching'};
-  for (var i = 0; i < list.length; i++) {
-    buildExCard(list[i], c, tagLabels);
-  }
+  if (!list.length) { c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--mu2);font-size:.82rem">Nessun esercizio.</div>'; return; }
+  var tl = {mec:'Meccanico',met:'Metabolico',pre:'Pre-Attivazione',str:'Stretching'};
+  list.forEach(function(ex) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--s2);border:1px solid var(--bdr);border-radius:10px;margin-bottom:7px';
+    row.innerHTML =
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-weight:600;font-size:.85rem">' + escHtml(ex.name) + '</div>' +
+        (ex.notes ? '<div style="font-size:.7rem;color:var(--mu2);margin-top:2px">' + escHtml(ex.notes.substring(0,70)) + '</div>' : '') +
+      '</div>' +
+      '<span class="tag t-' + (ex.tag||'mec') + '">' + (tl[ex.tag]||ex.tag) + '</span>';
+    var del = document.createElement('button');
+    del.className = 'btn-del';
+    del.textContent = 'Elimina';
+    del.onclick = (function(id) { return function() { delEx(id); }; })(ex.id);
+    row.appendChild(del);
+    c.appendChild(row);
+  });
 }
 
-function buildExCard(ex, container, tagLabels) {
-  var card = document.createElement('div');
-  card.className = 'ex-card';
-
-  var info = document.createElement('div');
-  info.className = 'ex-card-info';
-  var noteStr = ex.notes ? ' &bull; ' + ex.notes.substring(0, 50) + (ex.notes.length > 50 ? '...' : '') : '';
-  info.innerHTML =
-    '<div class="ex-card-name">' + ex.name + '</div>' +
-    '<div class="ex-card-meta">Serie: ' + (ex.default_sets || '2') + noteStr + '</div>';
-
-  var tag = document.createElement('span');
-  tag.className = 'tag-badge tag-' + (ex.tag || 'mec');
-  tag.textContent = tagLabels[ex.tag] || 'Mec';
-
-  var del = document.createElement('button');
-  del.className = 'del-btn';
-  del.textContent = 'Elimina';
-  del.onclick = (function(eid) { return function() { deleteExercise(eid); }; })(ex.id);
-
-  card.appendChild(info);
-  card.appendChild(tag);
-  card.appendChild(del);
-  container.appendChild(card);
-}
-
-function saveExercise() {
-  var name  = document.getElementById('exf-name').value.trim();
-  var tag   = document.getElementById('exf-tag').value;
-  var sets  = document.getElementById('exf-sets').value.trim() || '2';
-  var notes = document.getElementById('exf-notes').value.trim();
-  var msgEl = document.getElementById('exf-msg');
-  var tagLabels = {mec:'Meccanico', met:'Metabolico', pre:'Pre-Attivazione', str:'Stretching'};
-  if (!name) { showFormMsg(msgEl, 'Inserisci il nome', false); return; }
-  sb.from('exercises').insert({name: name, tag: tag, tag_label: tagLabels[tag], default_sets: sets, notes: notes || null, created_by: adminUser.id})
+function saveEx() {
+  var n = document.getElementById('exf-n').value.trim();
+  var t = document.getElementById('exf-t').value;
+  var no = document.getElementById('exf-no').value.trim();
+  var msg = document.getElementById('exf-msg');
+  if (!n) { fmsg(msg, 'Inserisci il nome', false); return; }
+  var tl = {mec:'Meccanico',met:'Metabolico',pre:'Pre-Attivazione',str:'Stretching'};
+  sb.from('exercises').insert({ name: n, tag: t, tag_label: tl[t], notes: no||null, created_by: ME.id })
     .then(function(r) {
-      if (r.error) { showFormMsg(msgEl, 'Errore: ' + r.error.message, false); return; }
-      showFormMsg(msgEl, 'Salvato!', true);
-      document.getElementById('exf-name').value = '';
-      document.getElementById('exf-notes').value = '';
-      document.getElementById('exf-sets').value = '';
-      toggleForm('exForm');
-      allExercises = []; loadExercises();
-    }).catch(function() { showFormMsg(msgEl, 'Errore di rete', false); });
+      if (r.error) { fmsg(msg, r.error.message, false); return; }
+      fmsg(msg, 'Salvato!', true);
+      document.getElementById('exf-n').value = '';
+      document.getElementById('exf-no').value = '';
+      toggleEl('ex-form');
+      allEx = []; loadEx();
+    }).catch(function() { fmsg(msg, 'Errore di rete', false); });
 }
 
-function deleteExercise(id) {
-  if (!confirm('Eliminare questo esercizio?')) return;
+function delEx(id) {
+  if (!confirm('Eliminare?')) return;
   sb.from('exercises').delete().eq('id', id)
-    .then(function() { allExercises = []; loadExercises(); }).catch(function() {});
+    .then(function() { allEx = []; loadEx(); }).catch(function(){});
 }
 
-// ─── SESSIONS ─────────────────────────────────────────────────────────
-function loadSessions() {
+// ── SESSIONS ──────────────────────────────────────────────────
+function loadSess() {
   sb.from('sessions')
-    .select('*, session_exercises(id, sort_order, sets, instructions, exercises(id, name, tag, tag_label))')
+    .select('*, session_exercises(id, sort_order, sets, reps, rest_sec, notes, exercises(id, name, tag, tag_label))')
     .order('name')
-    .then(function(r) { allSessions = r.data || []; renderSessions(allSessions); })
-    .catch(function() {});
+    .then(function(r) { allSess = r.data || []; renderSess(); }).catch(function(){});
 }
 
-function renderSessions(list) {
-  var c = document.getElementById('sessions-list');
+function renderSess() {
+  var c = document.getElementById('sess-list');
   c.innerHTML = '';
-  if (!list.length) {
-    c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted2);font-size:0.82rem;">Nessuna sessione.</div>';
-    return;
-  }
-  for (var i = 0; i < list.length; i++) {
-    buildSessCard(list[i], c);
-  }
+  if (!allSess.length) { c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--mu2);font-size:.82rem">Nessuna sessione.</div>'; return; }
+  var tl = {gym:'Palestra',bike:'Bici',rest:'Riposo'};
+  allSess.forEach(function(sess) { c.appendChild(buildSessCard(sess, tl)); });
 }
 
-function buildSessCard(sess, container) {
-  var typeLabels = {gym:'Palestra', bike:'Bici', rest:'Riposo'};
-  var sexs = (sess.session_exercises || []).sort(function(a, b) { return a.sort_order - b.sort_order; });
-
+function buildSessCard(sess, tl) {
+  var sexs = (sess.session_exercises || []).sort(function(a,b){return a.sort_order-b.sort_order;});
   var card = document.createElement('div');
-  card.className = 'sess-card';
+  card.className = 'card';
+  card.id = 'sc-' + sess.id;
 
   var head = document.createElement('div');
-  head.className = 'sess-head';
+  head.className = 'card-head';
   head.innerHTML =
-    '<div style="flex:1;">' +
-      '<div style="font-weight:600;font-size:0.88rem;">' + sess.name + '</div>' +
-      '<div style="font-size:0.7rem;color:var(--muted2);margin-top:2px;">' + sexs.length + ' esercizi</div>' +
+    '<div style="flex:1">' +
+      '<div style="font-weight:600;font-size:.88rem">' + escHtml(sess.name) + '</div>' +
+      '<div style="font-size:.7rem;color:var(--mu2);margin-top:2px">' + sexs.length + ' esercizi &bull; ' + (tl[sess.session_type]||sess.session_type) + '</div>' +
     '</div>' +
-    '<span class="type-badge type-' + (sess.session_type || 'gym') + '">' + (typeLabels[sess.session_type] || sess.session_type) + '</span>' +
-    '<span style="color:var(--muted);margin-left:8px;font-size:1.1rem;">&#8250;</span>';
+    '<span style="color:var(--mu);font-size:1.1rem">&#8250;</span>';
 
   var body = document.createElement('div');
-  body.className = 'sess-body';
-  body.id = 'sessbody-' + sess.id;
+  body.className = 'card-body';
 
-  // Exercise rows
-  for (var j = 0; j < sexs.length; j++) {
-    buildSessExRow(sexs[j], j, sess.id, body);
-  }
+  // Exercise list
+  var exWrap = document.createElement('div');
+  exWrap.id = 'sex-' + sess.id;
+  sexs.forEach(function(se, idx) { exWrap.appendChild(buildSessExRow(se, idx, sess.id)); });
   if (!sexs.length) {
-    var empty = document.createElement('div');
-    empty.style.cssText = 'font-size:0.75rem;color:var(--muted2);padding:8px 0;';
-    empty.textContent = 'Nessun esercizio ancora.';
-    body.appendChild(empty);
+    var emp = document.createElement('div');
+    emp.style.cssText = 'font-size:.75rem;color:var(--mu2);padding:6px 0 10px';
+    emp.textContent = 'Nessun esercizio ancora.';
+    exWrap.appendChild(emp);
   }
 
-  // Add exercise row
+  // Add exercise
   var addRow = document.createElement('div');
-  addRow.style.cssText = 'display:flex;gap:8px;margin-top:12px;align-items:center;';
+  addRow.style.cssText = 'display:flex;gap:7px;margin-top:10px;flex-wrap:wrap';
 
   var sel = document.createElement('select');
-  sel.className = 'field-input';
-  sel.id = 'addexsel-' + sess.id;
+  sel.className = 'inp inp-sm';
+  sel.id = 'aes-' + sess.id;
   sel.style.flex = '1';
-  var opt0 = document.createElement('option');
-  opt0.value = '';
-  opt0.textContent = '-- Esercizio --';
-  sel.appendChild(opt0);
-  for (var k = 0; k < allExercises.length; k++) {
-    var opt = document.createElement('option');
-    opt.value = allExercises[k].id;
-    opt.textContent = allExercises[k].name;
-    sel.appendChild(opt);
-  }
+  sel.style.minWidth = '150px';
+  var o0 = document.createElement('option'); o0.value=''; o0.textContent='-- Esercizio --'; sel.appendChild(o0);
+  allEx.forEach(function(ex) {
+    var o = document.createElement('option'); o.value = ex.id; o.textContent = ex.name; sel.appendChild(o);
+  });
 
-  var setsIn = document.createElement('input');
-  setsIn.type = 'text';
-  setsIn.className = 'field-input';
-  setsIn.id = 'addexsets-' + sess.id;
-  setsIn.placeholder = 'serie';
-  setsIn.style.width = '70px';
+  var setsI = document.createElement('input');
+  setsI.className = 'inp inp-sm'; setsI.id = 'aes-sets-'+sess.id; setsI.placeholder='Serie'; setsI.style.width='65px';
 
-  var addBtn = document.createElement('button');
-  addBtn.className = 'create-btn';
-  addBtn.style.cssText = 'width:auto;padding:10px 16px;margin-top:0;';
-  addBtn.textContent = '+';
-  addBtn.onclick = (function(sid) { return function() { addExToSession(sid); }; })(sess.id);
+  var repsI = document.createElement('input');
+  repsI.className = 'inp inp-sm'; repsI.id = 'aes-reps-'+sess.id; repsI.placeholder='Reps'; repsI.style.width='75px';
 
-  addRow.appendChild(sel);
-  addRow.appendChild(setsIn);
-  addRow.appendChild(addBtn);
-  body.appendChild(addRow);
+  var restI = document.createElement('input');
+  restI.className = 'inp inp-sm'; restI.id = 'aes-rest-'+sess.id; restI.placeholder='Rec(s)'; restI.style.width='70px';
 
+  var addB = document.createElement('button');
+  addB.className = 'btn-red'; addB.style.cssText='width:auto;padding:8px 14px;margin-top:0';
+  addB.textContent = '+';
+  addB.onclick = (function(sid) { return function() { addExToSess(sid); }; })(sess.id);
+
+  addRow.appendChild(sel); addRow.appendChild(setsI); addRow.appendChild(repsI); addRow.appendChild(restI); addRow.appendChild(addB);
+
+  // Delete session
   var delRow = document.createElement('div');
-  delRow.style.cssText = 'margin-top:10px;display:flex;justify-content:flex-end;';
-  var delSessBtn = document.createElement('button');
-  delSessBtn.className = 'del-btn';
-  delSessBtn.textContent = 'Elimina sessione';
-  delSessBtn.onclick = (function(sid) { return function() { deleteSession(sid); }; })(sess.id);
-  delRow.appendChild(delSessBtn);
+  delRow.style.cssText='display:flex;justify-content:flex-end;margin-top:10px';
+  var delB = document.createElement('button'); delB.className='btn-del'; delB.textContent='Elimina sessione';
+  delB.onclick = (function(sid) { return function() { delSess(sid); }; })(sess.id);
+  delRow.appendChild(delB);
+
+  body.appendChild(exWrap);
+  body.appendChild(addRow);
   body.appendChild(delRow);
+  head.onclick = function() { card.classList.toggle('open'); };
+  card.appendChild(head); card.appendChild(body);
+  return card;
+}
 
-  head.onclick = (function(sid) {
-    return function() {
-      var b = document.getElementById('sessbody-' + sid);
-      if (b) b.style.display = b.style.display === 'block' ? 'none' : 'block';
-    };
-  })(sess.id);
+function buildSessExRow(se, idx, sessId) {
+  var row = document.createElement('div');
+  row.id = 'ser-' + se.id;
+  row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bdr)';
+  row.innerHTML =
+    '<span style="color:var(--mu2);font-size:.7rem;min-width:18px">' + (idx+1) + '.</span>' +
+    '<span style="flex:1;font-size:.82rem">' + escHtml(se.exercises ? se.exercises.name : '?') + '</span>' +
+    '<span style="font-size:.7rem;color:var(--mu2)">' + (se.sets||'3') + 'x' + (se.reps||'8-10') + '</span>' +
+    '<span style="font-size:.7rem;color:var(--mu2)">' + (se.rest_sec ? se.rest_sec + 's' : '') + '</span>';
+  var del = document.createElement('button'); del.className='btn-del'; del.textContent='x';
+  del.onclick = (function(id, sid) { return function() { delSessEx(id, sid); }; })(se.id, sessId);
+  row.appendChild(del);
+  return row;
+}
 
+function saveSess() {
+  var n = document.getElementById('sff-n').value.trim();
+  var t = document.getElementById('sff-t').value;
+  var msg = document.getElementById('sff-msg');
+  if (!n) { fmsg(msg, 'Inserisci nome', false); return; }
+  sb.from('sessions').insert({ name: n, session_type: t, created_by: ME.id })
+    .then(function(r) {
+      if (r.error) { fmsg(msg, r.error.message, false); return; }
+      fmsg(msg, 'Creata!', true);
+      document.getElementById('sff-n').value = '';
+      toggleEl('sf-form');
+      allSess = []; loadSess();
+    }).catch(function() { fmsg(msg, 'Errore', false); });
+}
+
+function addExToSess(sessId) {
+  var sel  = document.getElementById('aes-' + sessId);
+  var exId = sel ? parseInt(sel.value) : 0;
+  if (!exId) return;
+  var sets = document.getElementById('aes-sets-'+sessId).value.trim() || '3';
+  var reps = document.getElementById('aes-reps-'+sessId).value.trim() || '8-10';
+  var rest = parseInt(document.getElementById('aes-rest-'+sessId).value) || 120;
+  var existing = 0;
+  allSess.forEach(function(s) { if (s.id === sessId) existing = (s.session_exercises||[]).length; });
+  sb.from('session_exercises').insert({ session_id: sessId, exercise_id: exId, sort_order: existing, sets: sets, reps: reps, rest_sec: rest })
+    .then(function(r) { if (!r.error) { allSess = []; loadSess(); } }).catch(function(){});
+}
+
+function delSessEx(seId, sessId) {
+  sb.from('session_exercises').delete().eq('id', seId)
+    .then(function() { allSess = []; loadSess(); }).catch(function(){});
+}
+
+function delSess(id) {
+  if (!confirm('Eliminare sessione e tutti i suoi esercizi?')) return;
+  sb.from('sessions').delete().eq('id', id)
+    .then(function() { allSess = []; loadSess(); }).catch(function(){});
+}
+
+// ── BLOCKS ────────────────────────────────────────────────────
+function loadBlk() {
+  sb.from('blocks').select('*, week_templates(*, week_days(*, sessions(id,name,session_type)))').order('sort_order')
+    .then(function(r) { allBlk = r.data || []; renderBlk(); }).catch(function(){});
+}
+
+function renderBlk() {
+  var c = document.getElementById('blk-list');
+  c.innerHTML = '';
+  if (!allBlk.length) { c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--mu2);font-size:.82rem">Nessun blocco. Creane uno.</div>'; return; }
+  allBlk.forEach(function(blk) { c.appendChild(buildBlkCard(blk)); });
+}
+
+function buildBlkCard(blk) {
+  var weeks = (blk.week_templates || []).sort(function(a,b){return a.sort_order-b.sort_order;});
+  var card = document.createElement('div');
+  card.className = 'card';
+
+  var head = document.createElement('div');
+  head.className = 'card-head';
+  head.innerHTML =
+    '<div style="flex:1">' +
+      '<div style="font-weight:700;font-size:.9rem">' + escHtml(blk.name) + '</div>' +
+      '<div style="font-size:.7rem;color:var(--mu2);margin-top:2px">' + (blk.description||'') + ' &bull; ' + weeks.length + ' settimane tipo</div>' +
+    '</div>' +
+    '<span style="color:var(--mu);font-size:1.1rem">&#8250;</span>';
+  head.onclick = function() { card.classList.toggle('open'); };
+
+  var body = document.createElement('div');
+  body.className = 'card-body';
+
+  // Weeks
+  var wkLabel = document.createElement('div');
+  wkLabel.className = 'sec-label';
+  wkLabel.textContent = 'Settimane tipo';
+  body.appendChild(wkLabel);
+
+  weeks.forEach(function(wk) {
+    body.appendChild(buildWeekRow(wk, blk.id));
+  });
+
+  // Add week
+  var addWkBtn = document.createElement('button');
+  addWkBtn.className = 'btn-out';
+  addWkBtn.style.cssText = 'width:100%;margin-top:8px';
+  addWkBtn.textContent = '+ Aggiungi settimana tipo';
+  addWkBtn.onclick = (function(bid) { return function() { addWeek(bid); }; })(blk.id);
+
+  // Delete block
+  var delBlkBtn = document.createElement('button');
+  delBlkBtn.className = 'btn-del';
+  delBlkBtn.style.cssText = 'width:100%;margin-top:6px';
+  delBlkBtn.textContent = 'Elimina blocco';
+  delBlkBtn.onclick = (function(id) { return function() { delBlk(id); }; })(blk.id);
+
+  body.appendChild(addWkBtn);
+  body.appendChild(delBlkBtn);
   card.appendChild(head);
   card.appendChild(body);
-  container.appendChild(card);
+  return card;
 }
 
-function buildSessExRow(se, idx, sessId, body) {
-  var row = document.createElement('div');
-  row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);';
-  row.innerHTML =
-    '<span style="color:var(--muted2);font-size:0.7rem;min-width:20px;">' + (idx + 1) + '.</span>' +
-    '<span style="flex:1;font-size:0.82rem;">' + (se.exercises ? se.exercises.name : 'Eliminato') + '</span>' +
-    '<span style="font-size:0.7rem;color:var(--muted2);">' + (se.sets || '2') + ' serie</span>';
-  var delBtn = document.createElement('button');
-  delBtn.className = 'del-btn';
-  delBtn.textContent = 'x';
-  delBtn.onclick = (function(seId, sid) { return function() { removeSessionExercise(seId, sid); }; })(se.id, sessId);
-  row.appendChild(delBtn);
-  body.appendChild(row);
+function buildWeekRow(wk, blkId) {
+  var days = (wk.week_days || []).sort(function(a,b){return a.day_of_week-b.day_of_week;});
+  var wrap = document.createElement('div');
+  wrap.style.cssText='background:var(--s3);border-radius:10px;padding:10px 12px;margin-bottom:8px;border:1px solid var(--bdr)';
+
+  var wtypes = {blast:'&#9889;',deload:'&#128164;',taper:'&#127987;',test:'&#127919;'};
+  var wtitle = document.createElement('div');
+  wtitle.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+  wtitle.innerHTML =
+    '<span style="font-weight:700;font-size:.85rem;flex:1">' + (wtypes[wk.week_type]||'') + ' ' + escHtml(wk.name) + '</span>';
+
+  var delWk = document.createElement('button');
+  delWk.className = 'btn-del';
+  delWk.textContent = 'x';
+  delWk.onclick = (function(id) { return function() { delWeek(id, blkId); }; })(wk.id);
+  wtitle.appendChild(delWk);
+  wrap.appendChild(wtitle);
+
+  // 7-day grid
+  var grid = document.createElement('div');
+  grid.className = 'week-grid';
+  for (var d = 1; d <= 7; d++) {
+    var dayData = null;
+    days.forEach(function(dd) { if (dd.day_of_week === d) dayData = dd; });
+    var cell = document.createElement('div');
+    var sessType = dayData && dayData.sessions ? dayData.sessions.session_type : 'rest';
+    cell.className = 'day-cell' + (dayData && dayData.sessions ? (sessType === 'bike' ? ' has-bike' : ' has-sess') : ' has-rest');
+    cell.innerHTML =
+      '<div class="day-name">' + DAY_NAMES[d-1] + '</div>' +
+      '<div class="day-sess">' + (dayData && dayData.sessions ? escHtml(dayData.sessions.name) : '') + '</div>';
+    cell.onclick = (function(dayNum, wkId, dd) {
+      return function() { editDay(dayNum, wkId, dd); };
+    })(d, wk.id, dayData);
+    grid.appendChild(cell);
+  }
+  wrap.appendChild(grid);
+  return wrap;
 }
 
-function saveSession() {
-  var name  = document.getElementById('sf-name').value.trim();
-  var type  = document.getElementById('sf-type').value;
-  var msgEl = document.getElementById('sf-msg');
-  if (!name) { showFormMsg(msgEl, 'Inserisci il nome', false); return; }
-  sb.from('sessions').insert({name: name, session_type: type, created_by: adminUser.id})
+function editDay(dayNum, wkId, existing) {
+  var dayName = DAY_NAMES[dayNum-1];
+  if (allSess.length === 0) { alert('Prima carica le sessioni (tab Sessioni).'); return; }
+  var opts = '0. Riposo / nessuna sessione\n';
+  allSess.forEach(function(s, i) { opts += (i+1) + '. ' + s.name + '\n'; });
+  var choice = prompt(dayName + ' — Assegna sessione:\n\n' + opts + '\nNumero:');
+  if (choice === null) return;
+  var idx = parseInt(choice);
+  if (isNaN(idx)) return;
+  var sessionId = idx === 0 ? null : (allSess[idx-1] ? allSess[idx-1].id : null);
+  if (existing) {
+    sb.from('week_days').update({ session_id: sessionId }).eq('id', existing.id)
+      .then(function() { allBlk = []; loadBlk(); }).catch(function(){});
+  } else {
+    sb.from('week_days').insert({ week_template_id: wkId, day_of_week: dayNum, session_id: sessionId })
+      .then(function() { allBlk = []; loadBlk(); }).catch(function(){});
+  }
+}
+
+function saveBlk() {
+  var n = document.getElementById('blkf-n').value.trim();
+  var d = document.getElementById('blkf-d').value.trim();
+  var msg = document.getElementById('blkf-msg');
+  if (!n) { fmsg(msg, 'Inserisci nome', false); return; }
+  var order = allBlk.length;
+  sb.from('blocks').insert({ name: n, description: d||null, sort_order: order, created_by: ME.id })
     .then(function(r) {
-      if (r.error) { showFormMsg(msgEl, 'Errore: ' + r.error.message, false); return; }
-      showFormMsg(msgEl, 'Sessione creata!', true);
-      document.getElementById('sf-name').value = '';
-      toggleForm('sfForm');
-      allSessions = []; loadSessions();
-    }).catch(function() { showFormMsg(msgEl, 'Errore di rete', false); });
+      if (r.error) { fmsg(msg, r.error.message, false); return; }
+      fmsg(msg, 'Blocco creato!', true);
+      document.getElementById('blkf-n').value = '';
+      document.getElementById('blkf-d').value = '';
+      toggleEl('blk-form');
+      allBlk = []; loadBlk();
+    }).catch(function() { fmsg(msg, 'Errore', false); });
 }
 
-function addExToSession(sessId) {
-  var sel  = document.getElementById('addexsel-' + sessId);
-  var sIn  = document.getElementById('addexsets-' + sessId);
-  var exId = sel ? parseInt(sel.value) : 0;
-  var sets = sIn ? (sIn.value.trim() || '2') : '2';
-  if (!exId) return;
-  var existingCount = 0;
-  for (var i = 0; i < allSessions.length; i++) {
-    if (allSessions[i].id === sessId) { existingCount = (allSessions[i].session_exercises || []).length; break; }
-  }
-  sb.from('session_exercises').insert({session_id: sessId, exercise_id: exId, sort_order: existingCount, sets: sets})
-    .then(function(r) { if (!r.error) { allSessions = []; loadSessions(); } })
-    .catch(function() {});
+function addWeek(blkId) {
+  var n = prompt('Nome settimana tipo (es. "Settimana A — Blast"):');
+  if (!n) return;
+  var typeOpts = '1. blast (normale)\n2. deload (scarico)\n3. taper (avvicinamento gara)\n4. test (test massimali)';
+  var tc = prompt('Tipo settimana:\n\n' + typeOpts + '\n\nNumero:') || '1';
+  var types = ['blast','deload','taper','test'];
+  var wtype = types[parseInt(tc)-1] || 'blast';
+  var existing = 0;
+  allBlk.forEach(function(b) { if (b.id === blkId) existing = (b.week_templates||[]).length; });
+  sb.from('week_templates').insert({ block_id: blkId, name: n, week_type: wtype, sort_order: existing })
+    .then(function(r) { if (!r.error) { allBlk = []; loadBlk(); } else alert(r.error.message); }).catch(function(){});
 }
 
-function removeSessionExercise(seId, sessId) {
-  sb.from('session_exercises').delete().eq('id', seId)
-    .then(function() { allSessions = []; loadSessions(); }).catch(function() {});
+function delWeek(id, blkId) {
+  if (!confirm('Eliminare questa settimana tipo e tutti i giorni configurati?')) return;
+  sb.from('week_templates').delete().eq('id', id)
+    .then(function() { allBlk = []; loadBlk(); }).catch(function(){});
 }
 
-function deleteSession(id) {
-  if (!confirm('Eliminare questa sessione?')) return;
-  sb.from('sessions').delete().eq('id', id)
-    .then(function() { allSessions = []; loadSessions(); }).catch(function() {});
+function delBlk(id) {
+  if (!confirm('Eliminare questo blocco e tutte le sue settimane?')) return;
+  sb.from('blocks').delete().eq('id', id)
+    .then(function() { allBlk = []; loadBlk(); }).catch(function(){});
 }
 
-// ─── PROGRAMS ─────────────────────────────────────────────────────────
-function loadPrograms() {
-  sb.from('training_programs').select('*').order('name')
-    .then(function(r) { allPrograms = r.data || []; renderPrograms(allPrograms); })
-    .catch(function() {});
-}
-
-function renderPrograms(list) {
-  var c = document.getElementById('programs-list');
-  c.innerHTML = '';
-  if (!list.length) {
-    c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted2);font-size:0.82rem;">Nessun programma.</div>';
-    return;
-  }
-  for (var i = 0; i < list.length; i++) {
-    buildProgCard(list[i], c);
-  }
-}
-
-function buildProgCard(prog, container) {
-  var card = document.createElement('div');
-  card.className = 'prog-card';
-
-  var top = document.createElement('div');
-  top.style.cssText = 'display:flex;align-items:center;gap:10px;';
-  top.innerHTML =
-    '<div style="flex:1;">' +
-      '<div style="font-weight:700;font-size:0.95rem;">' + prog.name + '</div>' +
-      '<div style="font-size:0.75rem;color:var(--muted2);">' + (prog.description || '') + ' &bull; ' + (prog.weeks || []).length + ' settimane</div>' +
-    '</div>';
-
-  var delBtn = document.createElement('button');
-  delBtn.className = 'del-btn';
-  delBtn.textContent = 'Elimina';
-  delBtn.onclick = (function(pid) { return function() { deleteProgram(pid); }; })(prog.id);
-  top.appendChild(delBtn);
-
-  var btns = document.createElement('div');
-  btns.style.marginTop = '12px';
-
-  var editBtn = document.createElement('button');
-  editBtn.className = 'logout-btn';
-  editBtn.style.fontSize = '0.7rem';
-  editBtn.textContent = 'Modifica settimane';
-  editBtn.onclick = (function(pid) { return function() { editProgramWeeks(pid); }; })(prog.id);
-
-  var assignBtn = document.createElement('button');
-  assignBtn.className = 'logout-btn';
-  assignBtn.style.cssText = 'font-size:0.7rem;margin-left:8px;';
-  assignBtn.textContent = 'Assegna ad atleta';
-  assignBtn.onclick = (function(pid, pname) { return function() { assignProgramToAthlete(pid, pname); }; })(prog.id, prog.name);
-
-  btns.appendChild(editBtn);
-  btns.appendChild(assignBtn);
-  card.appendChild(top);
-  card.appendChild(btns);
-  container.appendChild(card);
-}
-
-function saveProgram() {
-  var name  = document.getElementById('pf-name').value.trim();
-  var desc  = document.getElementById('pf-desc').value.trim();
-  var msgEl = document.getElementById('pf-msg');
-  if (!name) { showFormMsg(msgEl, 'Inserisci il nome', false); return; }
-  sb.from('training_programs').insert({name: name, description: desc || null, weeks: [], created_by: adminUser.id})
-    .then(function(r) {
-      if (r.error) { showFormMsg(msgEl, 'Errore: ' + r.error.message, false); return; }
-      showFormMsg(msgEl, 'Programma creato!', true);
-      document.getElementById('pf-name').value = '';
-      document.getElementById('pf-desc').value = '';
-      toggleForm('pfForm');
-      allPrograms = []; loadPrograms();
-    }).catch(function() { showFormMsg(msgEl, 'Errore di rete', false); });
-}
-
-function deleteProgram(id) {
-  if (!confirm('Eliminare questo programma?')) return;
-  sb.from('training_programs').delete().eq('id', id)
-    .then(function() { allPrograms = []; loadPrograms(); }).catch(function() {});
-}
-
-function editProgramWeeks(progId) {
-  var prog = null;
-  for (var i = 0; i < allPrograms.length; i++) {
-    if (allPrograms[i].id === progId) { prog = allPrograms[i]; break; }
-  }
-  if (!prog) return;
-  var weeksJson = prompt('Settimane attuali (JSON):', JSON.stringify(prog.weeks || [], null, 2));
-  if (weeksJson === null) return;
-  try {
-    var weeks = JSON.parse(weeksJson);
-    sb.from('training_programs').update({weeks: weeks}).eq('id', progId)
-      .then(function(r) {
-        if (!r.error) { alert('Aggiornato!'); allPrograms = []; loadPrograms(); }
-        else alert('Errore: ' + r.error.message);
-      }).catch(function() {});
-  } catch(e) {
-    alert('JSON non valido: ' + e.message);
-  }
-}
-
-function assignProgramToAthlete(progId, progName) {
-  if (!athletes.length) { alert('Nessun atleta disponibile.'); return; }
-  var list = athletes.map(function(a, i) { return (i + 1) + '. ' + (a.full_name || a.email); }).join('\n');
-  var choice = prompt('Assegna "' + progName + '" a:\n\n' + list + '\n\nNumero:');
-  if (!choice) return;
-  var idx = parseInt(choice) - 1;
-  if (isNaN(idx) || idx < 0 || idx >= athletes.length) { alert('Scelta non valida'); return; }
-  sb.from('profiles').update({training_program_id: progId}).eq('id', athletes[idx].id)
-    .then(function(r) {
-      if (!r.error) alert('Programma assegnato!');
-      else alert('Errore: ' + r.error.message);
-    }).catch(function() {});
-}
-
-// ─── UTILS ────────────────────────────────────────────────────────────
-function showNotice(el, text, ok) {
+// ── UTILS ─────────────────────────────────────────────────────
+function fmsg(el, text, ok) {
   el.textContent = text;
   el.style.display = 'block';
-  el.style.background = ok ? 'var(--green-dim)' : 'var(--red-dim)';
-  el.style.color = ok ? 'var(--green)' : '#ff6b6b';
-  setTimeout(function() { el.style.display = 'none'; }, 3500);
-}
-
-function showFormMsg(el, text, ok) {
-  el.textContent = text;
-  el.style.display = 'block';
-  el.style.background = ok ? 'var(--green-dim)' : 'var(--red-dim)';
-  el.style.color = ok ? 'var(--green)' : '#ff6b6b';
+  el.style.background = ok ? 'var(--gdim)' : 'var(--rdim)';
+  el.style.color = ok ? 'var(--grn)' : '#ff6b6b';
   setTimeout(function() { el.style.display = 'none'; }, 3000);
 }
 
 function fmtDate(iso) {
   var d = new Date(iso);
-  return d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}) + ' ' +
-         d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+  return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}) + ' ' +
+         d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function doLogout() {
-  sb.auth.signOut().then(function() { window.location.href = 'index.html'; })
-    .catch(function() { window.location.href = 'index.html'; });
+  sb.auth.signOut().then(function() { location.href = 'index.html'; }).catch(function() { location.href = 'index.html'; });
 }
 
 boot();
