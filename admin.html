@@ -281,6 +281,62 @@ var allEx = [], allSess = [], allBlk = [];
 var DAY_NAMES = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
 
 
+
+// ── RESET PROGRAM ─────────────────────────────────────────────
+var resetTargetAth = null;
+
+function openResetModal(ath) {
+  resetTargetAth = ath;
+  var el = document.getElementById('reset-ath-name');
+  if (el) el.textContent = 'Atleta: ' + (ath.full_name || ath.email || '?');
+  var msg = document.getElementById('reset-msg');
+  if (msg) msg.style.display = 'none';
+  var overlay = document.getElementById('reset-overlay');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function closeResetModal() {
+  var overlay = document.getElementById('reset-overlay');
+  if (overlay) overlay.style.display = 'none';
+  resetTargetAth = null;
+}
+
+function doReset(deleteLogbook) {
+  if (!resetTargetAth) return;
+  var ath = resetTargetAth;
+  var msg = document.getElementById('reset-msg');
+
+  // Step 1: remove assigned program
+  sb.from('profiles')
+    .update({ current_block_id: null, current_week_id: null })
+    .eq('id', ath.id)
+    .then(function(r) {
+      if (r.error) { showResetMsg('Errore: ' + r.error.message, false); return; }
+      if (!deleteLogbook) {
+        showResetMsg('Programma rimosso.', true);
+        setTimeout(function() { closeResetModal(); loadAthletes(); }, 1200);
+        return;
+      }
+      // Step 2: delete logbook
+      return sb.from('logbook').delete().eq('athlete_id', ath.id)
+        .then(function(lr) {
+          if (lr.error) { showResetMsg('Programma rimosso ma errore logbook: ' + lr.error.message, false); return; }
+          showResetMsg('Reset completo — programma e logbook cancellati.', true);
+          setTimeout(function() { closeResetModal(); loadAthletes(); }, 1500);
+        });
+    })
+    .catch(function(e) { showResetMsg('Errore: ' + String(e), false); });
+}
+
+function showResetMsg(text, ok) {
+  var el = document.getElementById('reset-msg');
+  if (!el) return;
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.background = ok ? 'rgba(16,185,129,.12)' : 'rgba(232,17,42,.12)';
+  el.style.color = ok ? '#10B981' : '#E8112A';
+}
+
 // ══════════════════════════════════════════════════════════════
 // AI PROGRAM GENERATOR
 // ══════════════════════════════════════════════════════════════
@@ -633,10 +689,18 @@ function buildAthCard(a) {
   var assignBtn = document.createElement('button');
   assignBtn.className = 'btn-out';
   assignBtn.textContent = 'Assegna blocco / settimana';
+  assignBtn.style.cssText = 'margin-right:7px;margin-bottom:7px';
   assignBtn.onclick = (function(ath) { return function() { openAssignModal(ath); }; })(a);
+
+  var resetBtn = document.createElement('button');
+  resetBtn.className = 'btn-out';
+  resetBtn.textContent = 'Reset programma';
+  resetBtn.style.cssText = 'margin-right:7px;margin-bottom:7px;border-color:rgba(245,158,11,.3);color:#F59E0B';
+  resetBtn.onclick = (function(ath) { return function() { openResetModal(ath); }; })(a);
 
   progSec.appendChild(progInfo);
   progSec.appendChild(assignBtn);
+  progSec.appendChild(resetBtn);
 
   // Messages section
   var msgSec = document.createElement('div');
@@ -1302,6 +1366,30 @@ function doLogout() {
 
 boot();
 </script>
+
+<!-- ── RESET MODAL ── -->
+<div id="reset-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center" onclick="closeResetModal()">
+  <div id="reset-panel" onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 16px 32px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.1em;color:#F59E0B">RESET PROGRAMMA</div>
+      <button onclick="closeResetModal()" style="background:none;border:none;color:#555;font-size:1.2rem;cursor:pointer">&#10005;</button>
+    </div>
+    <div id="reset-ath-name" style="font-size:.78rem;font-weight:600;margin-bottom:6px"></div>
+    <div style="font-size:.75rem;color:var(--mu2);margin-bottom:18px;line-height:1.6">Scegli cosa vuoi resettare per questo atleta.</div>
+
+    <button onclick="doReset(false)" style="width:100%;padding:11px;border-radius:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);color:#F59E0B;font-size:.82rem;font-weight:700;cursor:pointer;margin-bottom:9px;font-family:inherit">
+      &#8635; Solo programma assegnato<br>
+      <span style="font-size:.68rem;font-weight:400;opacity:.8">Rimuove blocco e settimana — il logbook rimane</span>
+    </button>
+
+    <button onclick="doReset(true)" style="width:100%;padding:11px;border-radius:10px;background:rgba(232,17,42,.1);border:1px solid rgba(232,17,42,.25);color:#E8112A;font-size:.82rem;font-weight:700;cursor:pointer;margin-bottom:9px;font-family:inherit">
+      &#128465; Reset completo<br>
+      <span style="font-size:.68rem;font-weight:400;opacity:.8">Rimuove programma + cancella tutto il logbook</span>
+    </button>
+
+    <div id="reset-msg" style="display:none;font-size:.76rem;padding:8px 12px;border-radius:8px;margin-top:4px"></div>
+  </div>
+</div>
 
 <!-- ── ASSIGN MODAL ── -->
 <div id="assign-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center" onclick="closeAssignModal()">
