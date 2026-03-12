@@ -373,6 +373,7 @@ select.inp{cursor:pointer}
           <textarea class="inp" id="ai-note" rows="2" placeholder="es. spalla destra da non caricare, preferisce macchine su free weights, recupero veloce..."></textarea></div>
 
         <button class="btn-red" id="ai-gen-btn" onclick="aiGenerate()" style="background:var(--orn);margin-top:4px">&#9889; Genera programma completo</button>
+        <button onclick="aiTestConnection()" style="width:100%;padding:8px;border-radius:9px;background:none;border:1px dashed rgba(255,255,255,.15);color:var(--mu2);font-size:.72rem;cursor:pointer;margin-top:7px;font-family:inherit">&#128267; Test connessione Worker</button>
         <div id="ai-status" style="display:none;font-size:.76rem;padding:8px 10px;border-radius:8px;margin-top:8px"></div>
       </div>
       <div id="ai-preview" style="display:none">
@@ -1353,6 +1354,34 @@ function aiSetUploadStatus(msg,type) {
   el.style.background=type==='ok'?'rgba(16,185,129,.12)':type==='err'?'rgba(232,17,42,.12)':'rgba(245,158,11,.12)';
   el.style.color=type==='ok'?'var(--grn)':type==='err'?'var(--red)':'var(--orn)';
 }
+function aiTestConnection() {
+  aiSetStatus('Test in corso...', 'loading');
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': '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',
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 10,
+      messages: [{role: 'user', content: 'Di solo: OK'}]
+    })
+  })
+  .then(function(r) {
+    aiSetStatus('HTTP ' + r.status + ' — lettura risposta...', 'loading');
+    return r.text();
+  })
+  .then(function(t) {
+    aiSetStatus('Risposta Worker: ' + t.substring(0, 200), 'ok');
+  })
+  .catch(function(e) {
+    aiSetStatus('ERRORE: ' + String(e) + ' | Origin: ' + window.location.origin, 'err');
+  });
+}
+
 function aiReset() {
   aiGeneratedPlan=null;
   document.getElementById('ai-preview').style.display='none';
@@ -1436,9 +1465,14 @@ function aiGenerate() {
         '. Cardio: '+cardioStr+
         (note ? '. Note importanti: '+note : '');
 
-      fetch('https://kratos-ai.dcarera.workers.dev',{
+      fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',
-        headers:{'Content-Type':'application/json'},
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key':'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',
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
         body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:4000,system:sys,messages:[{role:'user',content:usr}]})
       })
       .then(function(r){ return r.json(); })
