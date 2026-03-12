@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<title>KRATOS — Coach</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#E8112A;--rdim:rgba(232,17,42,.12);
+  --blu:#0EA5E9;--bdim:rgba(14,165,233,.12);
+  --grn:#10B981;--gdim:rgba(16,185,129,.12);
+  --orn:#F59E0B;--odim:rgba(245,158,11,.12);
+  --pur:#A855F7;--pdim:rgba(168,85,247,.12);
+  --bg:#0A0A0A;--s2:#191919;--s3:#222;--s4:#2C2C2C;
+  --bdr:rgba(255,255,255,.07);--txt:#F0F0F0;--mu:#555;--mu2:#888;
+  --sb:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'DM Sans',sans-serif;color:var(--txt);font-size:15px;display:flex;flex-direction:column;height:100dvh}
+#loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.15em;color:var(--red)}
+.sub{font-size:.65rem;color:var(--mu2);letter-spacing:.2em;text-transform:uppercase}
+.spin{width:24px;height:24px;border:2px solid var(--s4);border-top-color:var(--red);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.view{display:none;flex-direction:column;flex:1;overflow:hidden}
+.view.on{display:flex}
+.topbar{padding:13px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--bdr)}
+.topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.1em;color:var(--red)}
+.badge{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:var(--pdim);color:var(--pur)}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 14px calc(14px + var(--sb))}
+.bnav{display:flex;background:rgba(10,10,10,.95);backdrop-filter:blur(20px);border-top:1px solid var(--bdr);padding:6px 0 calc(6px + var(--sb));flex-shrink:0}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;cursor:pointer;border:none;background:none}
+.bni-ic{font-size:1.25rem}
+.bni-lb{font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}
+.bni.on .bni-lb{color:var(--red)}
+/* cards */
+.card{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.card-head{padding:13px 14px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.card-body{display:none;border-top:1px solid var(--bdr);padding:12px 14px}
+.card.open .card-body{display:block}
+.sec-label{font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px}
+/* inputs */
+.inp{width:100%;padding:10px 12px;background:var(--s3);border:1px solid var(--bdr);border-radius:10px;color:var(--txt);font-family:inherit;font-size:.85rem;outline:none}
+.inp:focus{border-color:rgba(232,17,42,.4)}
+.inp-sm{padding:8px 10px;font-size:.8rem}
+select.inp{cursor:pointer}
+/* buttons */
+.btn-red{padding:11px;border-radius:10px;background:var(--red);border:none;color:#fff;font-size:.82rem;font-weight:700;cursor:pointer;width:100%}
+.btn-out{padding:7px 12px;border-radius:8px;background:none;border:1px solid var(--bdr);color:var(--mu2);font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.btn-del{padding:5px 9px;border-radius:7px;background:var(--s4);border:none;color:var(--mu2);font-size:.68rem;cursor:pointer}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+/* tags */
+.tag{font-size:.6rem;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:8px}
+.t-mec{background:var(--rdim);color:var(--red)}
+.t-met{background:var(--odim);color:var(--orn)}
+.t-pre{background:var(--gdim);color:var(--grn)}
+.t-str{background:var(--bdim);color:var(--blu)}
+/* inline form */
+.iform{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:14px}
+.iform-title{font-size:.65rem;font-weight:700;letter-spacing:.12em;color:var(--mu2);text-transform:uppercase;margin-bottom:12px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:5px}
+.fmsg{font-size:.74rem;padding:7px 10px;border-radius:8px;display:none;margin-top:8px}
+/* tabs */
+.tabs{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+.tab{padding:7px 14px;border-radius:18px;border:1px solid var(--bdr);background:var(--s2);color:var(--mu2);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.tab.on{background:var(--red);color:#fff;border-color:var(--red)}
+/* week calendar */
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:14px}
+.day-cell{background:var(--s3);border-radius:8px;padding:6px 4px;text-align:center;min-height:54px;cursor:pointer;border:1px solid var(--bdr);transition:border-color .15s}
+.day-cell:hover{border-color:var(--red)}
+.day-cell.has-sess{border-color:rgba(232,17,42,.3);background:var(--rdim)}
+.day-cell.has-bike{border-color:rgba(14,165,233,.3);background:var(--bdim)}
+.day-cell.has-rest{background:var(--s4)}
+.day-name{font-size:.55rem;font-weight:700;color:var(--mu2);text-transform:uppercase;margin-bottom:4px}
+.day-sess{font-size:.6rem;color:var(--txt);line-height:1.3}
+/* athlete card */
+.ath-card{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.ath-head{padding:12px 14px;display:flex;align-items:center;gap:11px;cursor:pointer}
+.ath-av{width:36px;height:36px;border-radius:50%;background:var(--pdim);display:flex;align-items:center;justify-content:center;font-size:.95rem;color:var(--pur);flex-shrink:0;font-weight:700}
+.ath-info{flex:1;min-width:0}
+.ath-name{font-weight:600;font-size:.88rem}
+.ath-email{font-size:.7rem;color:var(--mu2);margin-top:1px}
+.ath-body{display:none;border-top:1px solid var(--bdr)}
+.ath-card.open .ath-body{display:block}
+/* stats */
+.stat-row{display:flex;gap:6px;padding:12px 14px;border-bottom:1px solid var(--bdr)}
+.stat-box{flex:1;background:var(--s3);border-radius:9px;padding:9px 10px}
+.stat-val{font-size:1.05rem;font-weight:700}
+.stat-lb{font-size:.62rem;color:var(--mu2);margin-top:1px}
+/* messages */
+.msg-area{max-height:160px;overflow-y:auto;padding:10px;background:var(--s3);border-radius:9px;margin-bottom:8px}
+.msg-bub{padding:7px 10px;border-radius:9px;margin-bottom:5px;font-size:.79rem;max-width:84%}
+.msg-bub.coach{background:var(--pdim);margin-left:auto}
+.msg-bub.athlete{background:var(--s4)}
+.msg-meta{font-size:.6rem;color:var(--mu2);margin-bottom:2px}
+.msg-row{display:flex;gap:7px}
+.msg-inp{flex:1;padding:9px 11px;background:var(--s3);border:1px solid var(--bdr);border-radius:9px;color:var(--txt);font-family:inherit;font-size:.82rem;outline:none}
+.msg-send{padding:9px 13px;background:var(--pur);border:none;border-radius:9px;color:#fff;font-weight:700;cursor:pointer}
+/* prog week day pill */
+.day-pill{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--s3);border-radius:9px;margin-bottom:6px}
+.day-pill-name{font-size:.72rem;font-weight:700;color:var(--mu2);width:28px;flex-shrink:0}
+.day-pill-sess{flex:1;font-size:.8rem}
+.day-pill-edit{padding:4px 8px;border-radius:6px;background:var(--s4);border:none;color:var(--mu2);font-size:.65rem;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="loader">
+  <div class="logo">KRATOS</div>
+  <div class="sub">Coach Panel</div>
+  <div class="spin"></div>
+</div>
+
+<!-- ── ATLETI ── -->
+<div class="view on" id="v-athletes">
+  <div class="topbar">
+    <div class="topbar-logo">KRATOS</div>
+    <span class="badge">COACH</span>
+    <button class="btn-out" onclick="doLogout()">Esci</button>
+  </div>
+  <div class="scroll" id="ath-list-wrap">
+    <div class="sec-label">I tuoi atleti</div>
+    <div id="ath-list"></div>
+  </div>
+</div>
+
+<!-- ── NUOVO ATLETA ── -->
+<div class="view" id="v-new">
+  <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge">NUOVO ATLETA</span></div>
+  <div class="scroll">
+    <div class="iform">
+      <div class="iform-title">CREA ACCOUNT ATLETA</div>
+      <div class="field"><label>Nome</label><input class="inp" id="na-name" placeholder="Mario Rossi"></div>
+      <div class="field"><label>Email</label><input class="inp" type="email" id="na-email" placeholder="atleta@email.com" inputmode="email"></div>
+      <div class="field"><label>Password temporanea</label><input class="inp" id="na-pass" placeholder="min. 6 caratteri"></div>
+      <button class="btn-red" id="na-btn" onclick="createAthlete()">Crea account</button>
+      <div class="fmsg" id="na-msg"></div>
+    </div>
+    <div style="font-size:.71rem;color:var(--mu2);line-height:1.6;padding:0 2px;">L'atleta accede da index.html con email e password che imposti qui. Puoi assegnargli il programma dalla sezione Atleti dopo la creazione.</div>
+  </div>
+</div>
+
+<!-- ── PROGRAMMI ── -->
+<div class="view" id="v-prog">
+  <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge">PROGRAMMI</span></div>
+  <div class="scroll">
+    <div class="tabs">
+      <button class="tab on" id="pt-ex"   onclick="pTab('ex')">Esercizi</button>
+      <button class="tab"    id="pt-sess" onclick="pTab('sess')">Sessioni</button>
+      <button class="tab"    id="pt-blk"  onclick="pTab('blk')">Blocchi</button>
+    </div>
+
+    <!-- TAB: ESERCIZI -->
+    <div id="pc-ex">
+      <input class="inp" id="ex-q" placeholder="Cerca esercizio..." oninput="filterEx()" style="margin-bottom:10px">
+      <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('ex-form')">+ Nuovo esercizio</button>
+      <div id="ex-form" class="iform" style="display:none">
+        <div class="iform-title">NUOVO ESERCIZIO</div>
+        <div class="field"><label>Nome *</label><input class="inp" id="exf-n" placeholder="es. Panca Piana"></div>
+        <div class="field"><label>Tipo</label>
+          <select class="inp" id="exf-t">
+            <option value="mec">Meccanico</option><option value="met">Metabolico</option>
+            <option value="pre">Pre-Attivazione</option><option value="str">Stretching</option>
+          </select></div>
+        <div class="field"><label>Note / istruzioni</label><textarea class="inp" id="exf-no" rows="2" placeholder="Tecnica, parametri..."></textarea></div>
+        <div class="btn-row">
+          <button class="btn-red" style="flex:1" onclick="saveEx()">Salva</button>
+          <button class="btn-out" style="flex:1" onclick="toggleEl('ex-form')">Annulla</button>
+        </div>
+        <div class="fmsg" id="exf-msg"></div>
+      </div>
+      <div id="ex-list"></div>
+    </div>
+
+    <!-- TAB: SESSIONI -->
+    <div id="pc-sess" style="display:none">
+      <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('sf-form')">+ Nuova sessione</button>
+      <div id="sf-form" class="iform" style="display:none">
+        <div class="iform-title">NUOVA SESSIONE</div>
+        <div class="field"><label>Nome *</label><input class="inp" id="sff-n" placeholder="es. Petto + Tricipiti"></div>
+        <div class="field"><label>Tipo</label>
+          <select class="inp" id="sff-t">
+            <option value="gym">Palestra</option><option value="bike">Bici</option><option value="rest">Riposo</option>
+          </select></div>
+        <div class="btn-row">
+          <button class="btn-red" style="flex:1" onclick="saveSess()">Crea sessione</button>
+          <button class="btn-out" style="flex:1" onclick="toggleEl('sf-form')">Annulla</button>
+        </div>
+        <div class="fmsg" id="sff-msg"></div>
+      </div>
+      <div id="sess-list"></div>
+    </div>
+
+    <!-- TAB: BLOCCHI -->
+    <div id="pc-blk" style="display:none">
+      <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('blk-form')">+ Nuovo blocco</button>
+      <div id="blk-form" class="iform" style="display:none">
+        <div class="iform-title">NUOVO BLOCCO</div>
+        <div class="field"><label>Nome *</label><input class="inp" id="blkf-n" placeholder="es. Blocco 1 — Ipertrofia"></div>
+        <div class="field"><label>Descrizione</label><input class="inp" id="blkf-d" placeholder="es. 4 settimane volume alto"></div>
+        <div class="btn-row">
+          <button class="btn-red" style="flex:1" onclick="saveBlk()">Crea blocco</button>
+          <button class="btn-out" style="flex:1" onclick="toggleEl('blk-form')">Annulla</button>
+        </div>
+        <div class="fmsg" id="blkf-msg"></div>
+      </div>
+      <div id="blk-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MESSAGGI ── -->
+<div class="view" id="v-msgs">
+  <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge">MESSAGGI</span></div>
+  <div class="scroll"><div id="msg-ath-list"></div></div>
+</div>
+
+<nav class="bnav">
+  <button class="bni on" id="bn-athletes" onclick="sv('athletes')"><span class="bni-ic">&#128101;</span><span class="bni-lb">Atleti</span></button>
+  <button class="bni"    id="bn-new"      onclick="sv('new')"><span class="bni-ic">&#10133;</span><span class="bni-lb">Nuovo</span></button>
+  <button class="bni"    id="bn-prog"     onclick="sv('prog')"><span class="bni-ic">&#128203;</span><span class="bni-lb">Programmi</span></button>
+  <button class="bni"    id="bn-msgs"     onclick="sv('msgs')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Messaggi</span></button>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+var SUPABASE_URL = 'https://tzkokgpxqjeyuvyvmqtt.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6a29rZ3B4cWpleXV2eXZtcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjg2ODEsImV4cCI6MjA4ODg0NDY4MX0.sIqJgyh1bAsKNHlFU5Q7LgpaoEJrZlgMlIH4EQx0hyo';
+var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+var ME = null;
+var athletes = [];
+var allEx = [], allSess = [], allBlk = [];
+var DAY_NAMES = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+
+// ── BOOT ─────────────────────────────────────────────────────
+function boot() {
+  sb.auth.getSession().then(function(r) {
+    if (!r.data.session) { location.href = 'index.html'; return; }
+    ME = r.data.session.user;
+    document.getElementById('loader').style.display = 'none';
+    loadAthletes();
+    loadEx(); // preload
+  }).catch(function() { location.href = 'index.html'; });
+}
+
+// ── VIEW SWITCH ───────────────────────────────────────────────
+function sv(name) {
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('on'); v.style.display = 'none'; });
+  document.querySelectorAll('.bni').forEach(function(b)  { b.classList.remove('on'); });
+  var v = document.getElementById('v-' + name);
+  var b = document.getElementById('bn-' + name);
+  if (v) { v.style.display = 'flex'; v.classList.add('on'); }
+  if (b) b.classList.add('on');
+  if (name === 'prog' && allEx.length === 0) loadEx();
+  if (name === 'msgs') renderMsgAthletes();
+}
+
+function toggleEl(id) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function pTab(t) {
+  ['ex','sess','blk'].forEach(function(x) {
+    document.getElementById('pt-' + x).className = 'tab' + (x === t ? ' on' : '');
+    document.getElementById('pc-' + x).style.display = x === t ? 'block' : 'none';
+  });
+  if (t === 'sess' && allSess.length === 0) loadSess();
+  if (t === 'blk'  && allBlk.length === 0)  loadBlk();
+}
+
+// ── ATHLETES ─────────────────────────────────────────────────
+function loadAthletes() {
+  sb.from('profiles').select('*').eq('role','athlete').order('full_name')
+    .then(function(r) { athletes = r.data || []; renderAthletes(); })
+    .catch(function() {});
+}
+
+function renderAthletes() {
+  var c = document.getElementById('ath-list');
+  c.innerHTML = '';
+  if (!athletes.length) {
+    c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--mu2);">Nessun atleta. Aggiungine uno dal tab Nuovo.</div>';
+    return;
+  }
+  athletes.forEach(function(a) { c.appendChild(buildAthCard(a)); });
+}
+
+function buildAthCard(a) {
+  var card = document.createElement('div');
+  card.className = 'ath-card';
+  card.id = 'ac-' + a.id;
+
+  var init = (a.full_name || a.email || '?').charAt(0).toUpperCase();
+  var head = document.createElement('div');
+  head.className = 'ath-head';
+  head.innerHTML =
+    '<div class="ath-av">' + init + '</div>' +
+    '<div class="ath-info">' +
+      '<div class="ath-name">' + (a.full_name || 'Atleta') + '</div>' +
+      '<div class="ath-email">' + (a.email || '') + '</div>' +
+    '</div>' +
+    '<span style="color:var(--mu);font-size:1.1rem">&#8250;</span>';
+  head.onclick = (function(id) { return function() {
+    var c = document.getElementById('ac-' + id);
+    c.classList.toggle('open');
+  }; })(a.id);
+
+  var body = document.createElement('div');
+  body.className = 'ath-body';
+
+  // Stats row
+  var stats = document.createElement('div');
+  stats.className = 'stat-row';
+  stats.innerHTML =
+    '<div class="stat-box"><div class="stat-val" id="sv-done-' + a.id + '">-</div><div class="stat-lb">Sessioni fatte</div></div>' +
+    '<div class="stat-box"><div class="stat-val" id="sv-ex-' + a.id + '">-</div><div class="stat-lb">Esercizi log</div></div>' +
+    '<div class="stat-box"><div class="stat-val" id="sv-blk-' + a.id + '">' + (a.current_block_id ? '&#10003;' : '-') + '</div><div class="stat-lb">Blocco</div></div>';
+
+  // Program assign section
+  var progSec = document.createElement('div');
+  progSec.style.cssText = 'padding:12px 14px;border-bottom:1px solid var(--bdr)';
+  progSec.innerHTML = '<div class="sec-label">Programmazione</div>';
+
+  var progInfo = document.createElement('div');
+  progInfo.id = 'prog-info-' + a.id;
+  progInfo.style.cssText = 'font-size:.8rem;color:var(--mu2);margin-bottom:10px';
+  progInfo.textContent = 'Nessun programma assegnato';
+
+  var assignBtn = document.createElement('button');
+  assignBtn.className = 'btn-out';
+  assignBtn.textContent = 'Assegna blocco / settimana';
+  assignBtn.onclick = (function(ath) { return function() { openAssignModal(ath); }; })(a);
+
+  progSec.appendChild(progInfo);
+  progSec.appendChild(assignBtn);
+
+  // Messages section
+  var msgSec = document.createElement('div');
+  msgSec.style.cssText = 'padding:12px 14px';
+  var msgTitle = document.createElement('div');
+  msgTitle.className = 'sec-label';
+  msgTitle.textContent = 'Messaggi';
+  var msgArea = document.createElement('div');
+  msgArea.className = 'msg-area';
+  msgArea.id = 'ma-' + a.id;
+  var msgRow = document.createElement('div');
+  msgRow.className = 'msg-row';
+  var mi = document.createElement('input');
+  mi.type = 'text';
+  mi.className = 'msg-inp';
+  mi.id = 'mi-' + a.id;
+  mi.placeholder = 'Scrivi...';
+  var ms = document.createElement('button');
+  ms.className = 'msg-send';
+  ms.textContent = 'Invia';
+  ms.onclick = (function(id) { return function() { sendMsg(id); }; })(a.id);
+  msgRow.appendChild(mi);
+  msgRow.appendChild(ms);
+  msgSec.appendChild(msgTitle);
+  msgSec.appendChild(msgArea);
+  msgSec.appendChild(msgRow);
+
+  body.appendChild(stats);
+  body.appendChild(progSec);
+  body.appendChild(msgSec);
+  card.appendChild(head);
+  card.appendChild(body);
+
+  loadAthStats(a.id);
+  loadAthMessages(a.id);
+  loadAthProgInfo(a);
+  return card;
+}
+
+function loadAthStats(aid) {
+  sb.from('logbook').select('id,done').eq('athlete_id', aid)
+    .then(function(r) {
+      var rows = r.data || [];
+      var done = rows.filter(function(x) { return x.done; }).length;
+      var e1 = document.getElementById('sv-done-' + aid);
+      var e2 = document.getElementById('sv-ex-' + aid);
+      if (e1) e1.textContent = done;
+      if (e2) e2.textContent = rows.length;
+    }).catch(function(){});
+}
+
+function loadAthProgInfo(a) {
+  var el = document.getElementById('prog-info-' + a.id);
+  if (!el) return;
+  if (!a.current_block_id) { el.textContent = 'Nessun programma assegnato'; return; }
+  sb.from('blocks').select('name').eq('id', a.current_block_id).single()
+    .then(function(r) {
+      var bname = r.data ? r.data.name : '?';
+      if (a.current_week_id) {
+        sb.from('week_templates').select('name').eq('id', a.current_week_id).single()
+          .then(function(r2) {
+            el.textContent = bname + ' — ' + (r2.data ? r2.data.name : '?');
+          }).catch(function() { el.textContent = bname; });
+      } else {
+        el.textContent = bname + ' — nessuna settimana';
+      }
+    }).catch(function() {});
+}
+
+// ── ASSIGN MODAL ──────────────────────────────────────────────
+var assignTargetAth = null;
+
+function openAssignModal(ath) {
+  assignTargetAth = ath;
+  var overlay = document.getElementById('assign-overlay');
+  var nameEl  = document.getElementById('assign-athlete-name');
+  var blkSel  = document.getElementById('assign-blk-sel');
+  var wkSel   = document.getElementById('assign-wk-sel');
+  var msg     = document.getElementById('assign-msg');
+  if (!overlay) return;
+
+  nameEl.textContent = 'Atleta: ' + (ath.full_name || ath.email || '?');
+  blkSel.innerHTML = '<option value="">— Caricamento... —</option>';
+  wkSel.innerHTML  = '<option value="">— Prima seleziona blocco —</option>';
+  msg.style.display = 'none';
+  overlay.style.display = 'flex';
+
+  // Load blocks fresh from DB
+  sb.from('blocks').select('id, name').order('sort_order')
+    .then(function(r) {
+      var blocks = r.data || [];
+      blkSel.innerHTML = '<option value="">— Seleziona blocco —</option>';
+      blocks.forEach(function(b) {
+        var o = document.createElement('option');
+        o.value = b.id;
+        o.textContent = b.name;
+        if (ath.current_block_id && String(ath.current_block_id) === String(b.id)) o.selected = true;
+        blkSel.appendChild(o);
+      });
+      // Pre-load weeks if block already assigned
+      if (ath.current_block_id) { onBlkChange(); }
+    }).catch(function(e) {
+      blkSel.innerHTML = '<option value="">Errore caricamento blocchi</option>';
+    });
+}
+
+function onBlkChange() {
+  var blkSel = document.getElementById('assign-blk-sel');
+  var wkSel  = document.getElementById('assign-wk-sel');
+  var blkId  = blkSel.value;
+  if (!blkId) { wkSel.innerHTML = '<option value="">— Prima seleziona blocco —</option>'; return; }
+  wkSel.innerHTML = '<option value="">— Caricamento... —</option>';
+  sb.from('week_templates').select('id, name, week_type').eq('block_id', blkId).order('sort_order')
+    .then(function(r) {
+      var weeks = r.data || [];
+      wkSel.innerHTML = '<option value="">— Seleziona settimana —</option>';
+      weeks.forEach(function(w) {
+        var o = document.createElement('option');
+        o.value = w.id;
+        o.textContent = w.name + ' (' + (w.week_type||'blast') + ')';
+        if (assignTargetAth && String(assignTargetAth.current_week_id) === String(w.id)) o.selected = true;
+        wkSel.appendChild(o);
+      });
+      if (!weeks.length) {
+        wkSel.innerHTML = '<option value="">Nessuna settimana in questo blocco</option>';
+      }
+    }).catch(function() {
+      wkSel.innerHTML = '<option value="">Errore caricamento</option>';
+    });
+}
+
+function confirmAssign() {
+  if (!assignTargetAth) return;
+  var blkId = document.getElementById('assign-blk-sel').value;
+  var wkId  = document.getElementById('assign-wk-sel').value;
+  var msg   = document.getElementById('assign-msg');
+  var btn   = document.getElementById('assign-confirm-btn');
+  if (!blkId) { showAssignMsg('Seleziona un blocco', false); return; }
+  if (!wkId)  { showAssignMsg('Seleziona una settimana', false); return; }
+  btn.textContent = 'Salvataggio...'; btn.disabled = true;
+  sb.from('profiles').update({
+    current_block_id: parseInt(blkId),
+    current_week_id:  parseInt(wkId)
+  }).eq('id', assignTargetAth.id)
+    .then(function(r) {
+      btn.textContent = 'Assegna'; btn.disabled = false;
+      if (r.error) { showAssignMsg('Errore: ' + r.error.message, false); return; }
+      showAssignMsg('Programma assegnato!', true);
+      setTimeout(function() { closeAssignModal(); loadAthletes(); }, 1200);
+    }).catch(function(e) {
+      btn.textContent = 'Assegna'; btn.disabled = false;
+      showAssignMsg('Errore di rete', false);
+    });
+}
+
+function showAssignMsg(text, ok) {
+  var el = document.getElementById('assign-msg');
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.background = ok ? 'rgba(16,185,129,.12)' : 'rgba(232,17,42,.12)';
+  el.style.color = ok ? '#10B981' : '#ff6b6b';
+}
+
+function closeAssignModal() {
+  var overlay = document.getElementById('assign-overlay');
+  if (overlay) overlay.style.display = 'none';
+  assignTargetAth = null;
+}
+
+function loadAthMessages(aid) {
+  var area = document.getElementById('ma-' + aid);
+  if (!area) return;
+  sb.from('messages').select('*').eq('athlete_id', aid).order('created_at', {ascending: true})
+    .then(function(r) {
+      area.innerHTML = '';
+      (r.data || []).forEach(function(m) {
+        var b = document.createElement('div');
+        b.className = 'msg-bub ' + (m.sender_role === 'admin' ? 'coach' : 'athlete');
+        b.innerHTML = '<div class="msg-meta">' + (m.sender_role === 'admin' ? 'Tu' : 'Atleta') + ' &middot; ' + fmtDate(m.created_at) + '</div>' + escHtml(m.text);
+        area.appendChild(b);
+      });
+      area.scrollTop = area.scrollHeight;
+    }).catch(function(){});
+}
+
+function sendMsg(aid) {
+  var inp = document.getElementById('mi-' + aid);
+  if (!inp) return;
+  var t = inp.value.trim();
+  if (!t) return;
+  inp.value = '';
+  sb.from('messages').insert({ athlete_id: aid, sender_id: ME.id, sender_role: 'admin', text: t })
+    .then(function() { loadAthMessages(aid); }).catch(function(){});
+}
+
+function renderMsgAthletes() {
+  var c = document.getElementById('msg-ath-list');
+  c.innerHTML = '';
+  athletes.forEach(function(a) {
+    var row = document.createElement('div');
+    row.className = 'card';
+    row.style.cursor = 'pointer';
+    var init = (a.full_name || a.email || '?').charAt(0).toUpperCase();
+    row.innerHTML =
+      '<div class="card-head">' +
+        '<div class="ath-av">' + init + '</div>' +
+        '<div class="ath-info"><div class="ath-name">' + (a.full_name || 'Atleta') + '</div></div>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="msg-area" id="msgv-' + a.id + '"></div>' +
+        '<div class="msg-row">' +
+          '<input class="msg-inp" id="msgvi-' + a.id + '" placeholder="Scrivi...">' +
+          '<button class="msg-send" id="msgvs-' + a.id + '">Invia</button>' +
+        '</div>' +
+      '</div>';
+    row.querySelector('.card-head').onclick = function() {
+      row.classList.toggle('open');
+      if (row.classList.contains('open')) loadMsgView(a.id);
+    };
+    row.querySelector('#msgvs-' + a.id).onclick = function() { sendMsgView(a.id); };
+    c.appendChild(row);
+  });
+}
+
+function loadMsgView(aid) {
+  var area = document.getElementById('msgv-' + aid);
+  if (!area) return;
+  sb.from('messages').select('*').eq('athlete_id', aid).order('created_at', {ascending: true})
+    .then(function(r) {
+      area.innerHTML = '';
+      (r.data || []).forEach(function(m) {
+        var b = document.createElement('div');
+        b.className = 'msg-bub ' + (m.sender_role === 'admin' ? 'coach' : 'athlete');
+        b.innerHTML = '<div class="msg-meta">' + (m.sender_role === 'admin' ? 'Tu' : 'Atleta') + ' &middot; ' + fmtDate(m.created_at) + '</div>' + escHtml(m.text);
+        area.appendChild(b);
+      });
+      area.scrollTop = area.scrollHeight;
+    }).catch(function(){});
+}
+
+function sendMsgView(aid) {
+  var inp = document.getElementById('msgvi-' + aid);
+  if (!inp) return;
+  var t = inp.value.trim();
+  if (!t) return;
+  inp.value = '';
+  sb.from('messages').insert({ athlete_id: aid, sender_id: ME.id, sender_role: 'admin', text: t })
+    .then(function() { loadMsgView(aid); }).catch(function(){});
+}
+
+// ── CREATE ATHLETE ────────────────────────────────────────────
+function createAthlete() {
+  var name  = document.getElementById('na-name').value.trim();
+  var email = document.getElementById('na-email').value.trim();
+  var pass  = document.getElementById('na-pass').value.trim();
+  var btn   = document.getElementById('na-btn');
+  var msg   = document.getElementById('na-msg');
+  if (!email || !pass) { fmsg(msg, 'Inserisci email e password', false); return; }
+  if (pass.length < 6)  { fmsg(msg, 'Password minimo 6 caratteri', false); return; }
+  btn.textContent = 'Creazione...'; btn.disabled = true;
+  sb.auth.admin.createUser({ email: email, password: pass, email_confirm: true })
+    .then(function(r) {
+      if (r.error) { fmsg(msg, r.error.message, false); btn.textContent = 'Crea account'; btn.disabled = false; return null; }
+      return sb.from('profiles').update({ full_name: name || email, role: 'athlete', coach_id: ME.id }).eq('id', r.data.user.id);
+    }).then(function(r) {
+      if (!r) return;
+      fmsg(msg, 'Atleta creato!', true);
+      document.getElementById('na-name').value = '';
+      document.getElementById('na-email').value = '';
+      document.getElementById('na-pass').value = '';
+      btn.textContent = 'Crea account'; btn.disabled = false;
+      loadAthletes();
+    }).catch(function() { fmsg(msg, 'Errore di rete', false); btn.textContent = 'Crea account'; btn.disabled = false; });
+}
+
+// ── EXERCISES ─────────────────────────────────────────────────
+function loadEx() {
+  sb.from('exercises').select('*').order('name')
+    .then(function(r) { allEx = r.data || []; renderEx(allEx); }).catch(function(){});
+}
+
+function filterEx() {
+  var q = document.getElementById('ex-q').value.toLowerCase();
+  renderEx(allEx.filter(function(e) { return e.name.toLowerCase().indexOf(q) !== -1; }));
+}
+
+function renderEx(list) {
+  var c = document.getElementById('ex-list');
+  c.innerHTML = '';
+  if (!list.length) { c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--mu2);font-size:.82rem">Nessun esercizio.</div>'; return; }
+  var tl = {mec:'Meccanico',met:'Metabolico',pre:'Pre-Attivazione',str:'Stretching'};
+  list.forEach(function(ex) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--s2);border:1px solid var(--bdr);border-radius:10px;margin-bottom:7px';
+    row.innerHTML =
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-weight:600;font-size:.85rem">' + escHtml(ex.name) + '</div>' +
+        (ex.notes ? '<div style="font-size:.7rem;color:var(--mu2);margin-top:2px">' + escHtml(ex.notes.substring(0,70)) + '</div>' : '') +
+      '</div>' +
+      '<span class="tag t-' + (ex.tag||'mec') + '">' + (tl[ex.tag]||ex.tag) + '</span>';
+    var del = document.createElement('button');
+    del.className = 'btn-del';
+    del.textContent = 'Elimina';
+    del.onclick = (function(id) { return function() { delEx(id); }; })(ex.id);
+    row.appendChild(del);
+    c.appendChild(row);
+  });
+}
+
+function saveEx() {
+  var n = document.getElementById('exf-n').value.trim();
+  var t = document.getElementById('exf-t').value;
+  var no = document.getElementById('exf-no').value.trim();
+  var msg = document.getElementById('exf-msg');
+  if (!n) { fmsg(msg, 'Inserisci il nome', false); return; }
+  var tl = {mec:'Meccanico',met:'Metabolico',pre:'Pre-Attivazione',str:'Stretching'};
+  sb.from('exercises').insert({ name: n, tag: t, tag_label: tl[t], notes: no||null, created_by: ME.id })
+    .then(function(r) {
+      if (r.error) { fmsg(msg, r.error.message, false); return; }
+      fmsg(msg, 'Salvato!', true);
+      document.getElementById('exf-n').value = '';
+      document.getElementById('exf-no').value = '';
+      toggleEl('ex-form');
+      allEx = []; loadEx();
+    }).catch(function() { fmsg(msg, 'Errore di rete', false); });
+}
+
+function delEx(id) {
+  if (!confirm('Eliminare?')) return;
+  sb.from('exercises').delete().eq('id', id)
+    .then(function() { allEx = []; loadEx(); }).catch(function(){});
+}
+
+// ── SESSIONS ──────────────────────────────────────────────────
+function loadSess() {
+  sb.from('sessions')
+    .select('*, session_exercises(id, sort_order, sets, reps, rest_sec, notes, exercises(id, name, tag, tag_label))')
+    .order('name')
+    .then(function(r) { allSess = r.data || []; renderSess(); }).catch(function(){});
+}
+
+function renderSess() {
+  var c = document.getElementById('sess-list');
+  c.innerHTML = '';
+  if (!allSess.length) { c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--mu2);font-size:.82rem">Nessuna sessione.</div>'; return; }
+  var tl = {gym:'Palestra',bike:'Bici',rest:'Riposo'};
+  allSess.forEach(function(sess) { c.appendChild(buildSessCard(sess, tl)); });
+}
+
+function buildSessCard(sess, tl) {
+  var sexs = (sess.session_exercises || []).sort(function(a,b){return a.sort_order-b.sort_order;});
+  var card = document.createElement('div');
+  card.className = 'card';
+  card.id = 'sc-' + sess.id;
+
+  var head = document.createElement('div');
+  head.className = 'card-head';
+  head.innerHTML =
+    '<div style="flex:1">' +
+      '<div style="font-weight:600;font-size:.88rem">' + escHtml(sess.name) + '</div>' +
+      '<div style="font-size:.7rem;color:var(--mu2);margin-top:2px">' + sexs.length + ' esercizi &bull; ' + (tl[sess.session_type]||sess.session_type) + '</div>' +
+    '</div>' +
+    '<span style="color:var(--mu);font-size:1.1rem">&#8250;</span>';
+
+  var body = document.createElement('div');
+  body.className = 'card-body';
+
+  // Exercise list
+  var exWrap = document.createElement('div');
+  exWrap.id = 'sex-' + sess.id;
+  sexs.forEach(function(se, idx) { exWrap.appendChild(buildSessExRow(se, idx, sess.id)); });
+  if (!sexs.length) {
+    var emp = document.createElement('div');
+    emp.style.cssText = 'font-size:.75rem;color:var(--mu2);padding:6px 0 10px';
+    emp.textContent = 'Nessun esercizio ancora.';
+    exWrap.appendChild(emp);
+  }
+
+  // Add exercise
+  var addRow = document.createElement('div');
+  addRow.style.cssText = 'display:flex;gap:7px;margin-top:10px;flex-wrap:wrap';
+
+  var sel = document.createElement('select');
+  sel.className = 'inp inp-sm';
+  sel.id = 'aes-' + sess.id;
+  sel.style.flex = '1';
+  sel.style.minWidth = '150px';
+  var o0 = document.createElement('option'); o0.value=''; o0.textContent='-- Esercizio --'; sel.appendChild(o0);
+  allEx.forEach(function(ex) {
+    var o = document.createElement('option'); o.value = ex.id; o.textContent = ex.name; sel.appendChild(o);
+  });
+
+  var setsI = document.createElement('input');
+  setsI.className = 'inp inp-sm'; setsI.id = 'aes-sets-'+sess.id; setsI.placeholder='Serie'; setsI.style.width='65px';
+
+  var repsI = document.createElement('input');
+  repsI.className = 'inp inp-sm'; repsI.id = 'aes-reps-'+sess.id; repsI.placeholder='Reps'; repsI.style.width='75px';
+
+  var restI = document.createElement('input');
+  restI.className = 'inp inp-sm'; restI.id = 'aes-rest-'+sess.id; restI.placeholder='Rec(s)'; restI.style.width='70px';
+
+  var addB = document.createElement('button');
+  addB.className = 'btn-red'; addB.style.cssText='width:auto;padding:8px 14px;margin-top:0';
+  addB.textContent = '+';
+  addB.onclick = (function(sid) { return function() { addExToSess(sid); }; })(sess.id);
+
+  addRow.appendChild(sel); addRow.appendChild(setsI); addRow.appendChild(repsI); addRow.appendChild(restI); addRow.appendChild(addB);
+
+  // Delete session
+  var delRow = document.createElement('div');
+  delRow.style.cssText='display:flex;justify-content:flex-end;margin-top:10px';
+  var delB = document.createElement('button'); delB.className='btn-del'; delB.textContent='Elimina sessione';
+  delB.onclick = (function(sid) { return function() { delSess(sid); }; })(sess.id);
+  delRow.appendChild(delB);
+
+  body.appendChild(exWrap);
+  body.appendChild(addRow);
+  body.appendChild(delRow);
+  head.onclick = function() { card.classList.toggle('open'); };
+  card.appendChild(head); card.appendChild(body);
+  return card;
+}
+
+function buildSessExRow(se, idx, sessId) {
+  var row = document.createElement('div');
+  row.id = 'ser-' + se.id;
+  row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bdr)';
+  row.innerHTML =
+    '<span style="color:var(--mu2);font-size:.7rem;min-width:18px">' + (idx+1) + '.</span>' +
+    '<span style="flex:1;font-size:.82rem">' + escHtml(se.exercises ? se.exercises.name : '?') + '</span>' +
+    '<span style="font-size:.7rem;color:var(--mu2)">' + (se.sets||'3') + 'x' + (se.reps||'8-10') + '</span>' +
+    '<span style="font-size:.7rem;color:var(--mu2)">' + (se.rest_sec ? se.rest_sec + 's' : '') + '</span>';
+  var del = document.createElement('button'); del.className='btn-del'; del.textContent='x';
+  del.onclick = (function(id, sid) { return function() { delSessEx(id, sid); }; })(se.id, sessId);
+  row.appendChild(del);
+  return row;
+}
+
+function saveSess() {
+  var n = document.getElementById('sff-n').value.trim();
+  var t = document.getElementById('sff-t').value;
+  var msg = document.getElementById('sff-msg');
+  if (!n) { fmsg(msg, 'Inserisci nome', false); return; }
+  sb.from('sessions').insert({ name: n, session_type: t, created_by: ME.id })
+    .then(function(r) {
+      if (r.error) { fmsg(msg, r.error.message, false); return; }
+      fmsg(msg, 'Creata!', true);
+      document.getElementById('sff-n').value = '';
+      toggleEl('sf-form');
+      allSess = []; loadSess();
+    }).catch(function() { fmsg(msg, 'Errore', false); });
+}
+
+function addExToSess(sessId) {
+  var sel  = document.getElementById('aes-' + sessId);
+  var exId = sel ? parseInt(sel.value) : 0;
+  if (!exId) return;
+  var sets = document.getElementById('aes-sets-'+sessId).value.trim() || '3';
+  var reps = document.getElementById('aes-reps-'+sessId).value.trim() || '8-10';
+  var rest = parseInt(document.getElementById('aes-rest-'+sessId).value) || 120;
+  var existing = 0;
+  allSess.forEach(function(s) { if (s.id === sessId) existing = (s.session_exercises||[]).length; });
+  sb.from('session_exercises').insert({ session_id: sessId, exercise_id: exId, sort_order: existing, sets: sets, reps: reps, rest_sec: rest })
+    .then(function(r) { if (!r.error) { allSess = []; loadSess(); } }).catch(function(){});
+}
+
+function delSessEx(seId, sessId) {
+  sb.from('session_exercises').delete().eq('id', seId)
+    .then(function() { allSess = []; loadSess(); }).catch(function(){});
+}
+
+function delSess(id) {
+  if (!confirm('Eliminare sessione e tutti i suoi esercizi?')) return;
+  sb.from('sessions').delete().eq('id', id)
+    .then(function() { allSess = []; loadSess(); }).catch(function(){});
+}
+
+// ── BLOCKS ────────────────────────────────────────────────────
+function loadBlk() {
+  sb.from('blocks').select('*, week_templates(*, week_days(*, sessions(id,name,session_type)))').order('sort_order')
+    .then(function(r) { allBlk = r.data || []; renderBlk(); }).catch(function(){});
+}
+
+function renderBlk() {
+  var c = document.getElementById('blk-list');
+  c.innerHTML = '';
+  if (!allBlk.length) { c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--mu2);font-size:.82rem">Nessun blocco. Creane uno.</div>'; return; }
+  allBlk.forEach(function(blk) { c.appendChild(buildBlkCard(blk)); });
+}
+
+function buildBlkCard(blk) {
+  var weeks = (blk.week_templates || []).sort(function(a,b){return a.sort_order-b.sort_order;});
+  var card = document.createElement('div');
+  card.className = 'card';
+
+  var head = document.createElement('div');
+  head.className = 'card-head';
+  head.innerHTML =
+    '<div style="flex:1">' +
+      '<div style="font-weight:700;font-size:.9rem">' + escHtml(blk.name) + '</div>' +
+      '<div style="font-size:.7rem;color:var(--mu2);margin-top:2px">' + (blk.description||'') + ' &bull; ' + weeks.length + ' settimane tipo</div>' +
+    '</div>' +
+    '<span style="color:var(--mu);font-size:1.1rem">&#8250;</span>';
+  head.onclick = function() { card.classList.toggle('open'); };
+
+  var body = document.createElement('div');
+  body.className = 'card-body';
+
+  // Weeks
+  var wkLabel = document.createElement('div');
+  wkLabel.className = 'sec-label';
+  wkLabel.textContent = 'Settimane tipo';
+  body.appendChild(wkLabel);
+
+  weeks.forEach(function(wk) {
+    body.appendChild(buildWeekRow(wk, blk.id));
+  });
+
+  // Add week
+  var addWkBtn = document.createElement('button');
+  addWkBtn.className = 'btn-out';
+  addWkBtn.style.cssText = 'width:100%;margin-top:8px';
+  addWkBtn.textContent = '+ Aggiungi settimana tipo';
+  addWkBtn.onclick = (function(bid) { return function() { addWeek(bid); }; })(blk.id);
+
+  // Delete block
+  var delBlkBtn = document.createElement('button');
+  delBlkBtn.className = 'btn-del';
+  delBlkBtn.style.cssText = 'width:100%;margin-top:6px';
+  delBlkBtn.textContent = 'Elimina blocco';
+  delBlkBtn.onclick = (function(id) { return function() { delBlk(id); }; })(blk.id);
+
+  body.appendChild(addWkBtn);
+  body.appendChild(delBlkBtn);
+  card.appendChild(head);
+  card.appendChild(body);
+  return card;
+}
+
+function buildWeekRow(wk, blkId) {
+  var days = (wk.week_days || []).sort(function(a,b){return a.day_of_week-b.day_of_week;});
+  var wrap = document.createElement('div');
+  wrap.style.cssText='background:var(--s3);border-radius:10px;padding:10px 12px;margin-bottom:8px;border:1px solid var(--bdr)';
+
+  var wtypes = {blast:'&#9889;',deload:'&#128164;',taper:'&#127987;',test:'&#127919;'};
+  var wtitle = document.createElement('div');
+  wtitle.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+  wtitle.innerHTML =
+    '<span style="font-weight:700;font-size:.85rem;flex:1">' + (wtypes[wk.week_type]||'') + ' ' + escHtml(wk.name) + '</span>';
+
+  var delWk = document.createElement('button');
+  delWk.className = 'btn-del';
+  delWk.textContent = 'x';
+  delWk.onclick = (function(id) { return function() { delWeek(id, blkId); }; })(wk.id);
+  wtitle.appendChild(delWk);
+  wrap.appendChild(wtitle);
+
+  // 7-day grid
+  var grid = document.createElement('div');
+  grid.className = 'week-grid';
+  for (var d = 1; d <= 7; d++) {
+    var dayData = null;
+    days.forEach(function(dd) { if (dd.day_of_week === d) dayData = dd; });
+    var cell = document.createElement('div');
+    var sessType = dayData && dayData.sessions ? dayData.sessions.session_type : 'rest';
+    cell.className = 'day-cell' + (dayData && dayData.sessions ? (sessType === 'bike' ? ' has-bike' : ' has-sess') : ' has-rest');
+    cell.innerHTML =
+      '<div class="day-name">' + DAY_NAMES[d-1] + '</div>' +
+      '<div class="day-sess">' + (dayData && dayData.sessions ? escHtml(dayData.sessions.name) : '') + '</div>';
+    cell.onclick = (function(dayNum, wkId, dd) {
+      return function() { editDay(dayNum, wkId, dd); };
+    })(d, wk.id, dayData);
+    grid.appendChild(cell);
+  }
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+function editDay(dayNum, wkId, existing) {
+  var dayName = DAY_NAMES[dayNum-1];
+  if (allSess.length === 0) { alert('Prima carica le sessioni (tab Sessioni).'); return; }
+  var opts = '0. Riposo / nessuna sessione\n';
+  allSess.forEach(function(s, i) { opts += (i+1) + '. ' + s.name + '\n'; });
+  var choice = prompt(dayName + ' — Assegna sessione:\n\n' + opts + '\nNumero:');
+  if (choice === null) return;
+  var idx = parseInt(choice);
+  if (isNaN(idx)) return;
+  var sessionId = idx === 0 ? null : (allSess[idx-1] ? allSess[idx-1].id : null);
+  if (existing) {
+    sb.from('week_days').update({ session_id: sessionId }).eq('id', existing.id)
+      .then(function() { allBlk = []; loadBlk(); }).catch(function(){});
+  } else {
+    sb.from('week_days').insert({ week_template_id: wkId, day_of_week: dayNum, session_id: sessionId })
+      .then(function() { allBlk = []; loadBlk(); }).catch(function(){});
+  }
+}
+
+function saveBlk() {
+  var n = document.getElementById('blkf-n').value.trim();
+  var d = document.getElementById('blkf-d').value.trim();
+  var msg = document.getElementById('blkf-msg');
+  if (!n) { fmsg(msg, 'Inserisci nome', false); return; }
+  var order = allBlk.length;
+  sb.from('blocks').insert({ name: n, description: d||null, sort_order: order, created_by: ME.id })
+    .then(function(r) {
+      if (r.error) { fmsg(msg, r.error.message, false); return; }
+      fmsg(msg, 'Blocco creato!', true);
+      document.getElementById('blkf-n').value = '';
+      document.getElementById('blkf-d').value = '';
+      toggleEl('blk-form');
+      allBlk = []; loadBlk();
+    }).catch(function() { fmsg(msg, 'Errore', false); });
+}
+
+function addWeek(blkId) {
+  var n = prompt('Nome settimana tipo (es. "Settimana A — Blast"):');
+  if (!n) return;
+  var typeOpts = '1. blast (normale)\n2. deload (scarico)\n3. taper (avvicinamento gara)\n4. test (test massimali)';
+  var tc = prompt('Tipo settimana:\n\n' + typeOpts + '\n\nNumero:') || '1';
+  var types = ['blast','deload','taper','test'];
+  var wtype = types[parseInt(tc)-1] || 'blast';
+  var existing = 0;
+  allBlk.forEach(function(b) { if (b.id === blkId) existing = (b.week_templates||[]).length; });
+  sb.from('week_templates').insert({ block_id: blkId, name: n, week_type: wtype, sort_order: existing })
+    .then(function(r) { if (!r.error) { allBlk = []; loadBlk(); } else alert(r.error.message); }).catch(function(){});
+}
+
+function delWeek(id, blkId) {
+  if (!confirm('Eliminare questa settimana tipo e tutti i giorni configurati?')) return;
+  sb.from('week_templates').delete().eq('id', id)
+    .then(function() { allBlk = []; loadBlk(); }).catch(function(){});
+}
+
+function delBlk(id) {
+  if (!confirm('Eliminare questo blocco e tutte le sue settimane?')) return;
+  sb.from('blocks').delete().eq('id', id)
+    .then(function() { allBlk = []; loadBlk(); }).catch(function(){});
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function fmsg(el, text, ok) {
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.background = ok ? 'var(--gdim)' : 'var(--rdim)';
+  el.style.color = ok ? 'var(--grn)' : '#ff6b6b';
+  setTimeout(function() { el.style.display = 'none'; }, 3000);
+}
+
+function fmtDate(iso) {
+  var d = new Date(iso);
+  return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}) + ' ' +
+         d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function doLogout() {
+  sb.auth.signOut().then(function() { location.href = 'index.html'; }).catch(function() { location.href = 'index.html'; });
+}
+
+boot();
+</script>
+
+<!-- ── ASSIGN MODAL ── -->
+<div id="assign-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center" onclick="closeAssignModal()">
+  <div id="assign-panel" onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 16px 32px;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.1em;color:#E8112A">ASSEGNA PROGRAMMA</div>
+      <button onclick="closeAssignModal()" style="background:none;border:none;color:#555;font-size:1.2rem;cursor:pointer">&#10005;</button>
+    </div>
+    <div id="assign-athlete-name" style="font-size:.75rem;color:#888;margin-bottom:14px"></div>
+
+    <div style="font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#555;margin-bottom:8px">BLOCCO</div>
+    <select id="assign-blk-sel" class="inp" style="margin-bottom:14px" onchange="onBlkChange()">
+      <option value="">— Seleziona blocco —</option>
+    </select>
+
+    <div style="font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#555;margin-bottom:8px">SETTIMANA CORRENTE</div>
+    <select id="assign-wk-sel" class="inp" style="margin-bottom:20px">
+      <option value="">— Prima seleziona blocco —</option>
+    </select>
+
+    <button class="btn-red" id="assign-confirm-btn" onclick="confirmAssign()">Assegna</button>
+    <div id="assign-msg" style="display:none;margin-top:10px;font-size:.78rem;padding:8px 12px;border-radius:8px"></div>
+  </div>
+</div>
+
+</body>
+</html>
