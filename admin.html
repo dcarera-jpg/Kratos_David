@@ -348,7 +348,7 @@ function aiGenerate() {
     ].join(' ')
     var userMsg = 'Programma da convertire in JSON: ' + prompt;
 
-    fetch('https://kratos-ai.dcarera.workers.dev/', {
+    fetch('https://kratos-ai.dcarera.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -362,7 +362,7 @@ function aiGenerate() {
     .then(function(data) {
       btn.disabled = false;
       btn.textContent = '⚡ Genera programma';
-      if (!data.content || !data.content[0]) { aiSetStatus('Errore risposta AI.', 'err'); return; }
+      if (!data.content || !data.content[0]) { aiSetStatus('Errore risposta AI: ' + JSON.stringify(data).substring(0,300), 'err'); return; }
       var raw = data.content[0].text.trim();
       // Strip markdown fences if present
       raw = raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
