@@ -347,55 +347,63 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);font-size:15px;
   </button>
 </nav>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────────────
-const SUPABASE_URL = 'https://tzkokgpxqjeyuvyvmqtt.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6a29rZ3B4cWpleXV2eXZtcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjg2ODEsImV4cCI6MjA4ODg0NDY4MX0.sIqJgyh1bAsKNHlFU5Q7LgpaoEJrZlgMlIH4EQx0hyo';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var SUPABASE_URL = 'https://tzkokgpxqjeyuvyvmqtt.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6a29rZ3B4cWpleXV2eXZtcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjg2ODEsImV4cCI6MjA4ODg0NDY4MX0.sIqJgyh1bAsKNHlFU5Q7LgpaoEJrZlgMlIH4EQx0hyo';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ─── STATE ───────────────────────────────────────────────────────────
-let currentUser = null;
-let currentProfile = null;
-let currentProgram = null;  // { weeks: [...] }
-let currentWeekIdx = 0;
-let currentDayIdx = null;
-let currentView = 'piano';
-let timerSecs = 0, timerRunning = false, timerInterval = null, activePreset = null;
-const doneMap = {};  // "weekIdx-dayIdx-part-exIdx" → true
+var currentUser = null;
+var currentProfile = null;
+var currentProgram = null;
+var currentWeekIdx = 0;
+var currentDayIdx = null;
+var currentView = 'piano';
+var timerSecs = 0, timerRunning = false, timerInterval = null, activePreset = null;
+var doneMap = {};
 
 // ─── BOOT ────────────────────────────────────────────────────────────
-async function boot() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
+function boot() {
+  sb.auth.getSession().then(function(res) {
+    if (!res.data || !res.data.session) {
+      window.location.href = 'index.html';
+      return;
+    }
+    currentUser = res.data.session.user;
 
-  currentUser = session.user;
+    sb.from('profiles').select('*').eq('id', currentUser.id).single()
+      .then(function(r) {
+        currentProfile = r.data || {};
+        if (currentProfile.role === 'admin') {
+          window.location.href = 'admin.html';
+          return;
+        }
+        document.getElementById('userLabel').textContent =
+          currentProfile.full_name || currentUser.email;
 
-  // Load profile
-  const { data: profile } = await sb.from('profiles')
-    .select('*').eq('id', currentUser.id).single();
-  currentProfile = profile;
-
-  // Redirect admin
-  if (profile?.role === 'admin') { window.location.href = 'admin.html'; return; }
-
-  // Load program assigned to this athlete
-  const { data: prog } = await sb.from('programs')
-    .select('*').eq('id', profile?.program_id).single();
-  currentProgram = prog?.data || getDefaultProgram();
-
-  // Load logbook from DB
-  const { data: logs } = await sb.from('logbook')
-    .select('*').eq('athlete_id', currentUser.id);
-  (logs || []).forEach(l => { doneMap[l.key] = l; });
-
-  // Update UI
-  document.getElementById('userLabel').textContent = profile?.full_name || currentUser.email;
-  document.getElementById('loadingScreen').style.display = 'none';
-
-  renderWeekStrip();
-  renderDayList();
-  loadMessages();
+        // Load logbook
+        sb.from('logbook').select('*').eq('athlete_id', currentUser.id)
+          .then(function(lr) {
+            (lr.data || []).forEach(function(l) { doneMap[l.key] = l; });
+            currentProgram = getDefaultProgram();
+            document.getElementById('loadingScreen').style.display = 'none';
+            renderWeekStrip();
+            renderDayList();
+            loadMessages();
+          }).catch(function() {
+            currentProgram = getDefaultProgram();
+            document.getElementById('loadingScreen').style.display = 'none';
+            renderWeekStrip();
+            renderDayList();
+          });
+      }).catch(function() {
+        window.location.href = 'index.html';
+      });
+  }).catch(function() {
+    window.location.href = 'index.html';
+  });
 }
 
 // ─── PROGRAM DEFAULT (se non assegnato) ──────────────────────────────
@@ -463,63 +471,71 @@ function getDefaultProgram() {
 
 // ─── RENDER WEEK STRIP ───────────────────────────────────────────────
 function renderWeekStrip() {
-  const weeks = currentProgram.weeks;
-  const c = document.getElementById('weekStrip');
+  var weeks = currentProgram.weeks;
+  var c = document.getElementById('weekStrip');
   c.innerHTML = '';
-  weeks.forEach((w, i) => {
-    const chip = document.createElement('div');
-    chip.className = 'week-chip' + (w.type === 'deload' ? ' deload' : '') + (i === currentWeekIdx ? ' active' : '');
-    chip.innerHTML = `<span class="wc-num">${w.phase.split('·')[0].trim()}</span><span class="wc-label">${w.label}</span>`;
-    chip.onclick = () => { currentWeekIdx = i; renderWeekStrip(); renderDayList(); };
-    c.appendChild(chip);
-  });
-  const w = weeks[currentWeekIdx];
-  document.getElementById('phasePill').textContent = w.phase;
+  for (var i = 0; i < weeks.length; i++) {
+    (function(w, idx) {
+      var chip = document.createElement('div');
+      chip.className = 'week-chip' + (w.type === 'deload' ? ' deload' : '') + (idx === currentWeekIdx ? ' active' : '');
+      chip.innerHTML = '<span class="wc-num">' + w.phase.split('\u00b7')[0].trim() + '</span><span class="wc-label">' + w.label + '</span>';
+      chip.onclick = function() { currentWeekIdx = idx; renderWeekStrip(); renderDayList(); };
+      c.appendChild(chip);
+    })(weeks[i], i);
+  }
+  document.getElementById('phasePill').textContent = weeks[currentWeekIdx].phase;
 }
 
 // ─── RENDER DAY LIST ─────────────────────────────────────────────────
 function renderDayList() {
-  const week = currentProgram.weeks[currentWeekIdx];
-  const c = document.getElementById('dayList');
+  var week = currentProgram.weeks[currentWeekIdx];
+  var c = document.getElementById('dayList');
   c.innerHTML = '';
 
-  const lbl = document.createElement('div');
+  var lbl = document.createElement('div');
   lbl.className = 'section-label';
-  lbl.textContent = week.label + ' — ' + week.phase;
+  lbl.textContent = week.label + ' \u2014 ' + week.phase;
   c.appendChild(lbl);
 
-  week.days.forEach((d, i) => {
-    const isDone  = d.note?.startsWith('✅');
-    const isToday = d.note === 'OGGI';
-    const hasGym  = d.am?.type==='gym'  || d.pm?.type==='gym';
-    const hasBike = d.am?.type==='bike' || d.pm?.type==='bike';
+  for (var i = 0; i < week.days.length; i++) {
+    (function(d, idx) {
+      var isDone  = d.note && d.note.indexOf('\u2705') === 0;
+      var isToday = d.note === 'OGGI';
+      var amType  = d.am ? d.am.type : 'rest';
+      var pmType  = d.pm ? d.pm.type : 'rest';
+      var hasGym  = amType === 'gym'  || pmType === 'gym';
+      var hasBike = amType === 'bike' || pmType === 'bike';
 
-    const row = document.createElement('div');
-    row.className = 'day-row fade-in';
-    row.style.animationDelay = (i*0.04)+'s';
-    if (isDone) row.style.opacity = '0.5';
-    if (isToday) row.style.borderColor = 'var(--bike)';
+      var row = document.createElement('div');
+      row.className = 'day-row fade-in';
+      row.style.animationDelay = (idx * 0.04) + 's';
+      if (isDone)  row.style.opacity = '0.5';
+      if (isToday) row.style.borderColor = 'var(--bike)';
 
-    let sessHTML = '';
-    if (d.am?.type==='gym')  sessHTML += `<div class="dr-sess">${d.am.ref}</div>`;
-    if (d.am?.type==='bike') sessHTML += `<div class="dr-sess bike">🚵 ${d.am.ref}</div>`;
-    if (d.pm?.type==='gym')  sessHTML += `<div class="dr-sess">${d.pm.ref}</div>`;
-    if (d.pm?.type==='bike') sessHTML += `<div class="dr-sess bike">🚵 ${d.pm.ref}</div>`;
-    if (!hasGym && !hasBike) sessHTML = `<div class="dr-sess rest">Riposo</div>`;
+      var sessHTML = '';
+      if (amType === 'gym')  sessHTML += '<div class="dr-sess">'  + d.am.ref + '</div>';
+      if (amType === 'bike') sessHTML += '<div class="dr-sess bike">\uD83D\uDEB5 ' + d.am.ref + '</div>';
+      if (pmType === 'gym')  sessHTML += '<div class="dr-sess">'  + d.pm.ref + '</div>';
+      if (pmType === 'bike') sessHTML += '<div class="dr-sess bike">\uD83D\uDEB5 ' + d.pm.ref + '</div>';
+      if (!hasGym && !hasBike) sessHTML = '<div class="dr-sess rest">Riposo</div>';
 
-    const badge = isDone
-      ? `<span style="font-size:0.65rem;color:var(--green);font-weight:700;">✅</span>`
-      : isToday
-        ? `<span style="font-size:0.65rem;color:var(--bike);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">OGGI</span>`
-        : `<span class="dr-chevron">›</span>`;
+      var badge = isDone
+        ? '<span style="font-size:0.65rem;color:var(--green);font-weight:700;">\u2705</span>'
+        : isToday
+          ? '<span style="font-size:0.65rem;color:var(--bike);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">OGGI</span>'
+          : '<span class="dr-chevron">\u203a</span>';
 
-    row.innerHTML = `
-      <div class="dr-day" style="${isToday?'color:var(--bike)':''}">${d.day.slice(0,3).toUpperCase()}</div>
-      <div class="dr-sessions">${sessHTML}</div>
-      ${badge}`;
-    row.onclick = () => openDay(i);
-    c.appendChild(row);
-  });
+      row.innerHTML =
+        '<div class="dr-day" style="' + (isToday ? 'color:var(--bike)' : '') + '">' +
+          d.day.slice(0,3).toUpperCase() +
+        '</div>' +
+        '<div class="dr-sessions">' + sessHTML + '</div>' +
+        badge;
+
+      row.onclick = function() { openDay(idx); };
+      c.appendChild(row);
+    })(week.days[i], i);
+  }
 }
 
 // ─── OPEN DAY ────────────────────────────────────────────────────────
@@ -559,275 +575,292 @@ function renderSession(container, sess, label, dayIdx, part) {
   block.appendChild(lbl);
 
   if (sess.type === 'rest') {
-    const c = document.createElement('div');
-    c.className = 'card';
-    c.innerHTML = `<div class="card-head"><div class="card-icon">💤</div>
-      <div class="card-title" style="color:var(--muted2)">Riposo</div>
-      <span class="card-badge badge-muted">Recovery</span></div>`;
-    block.appendChild(c);
+    var rc = document.createElement('div');
+    rc.className = 'card';
+    rc.innerHTML = '<div class="card-head"><div class="card-icon">\uD83D\uDCA4</div>' +
+      '<div class="card-title" style="color:var(--muted2)">Riposo</div>' +
+      '<span class="card-badge badge-muted">Recovery</span></div>';
+    block.appendChild(rc);
     container.appendChild(block);
     return;
   }
 
   if (sess.type === 'gym') {
-    const hdr = document.createElement('div');
+    var hdr = document.createElement('div');
     hdr.className = 'card';
-    hdr.innerHTML = `<div class="card-head"><div class="card-icon">🏋️</div>
-      <div class="card-title">${sess.ref}</div>
-      <span class="card-badge badge-red">GYM</span></div>`;
+    hdr.innerHTML = '<div class="card-head"><div class="card-icon">\uD83C\uDFCB\uFE0F</div>' +
+      '<div class="card-title">' + sess.ref + '</div>' +
+      '<span class="card-badge badge-red">GYM</span></div>';
     block.appendChild(hdr);
 
-    // exercises from DB or fallback to inline note
-    const exList = getExercises(sess.ref);
+    var exList = getExercises(sess.ref);
     if (exList.length) {
-      const prog = document.createElement('div');
+      var prog = document.createElement('div');
       prog.className = 'progress-row';
-      exList.forEach((_, ei) => {
-        const dot = document.createElement('div');
-        dot.className = 'prog-pill' + (doneMap[`${currentWeekIdx}-${dayIdx}-${part}-${ei}`] ? ' done' : '');
-        dot.id = `dot-${dayIdx}-${part}-${ei}`;
+      for (var ei2 = 0; ei2 < exList.length; ei2++) {
+        var dot = document.createElement('div');
+        var dkey = currentWeekIdx + '-' + dayIdx + '-' + part + '-' + ei2;
+        dot.className = 'prog-pill' + (doneMap[dkey] ? ' done' : '');
+        dot.id = 'dot-' + dayIdx + '-' + part + '-' + ei2;
         prog.appendChild(dot);
-      });
+      }
       block.appendChild(prog);
-
-      exList.forEach((ex, ei) => renderExercise(block, ex, dayIdx, part, ei));
+      for (var ei3 = 0; ei3 < exList.length; ei3++) {
+        renderExercise(block, exList[ei3], dayIdx, part, ei3);
+      }
     }
   }
 
   if (sess.type === 'bike') {
-    const c = document.createElement('div');
-    c.className = 'card';
-    c.innerHTML = `<div class="card-head"><div class="card-icon">🚵</div>
-      <div class="card-title">${sess.ref}</div>
-      <span class="card-badge badge-bike">BICI</span></div>
-      <div class="card-body" style="padding-top:12px;">
-        <div style="font-size:0.8rem;color:var(--muted2);line-height:1.7;">
-          ${getBikeDesc(sess.ref)}
-        </div>
-      </div>`;
-    block.appendChild(c);
+    var bc = document.createElement('div');
+    bc.className = 'card';
+    bc.innerHTML = '<div class="card-head"><div class="card-icon">\uD83D\uDEB5</div>' +
+      '<div class="card-title">' + sess.ref + '</div>' +
+      '<span class="card-badge badge-bike">BICI</span></div>' +
+      '<div class="card-body" style="padding-top:12px;">' +
+        '<div style="font-size:0.8rem;color:var(--muted2);line-height:1.7;">' +
+          getBikeDesc(sess.ref) +
+        '</div>' +
+      '</div>';
+    block.appendChild(bc);
   }
 
   container.appendChild(block);
 }
 
 function renderExercise(container, ex, dayIdx, part, ei) {
-  const key = `${currentWeekIdx}-${dayIdx}-${part}-${ei}`;
-  const log = doneMap[key];
-  const isDone = log?.done;
+  var key    = currentWeekIdx + '-' + dayIdx + '-' + part + '-' + ei;
+  var log    = doneMap[key];
+  var isDone = log && log.done;
+  var tagMap = {mec:'tag-mec', met:'tag-met', pre:'tag-pre', str:'tag-str'};
+  var tagClass = tagMap[ex.tag] || 'tag-met';
 
-  const item = document.createElement('div');
-  item.className = 'ex-item' + (isDone?' done':'');
-  item.id = `ex-${dayIdx}-${part}-${ei}`;
+  var item = document.createElement('div');
+  item.className = 'ex-item' + (isDone ? ' done' : '');
+  item.id = 'ex-' + dayIdx + '-' + part + '-' + ei;
 
-  const tagClass = {mec:'tag-mec',met:'tag-met',pre:'tag-pre',str:'tag-str'}[ex.tag]||'tag-met';
+  var chipsHTML = '';
+  for (var ci = 0; ci < ex.chips.length; ci++) {
+    chipsHTML += '<div class="rep-chip">' +
+      '<span class="rc-label">' + ex.chips[ci].l + '</span>' +
+      '<span class="rc-val">' + ex.chips[ci].v + '</span>' +
+      '</div>';
+  }
 
-  item.innerHTML = `
-    <div class="ex-header" onclick="toggleEx('${dayIdx}','${part}',${ei})">
-      <div class="ex-check">${isDone?'✓':''}</div>
-      <div class="ex-info">
-        <div class="ex-name">${ex.name}</div>
-        <span class="ex-tag ${tagClass}">${ex.tagLabel}</span>
-      </div>
-      <div class="ex-sets-pill">${ex.sets}×</div>
-    </div>
-    <div class="ex-body" id="exb-${dayIdx}-${part}-${ei}">
-      <div class="rep-chips">
-        ${ex.chips.map(ch=>`<div class="rep-chip"><span class="rc-label">${ch.l}</span><span class="rc-val">${ch.v}</span></div>`).join('')}
-      </div>
-      <div class="ex-inst">${ex.inst}</div>
-      <div class="log-row">
-        <div class="log-group">
-          <label>S1</label>
-          <input type="number" class="log-input" inputmode="decimal" placeholder="kg"
-            id="k1-${dayIdx}-${part}-${ei}" value="${log?.s1_kg||''}">
-          <span class="log-unit">kg ×</span>
-          <input type="number" class="log-input" inputmode="numeric" placeholder="rep"
-            id="r1-${dayIdx}-${part}-${ei}" value="${log?.s1_reps||''}">
-        </div>
-        <div class="log-group">
-          <label>S2</label>
-          <input type="number" class="log-input" inputmode="decimal" placeholder="kg"
-            id="k2-${dayIdx}-${part}-${ei}" value="${log?.s2_kg||''}">
-          <span class="log-unit">kg ×</span>
-          <input type="number" class="log-input" inputmode="numeric" placeholder="rep"
-            id="r2-${dayIdx}-${part}-${ei}" value="${log?.s2_reps||''}">
-        </div>
-      </div>
-      <button class="save-log-btn" id="savebtn-${dayIdx}-${part}-${ei}"
-        onclick="saveLog('${dayIdx}','${part}',${ei})">💾 Salva logbook</button>
-      <button class="done-btn ${isDone?'marked':''}" 
-        onclick="toggleDone('${dayIdx}','${part}',${ei})">
-        ${isDone?'✓ Completato':'Segna come fatto ✓'}
-      </button>
-    </div>`;
+  item.innerHTML =
+    '<div class="ex-header" onclick="toggleEx(\'' + dayIdx + '\',\'' + part + '\',' + ei + ')">' +
+      '<div class="ex-check">' + (isDone ? '\u2713' : '') + '</div>' +
+      '<div class="ex-info">' +
+        '<div class="ex-name">' + ex.name + '</div>' +
+        '<span class="ex-tag ' + tagClass + '">' + ex.tagLabel + '</span>' +
+      '</div>' +
+      '<div class="ex-sets-pill">' + ex.sets + '\u00d7</div>' +
+    '</div>' +
+    '<div class="ex-body" id="exb-' + dayIdx + '-' + part + '-' + ei + '">' +
+      '<div class="rep-chips">' + chipsHTML + '</div>' +
+      '<div class="ex-inst">' + ex.inst + '</div>' +
+      '<div class="log-row">' +
+        '<div class="log-group"><label>S1</label>' +
+          '<input type="number" class="log-input" inputmode="decimal" placeholder="kg"' +
+            ' id="k1-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s1_kg) || '') + '">' +
+          '<span class="log-unit">kg \u00d7</span>' +
+          '<input type="number" class="log-input" inputmode="numeric" placeholder="rep"' +
+            ' id="r1-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s1_reps) || '') + '">' +
+        '</div>' +
+        '<div class="log-group"><label>S2</label>' +
+          '<input type="number" class="log-input" inputmode="decimal" placeholder="kg"' +
+            ' id="k2-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s2_kg) || '') + '">' +
+          '<span class="log-unit">kg \u00d7</span>' +
+          '<input type="number" class="log-input" inputmode="numeric" placeholder="rep"' +
+            ' id="r2-' + dayIdx + '-' + part + '-' + ei + '" value="' + ((log && log.s2_reps) || '') + '">' +
+        '</div>' +
+      '</div>' +
+      '<button class="save-log-btn" id="savebtn-' + dayIdx + '-' + part + '-' + ei + '"' +
+        ' onclick="saveLog(\'' + dayIdx + '\',\'' + part + '\',' + ei + ')">\uD83D\uDCBE Salva logbook</button>' +
+      '<button class="done-btn ' + (isDone ? 'marked' : '') + '"' +
+        ' onclick="toggleDone(\'' + dayIdx + '\',\'' + part + '\',' + ei + ')">' +
+        (isDone ? '\u2713 Completato' : 'Segna come fatto \u2713') +
+      '</button>' +
+    '</div>';
+
   container.appendChild(item);
-}
 
 // ─── LOGBOOK SAVE ────────────────────────────────────────────────────
-async function saveLog(dayIdx, part, ei) {
-  const key = `${currentWeekIdx}-${dayIdx}-${part}-${ei}`;
-  const s1kg   = document.getElementById(`k1-${dayIdx}-${part}-${ei}`)?.value;
-  const s1reps = document.getElementById(`r1-${dayIdx}-${part}-${ei}`)?.value;
-  const s2kg   = document.getElementById(`k2-${dayIdx}-${part}-${ei}`)?.value;
-  const s2reps = document.getElementById(`r2-${dayIdx}-${part}-${ei}`)?.value;
+function saveLog(dayIdx, part, ei) {
+  var key    = currentWeekIdx + '-' + dayIdx + '-' + part + '-' + ei;
+  var s1kg   = (document.getElementById('k1-'+dayIdx+'-'+part+'-'+ei)||{}).value;
+  var s1reps = (document.getElementById('r1-'+dayIdx+'-'+part+'-'+ei)||{}).value;
+  var s2kg   = (document.getElementById('k2-'+dayIdx+'-'+part+'-'+ei)||{}).value;
+  var s2reps = (document.getElementById('r2-'+dayIdx+'-'+part+'-'+ei)||{}).value;
+  var btn    = document.getElementById('savebtn-'+dayIdx+'-'+part+'-'+ei);
+  if (btn) btn.textContent = '...';
 
-  const btn = document.getElementById(`savebtn-${dayIdx}-${part}-${ei}`);
-  btn.textContent = '...';
-
-  const { error } = await sb.from('logbook').upsert({
+  sb.from('logbook').upsert({
     athlete_id: currentUser.id,
-    key, s1_kg: s1kg||null, s1_reps: s1reps||null,
+    key: key,
+    s1_kg: s1kg||null, s1_reps: s1reps||null,
     s2_kg: s2kg||null, s2_reps: s2reps||null,
-    done: doneMap[key]?.done || false,
+    done: (doneMap[key] && doneMap[key].done) || false,
     updated_at: new Date().toISOString()
-  }, { onConflict: 'athlete_id,key' });
-
-  if (!error) {
-    btn.textContent = '✓ Salvato';
-    btn.classList.add('saved');
-    doneMap[key] = { ...doneMap[key], s1_kg:s1kg, s1_reps:s1reps, s2_kg:s2kg, s2_reps:s2reps };
-    setTimeout(() => { btn.textContent = '💾 Salva logbook'; btn.classList.remove('saved'); }, 1500);
-  } else {
-    btn.textContent = '💾 Salva logbook';
-  }
+  }, { onConflict: 'athlete_id,key' }).then(function(r) {
+    if (!r.error) {
+      if (btn) { btn.textContent = '✓ Salvato'; btn.classList.add('saved'); }
+      doneMap[key] = Object.assign({}, doneMap[key],
+        {s1_kg:s1kg, s1_reps:s1reps, s2_kg:s2kg, s2_reps:s2reps});
+      setTimeout(function() {
+        if (btn) { btn.textContent = '💾 Salva logbook'; btn.classList.remove('saved'); }
+      }, 1500);
+    } else {
+      if (btn) btn.textContent = '💾 Salva logbook';
+    }
+  });
 }
 
 // ─── TOGGLE DONE ────────────────────────────────────────────────────
-async function toggleDone(dayIdx, part, ei) {
-  const key  = `${currentWeekIdx}-${dayIdx}-${part}-${ei}`;
-  const item = document.getElementById(`ex-${dayIdx}-${part}-${ei}`);
-  const btn  = item?.querySelector('.done-btn');
-  const chk  = item?.querySelector('.ex-check');
-  const dot  = document.getElementById(`dot-${dayIdx}-${part}-${ei}`);
-  const wasDone = doneMap[key]?.done;
+function toggleDone(dayIdx, part, ei) {
+  var key    = currentWeekIdx + '-' + dayIdx + '-' + part + '-' + ei;
+  var item   = document.getElementById('ex-'+dayIdx+'-'+part+'-'+ei);
+  var btn    = item ? item.querySelector('.done-btn') : null;
+  var chk    = item ? item.querySelector('.ex-check') : null;
+  var dot    = document.getElementById('dot-'+dayIdx+'-'+part+'-'+ei);
+  var wasDone = doneMap[key] && doneMap[key].done;
 
-  doneMap[key] = { ...doneMap[key], done: !wasDone };
+  doneMap[key] = Object.assign({}, doneMap[key], {done: !wasDone});
 
   if (!wasDone) {
-    item?.classList.add('done');
-    if (btn) { btn.textContent='✓ Completato'; btn.classList.add('marked'); }
-    if (chk) chk.textContent='✓';
-    if (dot) dot.classList.add('done');
-    item?.classList.remove('open');
-    document.getElementById(`exb-${dayIdx}-${part}-${ei}`)?.style && (document.getElementById(`exb-${dayIdx}-${part}-${ei}`).style.display='none');
+    if (item) item.classList.add('done');
+    if (btn)  { btn.textContent='✓ Completato'; btn.classList.add('marked'); }
+    if (chk)  chk.textContent='✓';
+    if (dot)  dot.classList.add('done');
+    if (item) item.classList.remove('open');
+    var bd = document.getElementById('exb-'+dayIdx+'-'+part+'-'+ei);
+    if (bd) bd.style.display='none';
   } else {
-    item?.classList.remove('done');
-    if (btn) { btn.textContent='Segna come fatto ✓'; btn.classList.remove('marked'); }
-    if (chk) chk.textContent='';
-    if (dot) dot.classList.remove('done');
+    if (item) item.classList.remove('done');
+    if (btn)  { btn.textContent='Segna come fatto ✓'; btn.classList.remove('marked'); }
+    if (chk)  chk.textContent='';
+    if (dot)  dot.classList.remove('done');
   }
 
-  await sb.from('logbook').upsert({
-    athlete_id: currentUser.id, key,
-    done: !wasDone, updated_at: new Date().toISOString()
-  }, { onConflict: 'athlete_id,key' });
+  sb.from('logbook').upsert({
+    athlete_id: currentUser.id,
+    key: key,
+    done: !wasDone,
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'athlete_id,key' }).catch(function() {});
 }
 
 function toggleEx(dayIdx, part, ei) {
-  const body = document.getElementById(`exb-${dayIdx}-${part}-${ei}`);
-  const item = document.getElementById(`ex-${dayIdx}-${part}-${ei}`);
+  var body = document.getElementById('exb-' + dayIdx + '-' + part + '-' + ei);
+  var item = document.getElementById('ex-'  + dayIdx + '-' + part + '-' + ei);
   if (!body) return;
-  const isOpen = item.classList.contains('open');
-  document.querySelectorAll('.ex-item.open').forEach(el => {
-    el.classList.remove('open');
-    el.querySelector('.ex-body').style.display='none';
-  });
-  if (!isOpen) { item.classList.add('open'); body.style.display='block'; }
+  var isOpen = item.classList.contains('open');
+  var openItems = document.querySelectorAll('.ex-item.open');
+  for (var i = 0; i < openItems.length; i++) {
+    openItems[i].classList.remove('open');
+    var bd = openItems[i].querySelector('.ex-body');
+    if (bd) bd.style.display = 'none';
+  }
+  if (!isOpen) { item.classList.add('open'); body.style.display = 'block'; }
 }
 
 // ─── MESSAGES ────────────────────────────────────────────────────────
-async function loadMessages() {
-  const { data: msgs } = await sb.from('messages')
+function loadMessages() {
+  sb.from('messages')
     .select('*')
-    .or(`athlete_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`)
-    .order('created_at', { ascending: true });
-
-  renderMessages(msgs || []);
-
-  // Realtime subscription
-  sb.channel('messages').on('postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'messages' },
-    payload => {
-      const msg = payload.new;
-      if (msg.athlete_id === currentUser.id || msg.recipient_id === currentUser.id) {
-        appendMessage(msg);
-        scrollMsgs();
-      }
-    }
-  ).subscribe();
+    .or('athlete_id.eq.' + currentUser.id + ',recipient_id.eq.' + currentUser.id)
+    .order('created_at', { ascending: true })
+    .then(function(r) {
+      renderMessages(r.data || []);
+      // Realtime
+      sb.channel('messages').on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        function(payload) {
+          var msg = payload.new;
+          if (msg.athlete_id === currentUser.id || msg.recipient_id === currentUser.id) {
+            appendMessage(msg);
+            scrollMsgs();
+          }
+        }
+      ).subscribe();
+    }).catch(function() {});
 }
 
 function renderMessages(msgs) {
-  const list = document.getElementById('msgList');
+  var list = document.getElementById('msgList');
   list.innerHTML = '';
-  msgs.forEach(m => appendMessage(m, false));
+  for (var i = 0; i < msgs.length; i++) appendMessage(msgs[i], false);
   scrollMsgs();
 }
 
-function appendMessage(msg, scroll=true) {
-  const isCoach = msg.sender_role === 'admin';
-  const list = document.getElementById('msgList');
+function appendMessage(msg, scroll) {
+  if (scroll === undefined) scroll = true;
+  var isCoach = msg.sender_role === 'admin';
+  var list = document.getElementById('msgList');
   const div = document.createElement('div');
-  div.className = `msg-bubble ${isCoach?'coach':'athlete'}`;
-  div.innerHTML = `<div class="msg-meta">${isCoach?'👤 Coach':'Tu'} · ${fmtDate(msg.created_at)}</div>${msg.text}`;
+  div.className = 'msg-bubble ' + (isCoach ? 'coach' : 'athlete');
+  div.innerHTML = '<div class="msg-meta">' + (isCoach ? '\uD83D\uDC64 Coach' : 'Tu') + ' \u00b7 ' + fmtDate(msg.created_at) + '</div>' + msg.text;
   list.appendChild(div);
   if (scroll) scrollMsgs();
 }
 
 function scrollMsgs() {
-  const list = document.getElementById('msgList');
+  var list = document.getElementById('msgList');
   list.scrollTop = list.scrollHeight;
 }
 
-async function sendMessage() {
-  const input = document.getElementById('msgInput');
-  const text = input.value.trim();
+function sendMessage() {
+  var input = document.getElementById('msgInput');
+  var text = input ? input.value.trim() : '';
   if (!text) return;
   input.value = '';
   input.style.height = 'auto';
 
-  await sb.from('messages').insert({
+  sb.from('messages').insert({
     athlete_id: currentUser.id,
-    recipient_id: currentProfile?.coach_id || null,
-    text, sender_role: 'athlete',
+    recipient_id: (currentProfile && currentProfile.coach_id) || null,
+    text: text,
+    sender_role: 'athlete',
     created_at: new Date().toISOString()
-  });
+  }).catch(function() {});
 }
 
 function fmtDate(iso) {
-  const d = new Date(iso);
+  var d = new Date(iso);
   return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}) + ' ' +
          d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
 }
 
 // ─── VIEW SWITCHING ──────────────────────────────────────────────────
 function switchView(name) {
-  document.querySelectorAll('.view').forEach(v => {
-    v.classList.remove('active');
-    v.style.display='none';
-  });
-  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  var views = document.querySelectorAll('.view');
+  for (var i = 0; i < views.length; i++) {
+    views[i].classList.remove('active');
+    views[i].style.display = 'none';
+  }
+  var bnavs = document.querySelectorAll('.bnav-item');
+  for (var j = 0; j < bnavs.length; j++) bnavs[j].classList.remove('active');
 
-  const view = document.getElementById('view-'+name);
-  view.style.display = 'flex';
-  view.classList.add('active');
-  document.getElementById('nav-'+name)?.classList.add('active');
+  var view = document.getElementById('view-'+name);
+  if (view) { view.style.display = 'flex'; view.classList.add('active'); }
+  var nav = document.getElementById('nav-'+name);
+  if (nav) nav.classList.add('active');
   currentView = name;
   if (name === 'msg') setTimeout(scrollMsgs, 100);
 }
 
 // ─── TIMER ───────────────────────────────────────────────────────────
-function pad(n){return String(n).padStart(2,'0');}
+function pad(n){ return String(n).padStart(2,'0'); }
 function updateTimerDisplay(){
-  const d=document.getElementById('timerDisplay');
-  d.textContent=pad(Math.floor(timerSecs/60))+':'+pad(timerSecs%60);
+  var d = document.getElementById('timerDisplay');
+  d.textContent = pad(Math.floor(timerSecs/60)) + ':' + pad(timerSecs%60);
 }
 function setPreset(s){
-  resetTimer(); timerSecs=s; activePreset=s; updateTimerDisplay();
-  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
-  const i=[60,90,180,300].indexOf(s);
-  if(i>=0) document.querySelectorAll('.preset-btn')[i].classList.add('active');
+  resetTimer(); timerSecs = s; activePreset = s; updateTimerDisplay();
+  var presets = document.querySelectorAll('.preset-btn');
+  for (var i = 0; i < presets.length; i++) presets[i].classList.remove('active');
+  var idx = [60,90,180,300].indexOf(s);
+  if (idx >= 0) presets[idx].classList.add('active');
   toggleTimer();
 }
 function toggleTimer(){
@@ -854,9 +887,12 @@ function resetTimer(){
 }
 
 // ─── LOGOUT ──────────────────────────────────────────────────────────
-async function doLogout(){
-  await sb.auth.signOut();
-  window.location.href='index.html';
+function doLogout() {
+  sb.auth.signOut().then(function() {
+    window.location.href = 'index.html';
+  }).catch(function() {
+    window.location.href = 'index.html';
+  });
 }
 
 // ─── BIKE DESCRIPTIONS ───────────────────────────────────────────────
