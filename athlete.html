@@ -909,32 +909,32 @@ function getBikeDesc(ref){
 // In produzione questo viene dalla tabella "exercises" su Supabase.
 // Per ora usiamo un set inline di esempio.
 function getExercises(ref){
-  const db={
-    'PETTO — Rot 1':[
-      {name:'Smith Incline Press',sets:'2',chips:[{l:'Top Set',v:'6–8 reps'},{l:'Backoff',v:'10–12 reps'},{l:'Rec',v:'3–5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Warm-up → Top set a cedimento. Scendi 2'', esplodi su. Backoff −20%.'},
-      {name:'Distensioni Manubri 15–30°',sets:'2',chips:[{l:'Top Set',v:'6–8 reps'},{l:'Backoff',v:'12+ reps'},{l:'Rec',v:'3 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Top set esplosivo. Non rimbalzare in basso. Backoff −20%.'},
-      {name:'Machine Flyes — 3'' squeeze',sets:'2',chips:[{l:'Rep',v:'10 × 3'' sq'},{l:'Rec',v:'60'''}],tag:'met',tagLabel:'Metabolico',inst:'Carico leggero. 3'' squeeze in chiusura. Pump puro.'},
+  var db={
+    'PETTO - Rot 1':[
+      {name:'Smith Incline Press',sets:'2',chips:[{l:'Top Set',v:'6-8 reps'},{l:'Backoff',v:'10-12 reps'},{l:'Rec',v:'3-5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Warm-up. Top set a cedimento. Scendi 2 sec, esplodi su. Backoff -20%.'},
+      {name:'Distensioni Manubri 15-30 gradi',sets:'2',chips:[{l:'Top Set',v:'6-8 reps'},{l:'Backoff',v:'12+ reps'},{l:'Rec',v:'3 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Top set esplosivo. Non rimbalzare in basso. Backoff -20%.'},
+      {name:'Machine Flyes - 3 sec squeeze',sets:'2',chips:[{l:'Rep',v:'10 x 3 sec sq'},{l:'Rec',v:'60 sec'}],tag:'met',tagLabel:'Metabolico',inst:'Carico leggero. 3 sec squeeze in chiusura. Pump puro.'},
     ],
-    'BRACCIA & SPALLE — Rot 1':[
-      {name:'Smith Super Incline Press ~85°',sets:'2',chips:[{l:'Top Set',v:'6–8 reps'},{l:'Backoff',v:'10 × 5'' exc'},{l:'Rec',v:'3 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Inclinazione quasi verticale. Backoff: 5'' eccentrica ad ogni rep.'},
-      {name:'Single Delts — Muscle Round',sets:'1',chips:[{l:'Struttura',v:'6 × 4 reps'},{l:'Rec cl.',v:'10'''}],tag:'mec',tagLabel:'Meccanico',inst:'15RM. 6 cluster × 4 reps, 10'' recupero. Un braccio alla volta.'},
+    'BRACCIA & SPALLE - Rot 1':[
+      {name:'Smith Super Incline Press 85 gradi',sets:'2',chips:[{l:'Top Set',v:'6-8 reps'},{l:'Backoff',v:'10 x 5 sec exc'},{l:'Rec',v:'3 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Inclinazione quasi verticale. Backoff: 5 sec eccentrica ad ogni rep.'},
+      {name:'Single Delts - Muscle Round',sets:'1',chips:[{l:'Struttura',v:'6 x 4 reps'},{l:'Rec cl.',v:'10 sec'}],tag:'mec',tagLabel:'Meccanico',inst:'15RM. 6 cluster x 4 reps, 10 sec recupero. Un braccio alla volta.'},
       {name:'Cross Incline Laterals',sets:'3',chips:[{l:'S1',v:'10 reps'},{l:'S2',v:'8 reps'},{l:'S3',v:'20 reps'}],tag:'met',tagLabel:'Metabolico',inst:'Carichi diversi. Cedimento ogni set.'},
-      {name:'Curl ai Cavi Alti',sets:'2',chips:[{l:'Top Set',v:'8–10 reps'},{l:'Backoff',v:'15 reps'},{l:'Rec',v:'90'''}],tag:'met',tagLabel:'Metabolico',inst:'Squeeze in concentrica. Backoff −20%.'},
+      {name:'Curl ai Cavi Alti',sets:'2',chips:[{l:'Top Set',v:'8-10 reps'},{l:'Backoff',v:'15 reps'},{l:'Rec',v:'90 sec'}],tag:'met',tagLabel:'Metabolico',inst:'Squeeze in concentrica. Backoff -20%.'},
     ],
-    'SCHIENA — Rot 1':[
-      {name:'Pulley Unilaterale',sets:'2',chips:[{l:'Top Set',v:'8–10 reps'},{l:'Backoff',v:'15+ reps'},{l:'Rec',v:'2 min'}],tag:'pre',tagLabel:'Pre-Attivazione',inst:'Inclinato lateralmente. 1'' squeeze.'},
-      {name:'RDL — Stacco Romeno',sets:'2',chips:[{l:'Top Set',v:'6–8 reps'},{l:'Backoff',v:'10–12 reps'},{l:'Rec',v:'3–5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Eccentrica 2–3''. Fino a metà tibia. Femorali in stretch.'},
-      {name:'Stretchers al Pulley',sets:'2',chips:[{l:'Top Set',v:'8–10 reps'},{l:'Backoff',v:'12+5+5+5 Myo'},{l:'Rec',v:'2 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Backoff: Myo Reps. 12 → 10'' → 5 × 3.'},
+    'SCHIENA - Rot 1':[
+      {name:'Pulley Unilaterale',sets:'2',chips:[{l:'Top Set',v:'8-10 reps'},{l:'Backoff',v:'15+ reps'},{l:'Rec',v:'2 min'}],tag:'pre',tagLabel:'Pre-Attivazione',inst:'Inclinato lateralmente. 1 sec squeeze.'},
+      {name:'RDL - Stacco Romeno',sets:'2',chips:[{l:'Top Set',v:'6-8 reps'},{l:'Backoff',v:'10-12 reps'},{l:'Rec',v:'3-5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Eccentrica 2-3 sec. Fino a meta tibia. Femorali in stretch.'},
+      {name:'Stretchers al Pulley',sets:'2',chips:[{l:'Top Set',v:'8-10 reps'},{l:'Backoff',v:'12+5+5+5 Myo'},{l:'Rec',v:'2 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Backoff: Myo Reps. 12 - 10 sec - 5 x 3.'},
     ],
-    'GAMBE — Rot 1':[
-      {name:'Leg Curl Seduto — Drop',sets:'2',chips:[{l:'S1',v:'10–12 stop'},{l:'S2',v:'Drop × 3'},{l:'Rec',v:'2 min'}],tag:'pre',tagLabel:'Pre-Affaticamento',inst:'S2: 12 → −20% → 12 → −20% → 12.'},
-      {name:'Pressa',sets:'2',chips:[{l:'Top Set',v:'8–10 reps'},{l:'Backoff',v:'Max × 5'' exc'},{l:'Rec',v:'3–5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Backoff: max reps con 5'' eccentrica. Batti il record.'},
-      {name:'Smith Squat',sets:'2',chips:[{l:'S1',v:'10–12 reps'},{l:'S2',v:'6–8 reps'},{l:'Rec',v:'3–5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'S1 con elastici. S2 carico maggiore.'},
+    'GAMBE - Rot 1':[
+      {name:'Leg Curl Seduto - Drop',sets:'2',chips:[{l:'S1',v:'10-12 stop'},{l:'S2',v:'Drop x 3'},{l:'Rec',v:'2 min'}],tag:'pre',tagLabel:'Pre-Affaticamento',inst:'S2: 12 - 20% - 12 - 20% - 12.'},
+      {name:'Pressa',sets:'2',chips:[{l:'Top Set',v:'8-10 reps'},{l:'Backoff',v:'Max x 5 sec exc'},{l:'Rec',v:'3-5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'Backoff: max reps con 5 sec eccentrica. Batti il record.'},
+      {name:'Smith Squat',sets:'2',chips:[{l:'S1',v:'10-12 reps'},{l:'S2',v:'6-8 reps'},{l:'Rec',v:'3-5 min'}],tag:'mec',tagLabel:'Meccanico',inst:'S1 con elastici. S2 carico maggiore.'},
     ],
   };
-  // Fallback generico
   return db[ref] || [];
 }
+
 
 // ─── BOOT ────────────────────────────────────────────────────────────
 boot();
