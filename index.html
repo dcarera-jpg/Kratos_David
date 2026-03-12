@@ -1262,27 +1262,30 @@ function vsv(name) {
   if(name==='coach') athLoadMessages();
 }
 
-function renderNoProg() {
+function renderNoProg(reason) {
   document.getElementById('cycle-grid').innerHTML='';
+  var msg = reason ? '<div style="font-size:.7rem;color:var(--orn);margin-top:8px;word-break:break-all">Debug: '+escHtml(reason)+'</div>' : '';
   document.getElementById('day-session-area').innerHTML=
     '<div class="no-prog"><div style="font-size:2rem;margin-bottom:10px">&#128203;</div>' +
     '<div style="font-weight:700;font-size:1rem;margin-bottom:6px">Nessun programma</div>' +
-    '<div style="font-size:.8rem;color:var(--mu2)">Il tuo coach ti assegnera presto un programma.</div></div>';
+    '<div style="font-size:.8rem;color:var(--mu2)">Il tuo coach ti assegnera presto un programma.</div>' + msg + '</div>';
   document.getElementById('ath-cycle-badge').textContent='—';
   document.getElementById('ath-cycle-title').textContent='In attesa';
 }
 
 function loadCycle() {
+  var debugEl = document.getElementById('day-session-area');
+  if(debugEl) debugEl.innerHTML='<div style="padding:16px;font-size:.75rem;color:var(--orn)">Caricamento ciclo id='+myProfile.current_cycle_id+'...</div>';
   sb.from('cycles').select('*, cycle_days(*, sessions(id,name,session_type,session_exercises(id,sort_order,sets,reps,rest_sec,notes,exercises(id,name,tag,tag_label,notes))))').eq('id',myProfile.current_cycle_id).single()
     .then(function(r){
-      if(r.error||!r.data){ renderNoProg(); return; }
+      if(r.error||!r.data){ renderNoProg('loadCycle error: '+(r.error?r.error.message:'no data')); return; }
       currentCycle=r.data;
       currentCycle.cycle_days=(currentCycle.cycle_days||[]).sort(function(a,b){return a.day_number-b.day_number;});
       currentCycle.cycle_days.forEach(function(d){
         if(d.sessions) d.sessions.session_exercises=(d.sessions.session_exercises||[]).sort(function(a,b){return a.sort_order-b.sort_order;});
       });
       loadLogbookForCycle();
-    }).catch(function(){ renderNoProg(); });
+    }).catch(function(e){ renderNoProg('catch: '+String(e)); });
 }
 
 function loadLogbookForCycle() {
