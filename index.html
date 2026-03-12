@@ -1384,107 +1384,118 @@ function aiReset() {
   var btn=document.getElementById('ai-gen-btn'); btn.disabled=false; btn.textContent='⚡ Genera programma completo';
 }
 
+// ── AI: 2-step generation ──────────────────────────────────────
+// Step 1: generate sessions+exercises
+// Step 2: generate mesocycle+cycles+days using session names from step 1
+
+var aiSessionsPlan = null;   // result of step 1
+var aiGeneratedPlan = null;  // merged result
+
 function aiGenerate() {
-  var carenti=document.getElementById('ai-carenti').value.trim();
-  var meno=document.getElementById('ai-meno').value.trim();
-  var hiit=document.getElementById('ai-hiit').value;
-  var liss=document.getElementById('ai-liss').value;
-  var obj=document.getElementById('ai-obj').value;
-  var livello=document.getElementById('ai-livello').value;
-  var note=document.getElementById('ai-note').value.trim();
-  if(!carenti){ aiSetStatus('Inserisci almeno i distretti carenti.','err'); return; }
-  var btn=document.getElementById('ai-gen-btn'); btn.disabled=true; btn.textContent='Generazione...';
-  aiSetStatus('Analisi in corso — potrebbe richiedere 15-20 secondi...','loading');
+  var carenti  = document.getElementById('ai-carenti').value.trim();
+  var meno     = document.getElementById('ai-meno').value.trim();
+  var hiit     = document.getElementById('ai-hiit').value;
+  var liss     = document.getElementById('ai-liss').value;
+  var obj      = document.getElementById('ai-obj').value;
+  var livello  = document.getElementById('ai-livello').value;
+  var note     = document.getElementById('ai-note').value.trim();
+  if(!carenti){ aiSetStatus('Inserisci i distretti carenti.','err'); return; }
+
+  var btn=document.getElementById('ai-gen-btn'); btn.disabled=true; btn.textContent='Passo 1/2...';
+  aiSetStatus('Passo 1/2 — Genero sessioni ed esercizi...','loading');
   document.getElementById('ai-preview').style.display='none';
+  aiSessionsPlan=null; aiGeneratedPlan=null;
 
-  // Load exercises library for AI reference
-  sb.from('exercises').select('id,name,tag,tag_label,notes').order('name')
-    .then(function(exr){
-      var exercises = exr.data||[];
-      var exText = exercises.map(function(e){ return e.id+':'+e.name+' ['+e.tag+']'; }).join(', ');
+  sb.from('exercises').select('id,name,tag').order('name').then(function(exr){
+    var exText=(exr.data||[]).map(function(e){ return e.id+':'+e.name+'['+e.tag+']'; }).join(',');
 
-      var cardioNote = [];
-      if(parseInt(hiit)>0) cardioNote.push(hiit+' sessioni HIIT');
-      if(parseInt(liss)>0) cardioNote.push(liss+' sessioni LISS');
-      var cardioStr = cardioNote.length ? cardioNote.join(' + ') + ' ogni 10 giorni' : 'nessun cardio';
+    var cardioStr='';
+    if(parseInt(hiit)>0) cardioStr+=hiit+'xHIIT ';
+    if(parseInt(liss)>0) cardioStr+=liss+'xLISS';
+    cardioStr=cardioStr.trim()||'nessuno';
 
-      var sys = [
-        'Sei un coach di bodybuilding esperto. Genera programmi per atleti intermedi/avanzati.',
-        'Genera un MESOCICLO COMPLETO di allenamento: 4 cicli x 10 giorni consecutivi di allenamento (no riposo fisso).',
-        '',
-        'ESERCIZI DISPONIBILI IN LIBRERIA (usa questi id numerici):',
-        exText,
-        '',
-        'FORMATO JSON RICHIESTO - rispondi SOLO con JSON valido, zero markdown, zero testo extra:',
-        '{',
-        '  "mesocycle": {"name":"string","objective":"string","description":"string"},',
-        '  "sessions": [',
-        '    {',
-        '      "name": "string",',
-        '      "session_type": "gym|cardio",',
-        '      "exercises": [',
-        '        {',
-        '          "exercise_id": numero,',
-        '          "exercise_name": "string",',
-        '          "sort_order": numero,',
-        '          "sets": "string es. 4",',
-        '          "reps": "string es. 6-8 o 12-15 o cedimento",',
-        '          "rest_sec": numero,',
-        '          "notes": "string con tecnica specifica es. top set + 2 backoff -20%, eccentrica 3sec, myo-reps, drop set"',
-        '        }',
-        '      ]',
-        '    }',
-        '  ],',
-        '  "cycles": [',
-        '    {',
-        '      "cycle_number": 1,',
-        '      "name": "string",',
-        '      "cycle_type": "blast|deload|taper|test",',
-        '      "days": [{"day_number":1,"session_name":"nome esatto dalla lista sessions"}]',
-        '    }',
-        '  ]',
-        '}',
-        '',
-        'REGOLE CRITICHE:',
-        '- sessions: solo le sessioni necessarie. Cardio: session_type=cardio exercises=[].',
-        '- HIIT name="Cardio HIIT" LISS name="Cardio LISS".',
-        '- cycles.days: session_name IDENTICO al name in sessions.',
-        '- Carenti: 2-3 sessioni/ciclo volume alto. Sviluppati: 1 sessione mantenimento.',
-        '- Ciclo 4: deload -40% volume niente tecniche intensificazione.',
-        '- exercise_id: id numerico dalla libreria. sets/reps: stringhe. rest_sec: intero.',
-        '- notes negli esercizi: MAX 40 caratteri, brevissimo (es. "eccentrica 3s", "myo-reps", "drop set -20%").',
-        '- Sii CONCISO in tutti i campi stringa per non superare il limite di token.'
+    // STEP 1 PROMPT: sessions + exercises only
+    var sys1=[
+      'Coach bodybuilding esperto. Genera SOLO le sessioni di allenamento con i relativi esercizi.',
+      'ESERCIZI LIBRERIA (usa questi id): '+exText,
+      'RISPONDI SOLO JSON VALIDO, zero markdown:',
+      '{"sessions":[{"name":"string","session_type":"gym|cardio","exercises":[{"exercise_id":N,"exercise_name":"str","sort_order":N,"sets":"str","reps":"str","rest_sec":N,"notes":"max30char"}]}]}',
+      'REGOLE:',
+      '- Crea 4-7 sessioni gym uniche per coprire tutti i distretti + 1 "Cardio HIIT" se HIIT>0 + 1 "Cardio LISS" se LISS>0.',
+      '- Cardio: session_type=cardio, exercises=[].',
+      '- Distretti carenti: 3-4 esercizi per sessione, tecniche avanzate nelle notes (max 30 char).',
+      '- Distretti sviluppati: 2-3 esercizi, volume ridotto.',
+      '- sets/reps come stringhe. rest_sec intero. exercise_id dalla libreria.',
+      '- Sii CONCISO, nessun testo extra.'
+    ].join(' ');
+
+    var usr1='Livello:'+livello+'. Obiettivo:'+obj+'. Carenti:'+carenti+'. Sviluppati:'+(meno||'nessuno')+'. Cardio:'+cardioStr+(note?'. Note:'+note:'');
+
+    aiCallWorker(sys1, usr1, 3000, function(plan1){
+      aiSessionsPlan = plan1;
+      aiSetStatus('Passo 2/2 — Genero struttura cicli...','loading');
+      btn.textContent='Passo 2/2...';
+
+      var sessNames=(plan1.sessions||[]).map(function(s){ return '"'+s.name+'"'; }).join(', ');
+
+      // STEP 2 PROMPT: mesocycle + cycles + days
+      var sys2=[
+        'Coach bodybuilding. Genera la struttura mesociclo con 4 cicli x 10 giorni.',
+        'SESSIONI DISPONIBILI (usa SOLO questi nomi esatti): '+sessNames,
+        'RISPONDI SOLO JSON VALIDO, zero markdown:',
+        '{"mesocycle":{"name":"str","objective":"str","description":"str"},"cycles":[{"cycle_number":1,"name":"str","cycle_type":"blast|deload|taper|test","days":[{"day_number":1,"session_name":"nome esatto"}]}]}',
+        'REGOLE:',
+        '- 4 cicli esatti, 10 giorni ognuno, tutti i 10 giorni devono avere una session_name.',
+        '- Ciclo 4: deload, usa sessioni piu leggere.',
+        '- Distribuisci carenti con piu frequenza (2-3x per ciclo), sviluppati 1x.',
+        '- Cardio HIIT/LISS nei giorni appropriati se presenti nelle sessioni.',
+        '- session_name IDENTICO ai nomi nella lista. Sii CONCISO.'
       ].join(' ');
 
-      var usr = 'Crea mesociclo completo. Livello atleta: '+livello+'. Obiettivo: '+obj+
-        '. Distretti CARENTI (priorita massima, piu volume/frequenza): '+carenti+
-        '. Distretti SVILUPPATI (mantenimento): '+(meno||'nessuno specifico')+
-        '. Cardio: '+cardioStr+
-        (note ? '. Note importanti: '+note : '');
+      var usr2='Stessi parametri del passo 1. Carenti:'+carenti+'. Sviluppati:'+(meno||'nessuno')+'. Cardio:'+cardioStr+'. Obiettivo:'+obj;
 
-      fetch('https://kratos-ai.dcarera.workers.dev',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:7000,system:sys,messages:[{role:'user',content:usr}]})
-      })
-      .then(function(r){ return r.json(); })
-      .then(function(data){
+      aiCallWorker(sys2, usr2, 2500, function(plan2){
         btn.disabled=false; btn.textContent='⚡ Genera programma completo';
-        if(!data.content||!data.content[0]){ aiSetStatus('Errore risposta AI: '+JSON.stringify(data).substring(0,200),'err'); return; }
-        var raw=data.content[0].text.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
-        try{
-          aiGeneratedPlan=JSON.parse(raw);
-          aiSetStatus('','');
-          aiShowPreview(aiGeneratedPlan);
-        } catch(e){ aiSetStatus('Errore parsing JSON: '+e.message+' — Raw: '+raw.substring(0,300),'err'); }
-      })
-      .catch(function(e){ btn.disabled=false; btn.textContent='⚡ Genera programma completo'; aiSetStatus('Errore rete: '+String(e)+' — Controlla il Cloudflare Worker (timeout 30s su piano free)','err'); });
+        // Merge
+        aiGeneratedPlan = {
+          mesocycle: plan2.mesocycle,
+          sessions:  plan1.sessions,
+          cycles:    plan2.cycles
+        };
+        aiSetStatus('','');
+        aiShowPreview(aiGeneratedPlan);
+      });
     });
+  });
+}
+
+function aiCallWorker(sys, usr, maxTok, onSuccess) {
+  fetch('https://kratos-ai.dcarera.workers.dev',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:maxTok,system:sys,messages:[{role:'user',content:usr}]})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if(!data.content||!data.content[0]){ aiSetStatus('Errore risposta AI: '+JSON.stringify(data).substring(0,200),'err'); resetAiBtn(); return; }
+    var raw=data.content[0].text.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+    // Find JSON object boundaries robustly
+    var start=raw.indexOf('{');
+    var end=raw.lastIndexOf('}');
+    if(start<0||end<0){ aiSetStatus('JSON non trovato nella risposta: '+raw.substring(0,200),'err'); resetAiBtn(); return; }
+    raw=raw.substring(start,end+1);
+    try{ onSuccess(JSON.parse(raw)); }
+    catch(e){ aiSetStatus('Errore parsing: '+e.message+' — '+raw.substring(0,150),'err'); resetAiBtn(); }
+  })
+  .catch(function(e){ aiSetStatus('Errore rete: '+String(e),'err'); resetAiBtn(); });
+}
+
+function resetAiBtn(){
+  var btn=document.getElementById('ai-gen-btn'); btn.disabled=false; btn.textContent='⚡ Genera programma completo';
 }
 
 function aiShowPreview(plan) {
   var html='';
-  // Mesocycle header
   html+='<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:13px 14px;margin-bottom:10px">';
   html+='<div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:4px">MESOCICLO</div>';
   html+='<div style="font-weight:700;font-size:.95rem">'+escHtml(plan.mesocycle.name)+'</div>';
@@ -1492,30 +1503,24 @@ function aiShowPreview(plan) {
   if(plan.mesocycle.description) html+='<div style="font-size:.75rem;color:var(--mu2);margin-top:6px;line-height:1.5">'+escHtml(plan.mesocycle.description)+'</div>';
   html+='</div>';
 
-  // Sessions summary
   if((plan.sessions||[]).length){
     html+='<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:13px 14px;margin-bottom:10px">';
-    html+='<div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">SESSIONI GENERATE ('+(plan.sessions.length)+')</div>';
+    html+='<div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">SESSIONI ('+plan.sessions.length+')</div>';
     plan.sessions.forEach(function(s){
       var ic=s.session_type==='cardio'?'🚴':'🏋️';
       html+='<div style="margin-bottom:8px;padding:8px 10px;background:var(--s3);border-radius:9px">';
       html+='<div style="font-weight:700;font-size:.84rem;margin-bottom:4px">'+ic+' '+escHtml(s.name)+'</div>';
-      if(s.session_type==='cardio'){
-        html+='<div style="font-size:.72rem;color:var(--blu)">Sessione cardio</div>';
-      } else {
-        (s.exercises||[]).forEach(function(e,i){
-          html+='<div style="font-size:.72rem;color:var(--mu2);padding:3px 0;border-bottom:1px solid var(--bdr)">';
-          html+='<span style="color:var(--txt)">'+escHtml(e.exercise_name)+'</span> — '+escHtml(e.sets)+'×'+escHtml(e.reps);
-          if(e.notes) html+=' <span style="color:var(--orn);font-size:.67rem">· '+escHtml(e.notes.substring(0,60))+'</span>';
-          html+='</div>';
-        });
-      }
+      (s.exercises||[]).forEach(function(e){
+        html+='<div style="font-size:.71rem;color:var(--mu2);padding:2px 0;border-bottom:1px solid var(--bdr)">';
+        html+='<span style="color:var(--txt)">'+escHtml(e.exercise_name||'?')+'</span> — '+escHtml(String(e.sets||''))+'×'+escHtml(String(e.reps||''));
+        if(e.notes) html+=' <span style="color:var(--orn);font-size:.64rem">· '+escHtml(e.notes)+'</span>';
+        html+='</div>';
+      });
       html+='</div>';
     });
     html+='</div>';
   }
 
-  // Cycles grid
   var CT={blast:'var(--red)',deload:'var(--blu)',taper:'var(--pur)',test:'var(--orn)'};
   var CTB={blast:'var(--rdim)',deload:'var(--bdim)',taper:'var(--pdim)',test:'var(--odim)'};
   (plan.cycles||[]).forEach(function(cyc){
@@ -1527,8 +1532,7 @@ function aiShowPreview(plan) {
     html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:0 10px 12px">';
     var dm={}; (cyc.days||[]).forEach(function(d){ dm[d.day_number]=d; });
     for(var i=1;i<=10;i++){
-      var day=dm[i];
-      var sname=day?day.session_name:'';
+      var day=dm[i]; var sname=day?day.session_name:'';
       var isCardio=sname&&(sname.toLowerCase().indexOf('hiit')>=0||sname.toLowerCase().indexOf('liss')>=0||sname.toLowerCase().indexOf('cardio')>=0);
       var hasSess=!!sname;
       var dbg=hasSess?(isCardio?'rgba(14,165,233,.1)':'rgba(232,17,42,.1)'):'var(--s3)';
@@ -1551,32 +1555,23 @@ function aiUpload() {
   var btn=document.getElementById('ai-upload-btn'); btn.disabled=true; btn.textContent='Caricamento...';
   aiSetUploadStatus('Fase 1/3 — Creazione sessioni...','loading');
   var plan=aiGeneratedPlan;
-
-  // Step 1: create all sessions + their exercises
-  var sessionMap={}; // session name -> id
+  var sessionMap={};
   var sessions=plan.sessions||[];
   var si=0;
 
   function nextSession(){
-    if(si>=sessions.length){
-      uploadMesocycle();
-      return;
-    }
+    if(si>=sessions.length){ uploadMesocycle(); return; }
     var s=sessions[si];
     aiSetUploadStatus('Sessione '+(si+1)+'/'+sessions.length+': '+s.name+'...','loading');
     sb.from('sessions').insert({name:s.name,session_type:s.session_type||'gym',created_by:ME.id}).select().single()
       .then(function(sr){
         if(sr.error) throw new Error(sr.error.message);
-        var sessId=sr.data.id;
-        sessionMap[s.name]=sessId;
+        sessionMap[s.name]=sr.data.id;
         var exs=(s.exercises||[]).filter(function(e){ return e.exercise_id; });
         if(!exs.length){ si++; nextSession(); return; }
-        var exRows=exs.map(function(e,idx){ return {session_id:sessId,exercise_id:e.exercise_id,sort_order:e.sort_order||idx,sets:String(e.sets||'3'),reps:String(e.reps||'8-12'),rest_sec:e.rest_sec||120,notes:e.notes||null}; });
-        sb.from('session_exercises').insert(exRows)
-          .then(function(){ si++; nextSession(); })
-          .catch(function(e){ throw new Error('Esercizi sessione: '+e.message); });
-      })
-      .catch(function(e){ btn.disabled=false; btn.textContent='Carica'; aiSetUploadStatus('Errore sessione: '+e.message,'err'); });
+        var exRows=exs.map(function(e,idx){ return {session_id:sr.data.id,exercise_id:e.exercise_id,sort_order:e.sort_order||idx,sets:String(e.sets||'3'),reps:String(e.reps||'8-12'),rest_sec:e.rest_sec||120,notes:e.notes||null}; });
+        sb.from('session_exercises').insert(exRows).then(function(){ si++; nextSession(); }).catch(function(e){ throw new Error(e.message); });
+      }).catch(function(e){ btn.disabled=false; btn.textContent='Carica'; aiSetUploadStatus('Errore: '+e.message,'err'); });
   }
 
   function uploadMesocycle(){
@@ -1587,11 +1582,8 @@ function aiUpload() {
         var mesoId=r.data.id; var cycles=plan.cycles||[]; var ci=0;
         function nextCycle(){
           if(ci>=cycles.length){
-            aiSetUploadStatus('Caricamento completato!','ok');
-            btn.disabled=false; btn.textContent='Caricato!';
-            loadSess();
-            setTimeout(function(){ asv('prog'); aPTab('meso'); loadMeso(); },1500);
-            return;
+            aiSetUploadStatus('Completato!','ok'); btn.disabled=false; btn.textContent='Caricato!';
+            loadSess(); setTimeout(function(){ asv('prog'); aPTab('meso'); loadMeso(); },1500); return;
           }
           var cyc=cycles[ci];
           aiSetUploadStatus('Fase 3/3 — Ciclo '+(ci+1)+'/'+cycles.length+'...','loading');
@@ -1602,9 +1594,7 @@ function aiUpload() {
               var days=(cyc.days||[]).filter(function(d){ return d.session_name&&sessionMap[d.session_name]; });
               if(!days.length){ ci++; nextCycle(); return; }
               var rows=days.map(function(d){ return {cycle_id:cycId,day_number:d.day_number,session_id:sessionMap[d.session_name]}; });
-              sb.from('cycle_days').insert(rows)
-                .then(function(dr){ if(dr.error) throw new Error(dr.error.message); ci++; nextCycle(); })
-                .catch(function(e){ btn.disabled=false; btn.textContent='Carica'; aiSetUploadStatus('Errore giorni: '+e.message,'err'); });
+              sb.from('cycle_days').insert(rows).then(function(){ ci++; nextCycle(); }).catch(function(e){ btn.disabled=false; btn.textContent='Carica'; aiSetUploadStatus('Errore giorni: '+e.message,'err'); });
             }).catch(function(e){ btn.disabled=false; btn.textContent='Carica'; aiSetUploadStatus('Errore ciclo: '+e.message,'err'); });
         }
         nextCycle();
