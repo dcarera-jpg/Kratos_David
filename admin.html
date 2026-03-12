@@ -155,6 +155,56 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);font-size:15px;
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 .fade-in{animation:fadeUp 0.2s ease both;}
+
+.prog-tab {
+  padding:8px 16px; border-radius:20px; border:1px solid var(--border);
+  background:var(--s2); color:var(--muted2); font-size:0.72rem;
+  font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  cursor:pointer; white-space:nowrap; transition:all 0.15s;
+}
+.prog-tab.active { background:var(--red); color:white; border-color:var(--red); }
+.field-input {
+  width:100%; padding:11px 13px; background:var(--s3);
+  border:1px solid var(--border); border-radius:10px;
+  color:var(--text); font-family:inherit; font-size:0.88rem; outline:none;
+}
+.field-input:focus { border-color:rgba(232,17,42,0.4); }
+.ex-card {
+  background:var(--s2); border:1px solid var(--border); border-radius:12px;
+  padding:14px; margin-bottom:10px; display:flex; align-items:center; gap:12px;
+}
+.ex-card-info { flex:1; min-width:0; }
+.ex-card-name { font-weight:600; font-size:0.88rem; }
+.ex-card-meta { font-size:0.7rem; color:var(--muted2); margin-top:2px; }
+.ex-card-tag { font-size:0.62rem; font-weight:700; letter-spacing:0.1em;
+  padding:3px 8px; border-radius:10px; }
+.tag-mec { background:var(--red-dim); color:var(--red); }
+.tag-met { background:var(--orange-dim); color:var(--orange); }
+.tag-pre { background:var(--green-dim); color:var(--green); }
+.tag-str { background:var(--bike-dim); color:var(--bike); }
+.del-btn { padding:5px 10px; border-radius:8px; background:var(--s4);
+  border:none; color:var(--muted2); font-size:0.7rem; cursor:pointer; }
+.del-btn:active { background:var(--red-dim); color:var(--red); }
+.sess-card {
+  background:var(--s2); border:1px solid var(--border); border-radius:12px;
+  margin-bottom:10px; overflow:hidden;
+}
+.sess-card-head {
+  padding:14px 16px; display:flex; align-items:center; gap:10px; cursor:pointer;
+}
+.sess-card-body { display:none; border-top:1px solid var(--border); padding:12px 14px; }
+.sess-type-badge { font-size:0.6rem; font-weight:700; letter-spacing:0.1em;
+  padding:3px 8px; border-radius:10px; text-transform:uppercase; }
+.type-gym { background:var(--red-dim); color:var(--red); }
+.type-bike { background:var(--bike-dim); color:var(--bike); }
+.type-rest { background:var(--s4); color:var(--muted2); }
+.add-ex-row { display:flex; gap:8px; margin-top:10px; }
+.prog-card {
+  background:var(--s2); border:1px solid var(--border); border-radius:12px;
+  padding:16px; margin-bottom:10px;
+}
+.prog-card-name { font-weight:700; font-size:0.95rem; margin-bottom:4px; }
+.prog-card-desc { font-size:0.75rem; color:var(--muted2); }
 </style>
 </head>
 <body>
@@ -235,6 +285,101 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);font-size:15px;
   </div>
 </div>
 
+<!-- VIEW: PROGRAMMI -->
+<div class="view" id="view-prog">
+  <div class="status-bar">
+    <div class="sb-logo">KRATOS</div>
+    <span class="sb-admin-badge">Programmi</span>
+    <button class="logout-btn" onclick="doLogout()">Esci</button>
+  </div>
+  <div class="scroll-area">
+
+    <!-- TAB BAR -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;">
+      <button class="prog-tab active" id="ptab-exercises" onclick="switchProgTab('exercises')">Esercizi</button>
+      <button class="prog-tab" id="ptab-sessions" onclick="switchProgTab('sessions')">Sessioni</button>
+      <button class="prog-tab" id="ptab-programs" onclick="switchProgTab('programs')">Programmi</button>
+    </div>
+
+    <!-- TAB: ESERCIZI -->
+    <div id="ptab-content-exercises">
+      <div class="section-label">Libreria Esercizi</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input id="ex-search" type="text" class="field-input" placeholder="Cerca esercizio..." oninput="filterExercises()" style="flex:1;">
+      </div>
+      <button class="create-btn" style="margin-bottom:16px;" onclick="showExerciseForm()">+ Nuovo Esercizio</button>
+
+      <!-- Form nuovo esercizio (hidden) -->
+      <div id="exercise-form" style="display:none;background:var(--s2);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border);">
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;color:var(--muted2);margin-bottom:12px;">NUOVO ESERCIZIO</div>
+        <div class="field"><label>Nome *</label><input type="text" id="exf-name" class="field-input" placeholder="es. Panca Piana"></div>
+        <div class="field"><label>Tipo</label>
+          <select id="exf-tag" class="field-input">
+            <option value="mec">Meccanico</option>
+            <option value="met">Metabolico</option>
+            <option value="pre">Pre-Attivazione</option>
+            <option value="str">Stretching</option>
+          </select>
+        </div>
+        <div class="field"><label>Serie default</label><input type="text" id="exf-sets" class="field-input" placeholder="es. 3"></div>
+        <div class="field"><label>Note / Istruzioni</label><textarea id="exf-notes" class="field-input" rows="2" placeholder="Tecnica, note di esecuzione..."></textarea></div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="create-btn" style="flex:1;" onclick="saveExercise()">Salva</button>
+          <button class="logout-btn" style="flex:1;" onclick="hideExerciseForm()">Annulla</button>
+        </div>
+        <div id="exf-msg" style="display:none;margin-top:8px;font-size:0.75rem;padding:8px;border-radius:8px;"></div>
+      </div>
+
+      <div id="exercises-list"></div>
+    </div>
+
+    <!-- TAB: SESSIONI -->
+    <div id="ptab-content-sessions" style="display:none;">
+      <div class="section-label">Sessioni di Allenamento</div>
+      <button class="create-btn" style="margin-bottom:16px;" onclick="showSessionForm()">+ Nuova Sessione</button>
+
+      <div id="session-form" style="display:none;background:var(--s2);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border);">
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;color:var(--muted2);margin-bottom:12px;">NUOVA SESSIONE</div>
+        <div class="field"><label>Nome *</label><input type="text" id="sf-name" class="field-input" placeholder="es. PETTO - Rot 1"></div>
+        <div class="field"><label>Tipo</label>
+          <select id="sf-type" class="field-input">
+            <option value="gym">Palestra</option>
+            <option value="bike">Bici</option>
+            <option value="rest">Riposo</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="create-btn" style="flex:1;" onclick="saveSession()">Salva</button>
+          <button class="logout-btn" style="flex:1;" onclick="document.getElementById('session-form').style.display='none'">Annulla</button>
+        </div>
+        <div id="sf-msg" style="display:none;margin-top:8px;font-size:0.75rem;padding:8px;border-radius:8px;"></div>
+      </div>
+
+      <div id="sessions-list"></div>
+    </div>
+
+    <!-- TAB: PROGRAMMI -->
+    <div id="ptab-content-programs" style="display:none;">
+      <div class="section-label">Programmi di Allenamento</div>
+      <button class="create-btn" style="margin-bottom:16px;" onclick="showProgramForm()">+ Nuovo Programma</button>
+
+      <div id="program-form" style="display:none;background:var(--s2);border-radius:14px;padding:16px;margin-bottom:16px;border:1px solid var(--border);">
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;color:var(--muted2);margin-bottom:12px;">NUOVO PROGRAMMA</div>
+        <div class="field"><label>Nome *</label><input type="text" id="pf-name" class="field-input" placeholder="es. Kratos Blocco 1"></div>
+        <div class="field"><label>Descrizione</label><input type="text" id="pf-desc" class="field-input" placeholder="es. 8 settimane ipertrofia"></div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="create-btn" style="flex:1;" onclick="saveProgram()">Crea</button>
+          <button class="logout-btn" style="flex:1;" onclick="document.getElementById('program-form').style.display='none'">Annulla</button>
+        </div>
+        <div id="pf-msg" style="display:none;margin-top:8px;font-size:0.75rem;padding:8px;border-radius:8px;"></div>
+      </div>
+
+      <div id="programs-list"></div>
+    </div>
+
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <button class="bnav-item active" id="nav-athletes" onclick="switchView('athletes')">
@@ -242,6 +387,9 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);font-size:15px;
   </button>
   <button class="bnav-item" id="nav-new" onclick="switchView('new')">
     <span class="bnav-icon">➕</span><span class="bnav-label">Nuovo</span>
+  </button>
+  <button class="bnav-item" id="nav-prog" onclick="switchView('prog')">
+    <span class="bnav-icon">📋</span><span class="bnav-label">Programmi</span>
   </button>
   <button class="bnav-item" id="nav-msgs" onclick="switchView('msgs')">
     <span class="bnav-icon">💬</span><span class="bnav-label">Messaggi</span>
@@ -263,12 +411,7 @@ function boot() {
   sb.auth.getSession().then(function(res) {
     if (!res.data || !res.data.session) { window.location.href = 'index.html'; return; }
     adminUser = res.data.session.user;
-
-    sb.from('profiles').select('role').eq('id', adminUser.id).single()
-      .then(function(r) {
-        if (!r.data || r.data.role !== 'admin') { window.location.href = 'athlete.html'; return; }
-        loadAthletes();
-      }).catch(function() { window.location.href = 'index.html'; });
+    loadAthletes();
   }).catch(function() { window.location.href = 'index.html'; });
 }
 
@@ -537,6 +680,375 @@ function createAthlete() {
     });
 }
 
+
+// ─── PROGRAMMI STATE ─────────────────────────────────────────────────
+var allExercises = [];
+var allSessions  = [];
+var allPrograms  = [];
+var currentProgTab = 'exercises';
+
+// ─── PROG TAB SWITCHING ──────────────────────────────────────────────
+function switchProgTab(tab) {
+  currentProgTab = tab;
+  var tabs = ['exercises','sessions','programs'];
+  for (var i = 0; i < tabs.length; i++) {
+    var t = tabs[i];
+    var btn = document.getElementById('ptab-' + t);
+    var cnt = document.getElementById('ptab-content-' + t);
+    if (btn)  btn.className = 'prog-tab' + (t === tab ? ' active' : '');
+    if (cnt)  cnt.style.display = t === tab ? 'block' : 'none';
+  }
+  if (tab === 'exercises' && allExercises.length === 0) loadExercises();
+  if (tab === 'sessions'  && allSessions.length === 0)  loadSessions();
+  if (tab === 'programs'  && allPrograms.length === 0)  loadPrograms();
+}
+
+// ─── EXERCISES ───────────────────────────────────────────────────────
+function loadExercises() {
+  sb.from('exercises').select('*').order('name')
+    .then(function(r) {
+      allExercises = r.data || [];
+      renderExercises(allExercises);
+    }).catch(function() {});
+}
+
+function filterExercises() {
+  var q = (document.getElementById('ex-search').value || '').toLowerCase();
+  var filtered = allExercises.filter(function(e) {
+    return e.name.toLowerCase().indexOf(q) !== -1;
+  });
+  renderExercises(filtered);
+}
+
+function renderExercises(list) {
+  var c = document.getElementById('exercises-list');
+  if (!list.length) {
+    c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted2);font-size:0.82rem;">Nessun esercizio. Clicca + Nuovo per aggiungere.</div>';
+    return;
+  }
+  c.innerHTML = '';
+  var tagMap = {mec:'Meccanico',met:'Metabolico',pre:'Pre-Attivazione',str:'Stretching'};
+  for (var i = 0; i < list.length; i++) {
+    (function(ex) {
+      var card = document.createElement('div');
+      card.className = 'ex-card';
+      card.innerHTML =
+        '<div class="ex-card-info">' +
+          '<div class="ex-card-name">' + ex.name + '</div>' +
+          '<div class="ex-card-meta">Serie default: ' + (ex.default_sets || '2') +
+            (ex.notes ? ' &bull; ' + ex.notes.substring(0,60) + (ex.notes.length > 60 ? '...' : '') : '') + '</div>' +
+        '</div>' +
+        '<span class="ex-card-tag tag-' + (ex.tag||'mec') + '">' + (tagMap[ex.tag] || ex.tag) + '</span>';
+      var delBtn = document.createElement('button');
+      delBtn.className = 'del-btn';
+      delBtn.textContent = 'Elimina';
+      delBtn.onclick = function() { deleteExercise(ex.id); };
+      card.appendChild(delBtn);
+      c.appendChild(card);
+    })(list[i]);
+  }
+}
+
+function showExerciseForm() {
+  document.getElementById('exercise-form').style.display = 'block';
+  document.getElementById('exf-name').focus();
+}
+function hideExerciseForm() {
+  document.getElementById('exercise-form').style.display = 'none';
+  document.getElementById('exf-name').value = '';
+  document.getElementById('exf-notes').value = '';
+  document.getElementById('exf-sets').value = '';
+}
+
+function saveExercise() {
+  var name  = document.getElementById('exf-name').value.trim();
+  var tag   = document.getElementById('exf-tag').value;
+  var sets  = document.getElementById('exf-sets').value.trim() || '2';
+  var notes = document.getElementById('exf-notes').value.trim();
+  var msg   = document.getElementById('exf-msg');
+  var tagLabels = {mec:'Meccanico',met:'Metabolico',pre:'Pre-Attivazione',str:'Stretching'};
+
+  if (!name) { showMsg(msg, 'Inserisci il nome', 'error'); return; }
+
+  sb.from('exercises').insert({
+    name: name, tag: tag, tag_label: tagLabels[tag],
+    default_sets: sets, notes: notes || null,
+    created_by: adminUser.id
+  }).then(function(r) {
+    if (r.error) { showMsg(msg, 'Errore: ' + r.error.message, 'error'); return; }
+    showMsg(msg, 'Esercizio salvato!', 'ok');
+    hideExerciseForm();
+    allExercises = [];
+    loadExercises();
+  }).catch(function() { showMsg(msg, 'Errore di rete', 'error'); });
+}
+
+function deleteExercise(id) {
+  if (!confirm('Eliminare questo esercizio?')) return;
+  sb.from('exercises').delete().eq('id', id)
+    .then(function() { allExercises = []; loadExercises(); }).catch(function(){});
+}
+
+// ─── SESSIONS ────────────────────────────────────────────────────────
+function loadSessions() {
+  sb.from('sessions').select('*, session_exercises(id, sort_order, sets, chips, instructions, exercises(id,name,tag,tag_label))')
+    .order('name')
+    .then(function(r) {
+      allSessions = r.data || [];
+      renderSessions(allSessions);
+    }).catch(function() {});
+}
+
+function renderSessions(list) {
+  var c = document.getElementById('sessions-list');
+  if (!list.length) {
+    c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted2);font-size:0.82rem;">Nessuna sessione. Clicca + Nuova per aggiungere.</div>';
+    return;
+  }
+  c.innerHTML = '';
+  var typeLabels = {gym:'Palestra',bike:'Bici',rest:'Riposo'};
+  for (var i = 0; i < list.length; i++) {
+    (function(sess) {
+      var card = document.createElement('div');
+      card.className = 'sess-card';
+
+      var exCount = (sess.session_exercises || []).length;
+      var typeClass = 'type-' + (sess.session_type || 'gym');
+
+      var head = document.createElement('div');
+      head.className = 'sess-card-head';
+      head.innerHTML =
+        '<div style="flex:1;">' +
+          '<div style="font-weight:600;font-size:0.88rem;">' + sess.name + '</div>' +
+          '<div style="font-size:0.7rem;color:var(--muted2);margin-top:2px;">' + exCount + ' esercizi</div>' +
+        '</div>' +
+        '<span class="sess-type-badge ' + typeClass + '">' + (typeLabels[sess.session_type]||sess.session_type) + '</span>' +
+        '<span style="color:var(--muted);margin-left:8px;">›</span>';
+
+      var body = document.createElement('div');
+      body.className = 'sess-card-body';
+      body.id = 'sess-body-' + sess.id;
+
+      // List existing exercises
+      var exHtml = '';
+      var sexs = (sess.session_exercises || []).sort(function(a,b){return a.sort_order-b.sort_order;});
+      for (var j = 0; j < sexs.length; j++) {
+        var se = sexs[j];
+        var exName = se.exercises ? se.exercises.name : 'Esercizio eliminato';
+        exHtml +=
+          '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">' +
+            '<span style="color:var(--muted2);font-size:0.7rem;min-width:20px;">' + (j+1) + '.</span>' +
+            '<span style="flex:1;font-size:0.82rem;">' + exName + '</span>' +
+            '<span style="font-size:0.7rem;color:var(--muted2);">' + (se.sets||'2') + ' serie</span>' +
+            '<button class="del-btn" onclick="removeSessionExercise(' + se.id + ',' + sess.id + ')">x</button>' +
+          '</div>';
+      }
+      if (!exHtml) exHtml = '<div style="font-size:0.75rem;color:var(--muted2);padding:8px 0;">Nessun esercizio ancora.</div>';
+
+      // Add exercise form
+      var exOptions = '<option value="">-- Scegli esercizio --</option>';
+      for (var k = 0; k < allExercises.length; k++) {
+        exOptions += '<option value="' + allExercises[k].id + '">' + allExercises[k].name + '</option>';
+      }
+
+      body.innerHTML = exHtml +
+        '<div class="add-ex-row" style="margin-top:12px;">' +
+          '<select id="add-ex-sel-' + sess.id + '" class="field-input" style="flex:1;">' + exOptions + '</select>' +
+          '<input type="text" id="add-ex-sets-' + sess.id + '" class="field-input" placeholder="serie" style="width:70px;">' +
+          '<button class="create-btn" style="padding:8px 12px;font-size:0.75rem;" onclick="addExToSession(' + sess.id + ')">+</button>' +
+        '</div>' +
+        '<div style="margin-top:10px;display:flex;justify-content:flex-end;">' +
+          '<button class="del-btn" onclick="deleteSession(' + sess.id + ')">Elimina sessione</button>' +
+        '</div>';
+
+      head.onclick = function() {
+        var b = document.getElementById('sess-body-' + sess.id);
+        b.style.display = b.style.display === 'block' ? 'none' : 'block';
+      };
+
+      card.appendChild(head);
+      card.appendChild(body);
+      c.appendChild(card);
+    })(list[i]);
+  }
+}
+
+function showSessionForm() {
+  document.getElementById('session-form').style.display = 'block';
+  document.getElementById('sf-name').focus();
+}
+
+function saveSession() {
+  var name = document.getElementById('sf-name').value.trim();
+  var type = document.getElementById('sf-type').value;
+  var msg  = document.getElementById('sf-msg');
+  if (!name) { showMsg(msg, 'Inserisci il nome', 'error'); return; }
+
+  sb.from('sessions').insert({ name: name, session_type: type, created_by: adminUser.id })
+    .then(function(r) {
+      if (r.error) { showMsg(msg, 'Errore: ' + r.error.message, 'error'); return; }
+      showMsg(msg, 'Sessione creata!', 'ok');
+      document.getElementById('sf-name').value = '';
+      document.getElementById('session-form').style.display = 'none';
+      allSessions = []; loadSessions();
+    }).catch(function() { showMsg(msg, 'Errore di rete', 'error'); });
+}
+
+function addExToSession(sessionId) {
+  var selEl  = document.getElementById('add-ex-sel-' + sessionId);
+  var setsEl = document.getElementById('add-ex-sets-' + sessionId);
+  var exId   = selEl ? parseInt(selEl.value) : 0;
+  var sets   = setsEl ? setsEl.value.trim() || '2' : '2';
+  if (!exId) return;
+
+  var existing = [];
+  for (var i = 0; i < allSessions.length; i++) {
+    if (allSessions[i].id === sessionId) {
+      existing = allSessions[i].session_exercises || [];
+      break;
+    }
+  }
+  var nextOrder = existing.length;
+
+  sb.from('session_exercises').insert({
+    session_id: sessionId, exercise_id: exId,
+    sort_order: nextOrder, sets: sets
+  }).then(function(r) {
+    if (!r.error) { allSessions = []; loadSessions(); }
+  }).catch(function(){});
+}
+
+function removeSessionExercise(seId, sessId) {
+  sb.from('session_exercises').delete().eq('id', seId)
+    .then(function() { allSessions = []; loadSessions(); }).catch(function(){});
+}
+
+function deleteSession(id) {
+  if (!confirm('Eliminare questa sessione e tutti i suoi esercizi?')) return;
+  sb.from('sessions').delete().eq('id', id)
+    .then(function() { allSessions = []; loadSessions(); }).catch(function(){});
+}
+
+// ─── PROGRAMS ────────────────────────────────────────────────────────
+function loadPrograms() {
+  sb.from('training_programs').select('*').order('name')
+    .then(function(r) {
+      allPrograms = r.data || [];
+      renderPrograms(allPrograms);
+    }).catch(function(){});
+}
+
+function renderPrograms(list) {
+  var c = document.getElementById('programs-list');
+  if (!list.length) {
+    c.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted2);font-size:0.82rem;">Nessun programma. Clicca + Nuovo per creare.</div>';
+    return;
+  }
+  c.innerHTML = '';
+  for (var i = 0; i < list.length; i++) {
+    (function(prog) {
+      var card = document.createElement('div');
+      card.className = 'prog-card';
+      var weeks = (prog.weeks || []);
+      card.innerHTML =
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div style="flex:1;">' +
+            '<div class="prog-card-name">' + prog.name + '</div>' +
+            '<div class="prog-card-desc">' + (prog.description || '') + ' &bull; ' + weeks.length + ' settimane</div>' +
+          '</div>' +
+          '<button class="del-btn" onclick="deleteProgram(' + prog.id + ')">Elimina</button>' +
+        '</div>' +
+        '<div style="margin-top:12px;">' +
+          '<button class="logout-btn" style="font-size:0.7rem;" onclick="editProgramWeeks(' + prog.id + ')">Modifica settimane</button>' +
+          '<button class="logout-btn" style="font-size:0.7rem;margin-left:8px;" onclick="assignProgramToAthlete(' + prog.id + ','' + prog.name + '')">Assegna ad atleta</button>' +
+        '</div>';
+      c.appendChild(card);
+    })(list[i]);
+  }
+}
+
+function showProgramForm() {
+  document.getElementById('program-form').style.display = 'block';
+  document.getElementById('pf-name').focus();
+}
+
+function saveProgram() {
+  var name = document.getElementById('pf-name').value.trim();
+  var desc = document.getElementById('pf-desc').value.trim();
+  var msg  = document.getElementById('pf-msg');
+  if (!name) { showMsg(msg, 'Inserisci il nome', 'error'); return; }
+
+  sb.from('training_programs').insert({
+    name: name, description: desc || null,
+    weeks: [], created_by: adminUser.id
+  }).then(function(r) {
+    if (r.error) { showMsg(msg, 'Errore: ' + r.error.message, 'error'); return; }
+    showMsg(msg, 'Programma creato!', 'ok');
+    document.getElementById('pf-name').value = '';
+    document.getElementById('pf-desc').value = '';
+    document.getElementById('program-form').style.display = 'none';
+    allPrograms = []; loadPrograms();
+  }).catch(function() { showMsg(msg, 'Errore di rete', 'error'); });
+}
+
+function deleteProgram(id) {
+  if (!confirm('Eliminare questo programma?')) return;
+  sb.from('training_programs').delete().eq('id', id)
+    .then(function() { allPrograms = []; loadPrograms(); }).catch(function(){});
+}
+
+function editProgramWeeks(progId) {
+  // Find the program
+  var prog = null;
+  for (var i = 0; i < allPrograms.length; i++) {
+    if (allPrograms[i].id === progId) { prog = allPrograms[i]; break; }
+  }
+  if (!prog) return;
+
+  var weeksJson = prompt('Modifica settimane (JSON):
+
+Formato: [{"id":1,"label":"Sett 1-2","phase":"Blocco 1","type":"blast","days":[...]}]
+
+Settimane attuali:', JSON.stringify(prog.weeks || [], null, 2));
+  if (weeksJson === null) return;
+
+  try {
+    var weeks = JSON.parse(weeksJson);
+    sb.from('training_programs').update({ weeks: weeks }).eq('id', progId)
+      .then(function(r) {
+        if (!r.error) { alert('Programma aggiornato!'); allPrograms = []; loadPrograms(); }
+        else alert('Errore: ' + r.error.message);
+      }).catch(function(){});
+  } catch(e) {
+    alert('JSON non valido: ' + e.message);
+  }
+}
+
+function assignProgramToAthlete(progId, progName) {
+  var names = athletes.map(function(a) { return a.full_name || a.email; });
+  var list = names.map(function(n,i) { return (i+1) + '. ' + n; }).join('\n');
+  var choice = prompt('A quale atleta assegnare "' + progName + '"?\n\n' + list + '\n\nInserisci il numero:');
+  if (!choice) return;
+  var idx = parseInt(choice) - 1;
+  if (idx < 0 || idx >= athletes.length) { alert('Scelta non valida'); return; }
+  var athleteId = athletes[idx].id;
+  sb.from('profiles').update({ training_program_id: progId }).eq('id', athleteId)
+    .then(function(r) {
+      if (!r.error) alert('Programma assegnato a ' + names[idx] + '!');
+      else alert('Errore: ' + r.error.message);
+    }).catch(function(){});
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────
+function showMsg(el, text, type) {
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.background = type === 'ok' ? 'var(--green-dim)' : 'var(--red-dim)';
+  el.style.color = type === 'ok' ? 'var(--green)' : '#ff6b6b';
+  el.style.border = '1px solid ' + (type === 'ok' ? 'rgba(16,185,129,0.2)' : 'rgba(232,17,42,0.2)');
+  setTimeout(function() { el.style.display = 'none'; }, 3000);
+}
+
 // ─── UTILS ───────────────────────────────────────────────────────────
 function fmtDate(iso) {
   var d = new Date(iso);
@@ -556,6 +1068,10 @@ function switchView(name) {
   if (v) { v.style.display = 'flex'; v.classList.add('active'); }
   var nav = document.getElementById('nav-' + name);
   if (nav) nav.classList.add('active');
+  // Load data when switching to programmi tab
+  if (name === 'prog' && allExercises.length === 0) {
+    loadExercises();
+  }
 }
 
 function doLogout() {

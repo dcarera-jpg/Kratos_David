@@ -230,13 +230,18 @@ function redirectByRole(user) {
     .eq('id', user.id)
     .single()
     .then(function(result) {
+      console.log('Profile result:', JSON.stringify(result));
+      if (result.error) {
+        console.error('RLS error:', result.error.message);
+      }
       if (result.data && result.data.role === 'admin') {
         window.location.href = 'admin.html';
       } else {
         window.location.href = 'athlete.html';
       }
     })
-    .catch(function() {
+    .catch(function(err) {
+      console.error('Catch error:', err);
       window.location.href = 'athlete.html';
     });
 }
