@@ -1451,7 +1451,9 @@ function aiGenerate() {
         '- cycles.days: session_name IDENTICO al name in sessions.',
         '- Carenti: 2-3 sessioni/ciclo volume alto. Sviluppati: 1 sessione mantenimento.',
         '- Ciclo 4: deload -40% volume niente tecniche intensificazione.',
-        '- exercise_id: id numerico dalla libreria. sets/reps: stringhe. rest_sec: intero.'
+        '- exercise_id: id numerico dalla libreria. sets/reps: stringhe. rest_sec: intero.',
+        '- notes negli esercizi: MAX 40 caratteri, brevissimo (es. "eccentrica 3s", "myo-reps", "drop set -20%").',
+        '- Sii CONCISO in tutti i campi stringa per non superare il limite di token.'
       ].join(' ');
 
       var usr = 'Crea mesociclo completo. Livello atleta: '+livello+'. Obiettivo: '+obj+
@@ -1463,7 +1465,7 @@ function aiGenerate() {
       fetch('https://kratos-ai.dcarera.workers.dev',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:4000,system:sys,messages:[{role:'user',content:usr}]})
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:7000,system:sys,messages:[{role:'user',content:usr}]})
       })
       .then(function(r){ return r.json(); })
       .then(function(data){
