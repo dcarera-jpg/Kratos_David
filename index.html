@@ -556,6 +556,7 @@ select.inp{cursor:pointer}
 // ════════════════════════════════════════════════════════════════
 
 var SURL = 'https://tzkokgpxqjeyuvyvmqtt.supabase.co';
+var SUPABASE_URL = SURL;
 var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6a29rZ3B4cWpleXV2eXZtcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjg2ODEsImV4cCI6MjA4ODg0NDY4MX0.sIqJgyh1bAsKNHlFU5Q7LgpaoEJrZlgMlIH4EQx0hyo';
 var sb = supabase.createClient(SURL, SKEY);
 
@@ -1324,21 +1325,34 @@ function closeOverrideModal() {
 }
 
 function adminCreateAthlete() {
-  var name=document.getElementById('na-name').value.trim();
-  var email=document.getElementById('na-email').value.trim();
-  var pass=document.getElementById('na-pass').value.trim();
+  var name  = document.getElementById('na-name').value.trim();
+  var email = document.getElementById('na-email').value.trim();
+  var pass  = document.getElementById('na-pass').value.trim();
   if(!email||!pass){ showFmsg('na-msg','Email e password obbligatorie','err'); return; }
-  var btn=document.getElementById('na-btn'); btn.disabled=true; btn.textContent='Creazione...';
-  sb.auth.admin.createUser({email:email,password:pass,email_confirm:true,user_metadata:{full_name:name}})
-    .then(function(r){
-      btn.disabled=false; btn.textContent='Crea account';
-      if(r.error){ showFmsg('na-msg',r.error.message,'err'); return; }
-      return sb.from('profiles').update({full_name:name,role:'athlete'}).eq('id',r.data.user.id);
-    }).then(function(){
-      showFmsg('na-msg','Atleta creato!','ok');
-      document.getElementById('na-name').value=''; document.getElementById('na-email').value=''; document.getElementById('na-pass').value='';
-      loadAthletes();
-    }).catch(function(e){ btn.disabled=false; btn.textContent='Crea account'; showFmsg('na-msg',String(e),'err'); });
+  if(pass.length < 6){ showFmsg('na-msg','Password minimo 6 caratteri','err'); return; }
+  var btn = document.getElementById('na-btn'); btn.disabled=true; btn.textContent='Creazione...';
+
+  fetch('https://kratos-ai.dcarera.workers.dev/create-athlete', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      email: email,
+      password: pass,
+      full_name: name || null,
+      supabase_url: SUPABASE_URL
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    btn.disabled=false; btn.textContent='Crea account';
+    if(data.error){ showFmsg('na-msg', data.error, 'err'); return; }
+    showFmsg('na-msg', '✓ Atleta creato! Può accedere subito.', 'ok');
+    document.getElementById('na-name').value='';
+    document.getElementById('na-email').value='';
+    document.getElementById('na-pass').value='';
+    loadAthletes();
+  })
+  .catch(function(e){ btn.disabled=false; btn.textContent='Crea account'; showFmsg('na-msg','Errore: '+String(e),'err'); });
 }
 
 // ── AI COACH ─────────────────────────────────────────────────
