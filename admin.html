@@ -348,7 +348,7 @@ function aiGenerate() {
     ].join(' ')
     var userMsg = 'Programma da convertire in JSON: ' + prompt;
 
-    fetch('https://api.anthropic.com/v1/messages', {
+    fetch('https://kratos-ai.dcarera.workers.dev/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
