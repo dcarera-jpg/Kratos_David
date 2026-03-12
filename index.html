@@ -506,6 +506,32 @@ select.inp{cursor:pointer}
 </div>
 
 <!-- ── DAY ASSIGN MODAL (admin) ── -->
+<!-- OVERRIDE MODAL -->
+<div id="override-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center" onclick="closeOverrideModal()">
+  <div onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 16px 32px;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--pur)">MODIFICA GIORNO</div>
+      <button onclick="closeOverrideModal()" style="background:none;border:none;color:var(--mu);font-size:1.2rem;cursor:pointer">&#10005;</button>
+    </div>
+    <div id="override-ctx" style="font-size:.72rem;color:var(--mu2);margin-bottom:14px"></div>
+    <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:6px">SESSIONE BASE</div>
+    <div id="override-base-sess" style="font-size:.82rem;padding:8px 10px;background:var(--s3);border-radius:8px;margin-bottom:12px;color:var(--mu2)">—</div>
+    <div class="field">
+      <label>Override sessione <span style="color:var(--mu);font-weight:400;text-transform:none;font-size:.65rem">(lascia vuoto per mantenere la base)</span></label>
+      <select id="override-sess-sel" class="inp"><option value="">— Usa sessione base —</option></select>
+    </div>
+    <div class="field">
+      <label>Nota coach <span style="color:var(--mu);font-weight:400;text-transform:none;font-size:.65rem">(visibile all'atleta)</span></label>
+      <textarea class="inp" id="override-note" rows="3" placeholder="es. Lavora leggero, focus tecnica. Niente carichi massimali."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-red" style="flex:2;background:var(--pur)" onclick="saveOverride()">Salva modifica</button>
+      <button class="btn-out" style="flex:1;color:var(--red);border-color:rgba(232,17,42,.3)" onclick="clearOverride()">Rimuovi</button>
+    </div>
+    <div id="override-msg" style="display:none;margin-top:10px;font-size:.76rem;padding:8px 10px;border-radius:8px"></div>
+  </div>
+</div>
+
 <div id="day-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center" onclick="closeDayModal()">
   <div onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 16px 28px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -694,7 +720,11 @@ function buildAthCard(a) {
   btnReset.style.cssText='border-color:rgba(245,158,11,.3);color:var(--orn)';
   btnReset.onclick = (function(ath){ return function(){ openResetModal(ath); }; })(a);
 
-  btnRow.appendChild(btnAssign); btnRow.appendChild(btnAdv); btnRow.appendChild(btnReset);
+  var btnOverride = document.createElement('button'); btnOverride.className='btn-out'; btnOverride.textContent='✏ Giorno';
+  btnOverride.style.cssText='border-color:rgba(168,85,247,.3);color:var(--pur)';
+  btnOverride.onclick = (function(ath){ return function(){ openOverridePanel(ath); }; })(a);
+
+  btnRow.appendChild(btnAssign); btnRow.appendChild(btnAdv); btnRow.appendChild(btnOverride); btnRow.appendChild(btnReset);
   progSec.appendChild(progInfo); progSec.appendChild(btnRow);
 
   // Messages
@@ -1133,6 +1163,165 @@ function showResetMsg(text,ok) {
 }
 
 // ── CREATE ATHLETE ────────────────────────────────────────────
+// ── OVERRIDE PANEL ───────────────────────────────────────────
+var overrideTargetAth = null;
+var overrideCycleDays = []; // days of current cycle for this athlete
+
+function openOverridePanel(ath) {
+  if (!ath.current_cycle_id) { alert('Atleta senza ciclo assegnato.'); return; }
+  overrideTargetAth = ath;
+  document.getElementById('override-ctx').textContent = 'Atleta: ' + (ath.full_name||ath.email) + ' — Ciclo corrente';
+  document.getElementById('override-note').value = '';
+  document.getElementById('override-base-sess').textContent = 'Caricamento...';
+  document.getElementById('override-msg').style.display = 'none';
+
+  // Load sessions for select
+  var sel = document.getElementById('override-sess-sel');
+  sel.innerHTML = '<option value="">— Usa sessione base —</option>';
+  (allSess.length ? Promise.resolve({data:allSess}) : sb.from('sessions').select('id,name,session_type').order('name'))
+    .then(function(sr){
+      allSess = sr.data||[];
+      allSess.forEach(function(s){
+        var o = document.createElement('option'); o.value = s.id;
+        o.textContent = (s.session_type==='cardio'?'🚴 ':'🏋️ ') + s.name;
+        sel.appendChild(o);
+      });
+    });
+
+  // Load cycle days with sessions + existing overrides for this athlete
+  sb.from('cycle_days')
+    .select('id, day_number, sessions(id,name)')
+    .eq('cycle_id', ath.current_cycle_id)
+    .order('day_number')
+    .then(function(r){
+      overrideCycleDays = r.data || [];
+      renderOverrideDayList(ath);
+    }).catch(function(){});
+
+  document.getElementById('override-overlay').style.display = 'flex';
+}
+
+function renderOverrideDayList(ath) {
+  var baseEl = document.getElementById('override-base-sess');
+  if (!overrideCycleDays.length) { baseEl.textContent = 'Nessun giorno trovato.'; return; }
+
+  // Load existing overrides for this athlete+cycle
+  sb.from('athlete_day_overrides')
+    .select('*, sessions(id,name)')
+    .eq('athlete_id', ath.id)
+    .then(function(or){
+      var overrideMap = {};
+      (or.data||[]).forEach(function(o){ overrideMap[o.cycle_day_id] = o; });
+
+      var html = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:4px">';
+      overrideCycleDays.forEach(function(d){
+        var ov = overrideMap[d.id];
+        var hasOv = ov && (ov.session_id || ov.coach_note);
+        var hasNote = ov && ov.coach_note;
+        var bg = hasOv ? 'rgba(168,85,247,.15)' : 'var(--s3)';
+        var bdr = hasOv ? 'rgba(168,85,247,.4)' : 'var(--bdr)';
+        var baseName = (d.sessions ? d.sessions.name : '—').substring(0,8);
+        var ovName = ov && ov.sessions ? ov.sessions.name.substring(0,8) : '';
+        html += '<div onclick="selectOverrideDay('+d.id+','+d.day_number+')" style="background:'+bg+';border:1px solid '+bdr+';border-radius:8px;padding:5px 3px;text-align:center;min-height:50px;cursor:pointer">';
+        html += '<div style="font-size:.55rem;font-weight:700;color:var(--mu2)">G'+d.day_number+'</div>';
+        html += '<div style="font-size:.5rem;color:var(--txt);line-height:1.3;margin-top:2px">'+escHtml(baseName)+'</div>';
+        if(ovName) html += '<div style="font-size:.48rem;color:var(--pur);margin-top:1px">→'+escHtml(ovName)+'</div>';
+        if(hasNote) html += '<div style="font-size:.5rem;color:var(--orn)">📝</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '<div style="font-size:.68rem;color:var(--mu2);margin-top:6px">Tocca un giorno per modificarlo. <span style="color:var(--pur)">Viola</span> = override attivo. 📝 = nota coach.</div>';
+      baseEl.innerHTML = html;
+    }).catch(function(){});
+}
+
+var overrideSelectedDayId = null;
+var overrideSelectedDayNum = null;
+
+function selectOverrideDay(cycleDayId, dayNum) {
+  overrideSelectedDayId = cycleDayId;
+  overrideSelectedDayNum = dayNum;
+
+  // Highlight selected
+  document.querySelectorAll('#override-base-sess > div > div').forEach(function(el,i){
+    el.style.outline = (overrideCycleDays[i] && overrideCycleDays[i].id === cycleDayId) ? '2px solid var(--pur)' : 'none';
+  });
+
+  // Show day info + load existing override
+  var dayData = overrideCycleDays.find(function(d){ return d.id === cycleDayId; });
+  var baseName = dayData && dayData.sessions ? dayData.sessions.name : 'Nessuna';
+
+  var sel = document.getElementById('override-sess-sel');
+  sel.value = '';
+  document.getElementById('override-note').value = '';
+  document.getElementById('override-ctx').textContent =
+    'Atleta: '+(overrideTargetAth.full_name||overrideTargetAth.email)+' · Giorno '+dayNum+' · Base: '+baseName;
+
+  sb.from('athlete_day_overrides')
+    .select('*, sessions(id,name)')
+    .eq('athlete_id', overrideTargetAth.id)
+    .eq('cycle_day_id', cycleDayId)
+    .maybeSingle()
+    .then(function(r){
+      if(r.data){
+        if(r.data.session_id) sel.value = r.data.session_id;
+        document.getElementById('override-note').value = r.data.coach_note || '';
+      }
+    }).catch(function(){});
+}
+
+function saveOverride() {
+  if (!overrideTargetAth || !overrideSelectedDayId) {
+    showOverrideMsg('Seleziona prima un giorno dalla griglia.', false); return;
+  }
+  var sessId = document.getElementById('override-sess-sel').value;
+  var note = document.getElementById('override-note').value.trim();
+  if (!sessId && !note) { showOverrideMsg('Inserisci una sessione alternativa o una nota.', false); return; }
+
+  var data = {
+    athlete_id: overrideTargetAth.id,
+    cycle_day_id: overrideSelectedDayId,
+    session_id: sessId ? parseInt(sessId) : null,
+    coach_note: note || null,
+    created_by: ME.id,
+    updated_at: new Date().toISOString()
+  };
+
+  sb.from('athlete_day_overrides').upsert(data, {onConflict:'athlete_id,cycle_day_id'})
+    .then(function(r){
+      if(r.error){ showOverrideMsg('Errore: '+r.error.message, false); return; }
+      showOverrideMsg('Salvato!', true);
+      renderOverrideDayList(overrideTargetAth);
+    }).catch(function(e){ showOverrideMsg('Errore: '+String(e), false); });
+}
+
+function clearOverride() {
+  if (!overrideTargetAth || !overrideSelectedDayId) { showOverrideMsg('Seleziona prima un giorno.', false); return; }
+  sb.from('athlete_day_overrides')
+    .delete()
+    .eq('athlete_id', overrideTargetAth.id)
+    .eq('cycle_day_id', overrideSelectedDayId)
+    .then(function(){
+      showOverrideMsg('Override rimosso.', true);
+      document.getElementById('override-sess-sel').value = '';
+      document.getElementById('override-note').value = '';
+      renderOverrideDayList(overrideTargetAth);
+    }).catch(function(){});
+}
+
+function showOverrideMsg(text, ok) {
+  var el = document.getElementById('override-msg');
+  el.textContent = text; el.style.display = 'block';
+  el.style.background = ok ? 'rgba(16,185,129,.12)' : 'rgba(232,17,42,.12)';
+  el.style.color = ok ? 'var(--grn)' : 'var(--red)';
+  setTimeout(function(){ el.style.display='none'; }, 3000);
+}
+
+function closeOverrideModal() {
+  document.getElementById('override-overlay').style.display = 'none';
+  overrideTargetAth = null; overrideSelectedDayId = null; overrideSelectedDayNum = null;
+}
+
 function adminCreateAthlete() {
   var name=document.getElementById('na-name').value.trim();
   var email=document.getElementById('na-email').value.trim();
@@ -1415,6 +1604,7 @@ function aiUpload() {
 var currentCycle = null;     // full cycle object with cycle_days + sessions
 var logbookCache = {};       // cycleDayId_seId -> logbook row
 var prCache = {};            // seId -> best previous
+var overrideCache = {};      // cycleDayId -> {session_id, coach_note, sessions}
 var selectedDayNum = null;
 var today = new Date();
 
@@ -1484,6 +1674,17 @@ function loadPRs() {
       (r.data||[]).forEach(function(row){
         if(!prCache[row.session_exercise_id]) prCache[row.session_exercise_id]={kg:row.set1_kg,reps:row.set1_reps,kg2:row.set2_kg,reps2:row.set2_reps,kg3:row.set3_kg,reps3:row.set3_reps};
       });
+      return loadOverrides();
+    }).catch(function(){ renderCycle(); });
+}
+
+function loadOverrides() {
+  sb.from('athlete_day_overrides')
+    .select('cycle_day_id, session_id, coach_note, sessions(id,name,session_type,session_exercises(id,sort_order,sets,reps,rest_sec,notes,exercises(id,name,tag,tag_label,notes)))')
+    .eq('athlete_id', ME.id)
+    .then(function(r){
+      overrideCache={};
+      (r.data||[]).forEach(function(o){ overrideCache[o.cycle_day_id]=o; });
       renderCycle();
     }).catch(function(){ renderCycle(); });
 }
@@ -1511,10 +1712,14 @@ function renderCycle() {
     else if(sess) cls+=' has-gym';
 
     var cell=document.createElement('div'); cell.className=cls;
-    var dotCls=isDone?'done':(sess&&sess.session_type==='cardio'?'cardio':'');
+    var ov=d?overrideCache[d.id]:null;
+    var displaySess=ov&&ov.sessions?ov.sessions:sess;
+    var dotCls=isDone?'done':(displaySess&&displaySess.session_type==='cardio'?'cardio':'');
+    var ovBadge=ov?'<div style="font-size:.44rem;color:var(--pur);line-height:1">✏</div>':'';
     cell.innerHTML='<div class="cd-num">G'+i+'</div>' +
-      (sess?'<div class="cd-dot '+dotCls+'"></div>':'') +
-      (sess?'<div class="cd-label">'+escHtml(shortName(sess.name))+'</div>':'');
+      (displaySess?'<div class="cd-dot '+dotCls+'"></div>':'') +
+      (displaySess?'<div class="cd-label">'+escHtml(shortName(displaySess.name))+'</div>':'') +
+      ovBadge;
     cell.onclick=(function(n){ return function(){ selectCycleDay(n); }; })(i);
     grid.appendChild(cell);
   }
@@ -1536,23 +1741,44 @@ function renderDaySession(dayNum) {
   currentCycle.cycle_days.forEach(function(d){ dayMap[d.day_number]=d; });
   var dayData=dayMap[dayNum];
 
-  if(!dayData||!dayData.sessions){
+  // Check for override on this day
+  var ov = dayData ? overrideCache[dayData.id] : null;
+  var sess = ov && ov.sessions ? ov.sessions : (dayData ? dayData.sessions : null);
+  var isOverridden = !!(ov && ov.session_id && ov.sessions);
+
+  if(!dayData||!sess){
     area.innerHTML='<div class="rest-card"><div style="font-size:2.5rem;margin-bottom:10px">&#128164;</div>' +
       '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.6rem;letter-spacing:.1em;color:var(--mu2)">Giorno '+dayNum+'</div>' +
       '<div style="font-size:.8rem;color:var(--mu2);margin-top:6px">Nessuna sessione assegnata a questo giorno.</div></div>';
+    // Still show coach note if present
+    if(ov && ov.coach_note) {
+      area.innerHTML += '<div style="background:var(--pdim);border:1px solid rgba(168,85,247,.25);border-radius:12px;padding:12px 14px;margin-top:8px">' +
+        '<div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pur);margin-bottom:5px">&#128100; Nota del Coach</div>' +
+        '<div style="font-size:.84rem;line-height:1.6">'+escHtml(ov.coach_note)+'</div></div>';
+    }
     return;
   }
 
-  var sess=dayData.sessions;
   var sexs=sess.session_exercises||[];
   var doneCount=sexs.filter(function(se){ return logbookCache[dayData.id+'_'+se.id]&&logbookCache[dayData.id+'_'+se.id].done; }).length;
   var ic=sess.session_type==='cardio'?'&#128693;':'&#127947;';
 
+  // Coach note banner (above card)
+  if(ov && ov.coach_note){
+    var noteBanner = document.createElement('div');
+    noteBanner.style.cssText='background:var(--pdim);border:1px solid rgba(168,85,247,.25);border-radius:12px;padding:12px 14px;margin-bottom:10px';
+    noteBanner.innerHTML='<div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pur);margin-bottom:5px">&#128100; Nota del Coach</div>' +
+      '<div style="font-size:.84rem;line-height:1.6">'+escHtml(ov.coach_note)+'</div>';
+    area.appendChild(noteBanner);
+  }
+
   var card=document.createElement('div'); card.className='sess-card';
   var sHead=document.createElement('div'); sHead.className='sess-head';
   sHead.innerHTML='<div class="sess-icon">'+ic+'</div>' +
-    '<div class="sess-info"><div class="sess-name">'+escHtml(sess.name)+'</div>' +
-    '<div class="sess-meta">Giorno '+dayNum+' · '+doneCount+'/'+sexs.length+' esercizi</div></div>' +
+    '<div class="sess-info">' +
+      '<div class="sess-name">'+escHtml(sess.name)+(isOverridden?' <span style="font-size:.6rem;background:var(--pdim);color:var(--pur);padding:2px 6px;border-radius:6px;vertical-align:middle">MODIF.</span>':'')+'</div>' +
+      '<div class="sess-meta">Giorno '+dayNum+' · '+doneCount+'/'+sexs.length+' esercizi</div>' +
+    '</div>' +
     (doneCount===sexs.length&&sexs.length>0?'<div class="sess-done-pill">&#10003; Completata</div>':'');
 
   var progRow=document.createElement('div'); progRow.className='prog-row';
