@@ -224,6 +224,18 @@ var timerSecs = 90, timerRunning = false, timerInterval = null, activePreset = 9
 
 var DAY_NAMES = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
 
+// ── DEBUG ─────────────────────────────────────────────────────
+function showDebug(lines) {
+  var el = document.getElementById('debug-box');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'debug-box';
+    el.style.cssText = 'position:fixed;bottom:80px;left:10px;right:10px;background:#1a1a00;border:1px solid #ff0;color:#ff0;font-size:.65rem;padding:10px;border-radius:8px;z-index:9999;max-height:200px;overflow-y:auto;font-family:monospace;white-space:pre-wrap;word-break:break-all';
+    document.body.appendChild(el);
+  }
+  el.textContent = lines.join('\n');
+}
+
 // ── BOOT ─────────────────────────────────────────────────────
 function boot() {
   sb.auth.getSession().then(function(r) {
@@ -234,13 +246,27 @@ function boot() {
     if (!r || r.error) { location.href = 'index.html'; return; }
     myProfile = r.data;
     document.getElementById('loader').style.display = 'none';
+
+    // DEBUG: mostra cosa c'è nel profilo
+    showDebug([
+      'PROFILO OK',
+      'email: ' + (myProfile.email || ME.email || '?'),
+      'role: ' + myProfile.role,
+      'current_block_id: ' + myProfile.current_block_id,
+      'current_week_id: ' + myProfile.current_week_id,
+      '→ ' + (myProfile.current_week_id ? 'CARICO SETTIMANA' : 'NO WEEK ID — vedo no-prog')
+    ]);
+
     if (!myProfile.current_week_id) {
       renderNoProg();
       return;
     }
     loadWeek();
     loadMessages();
-  }).catch(function() { location.href = 'index.html'; });
+  }).catch(function(e) {
+    showDebug(['ERRORE BOOT: ' + String(e)]);
+    location.href = 'index.html';
+  });
 }
 
 function renderNoProg() {
@@ -269,17 +295,23 @@ function renderCalEmpty() {
 
 // ── LOAD WEEK ─────────────────────────────────────────────────
 function loadWeek() {
+  showDebug(['loadWeek() week_id=' + myProfile.current_week_id]);
   sb.from('week_templates')
     .select('*, week_days(*, sessions(id, name, session_type, session_exercises(id, sort_order, sets, reps, rest_sec, notes, exercises(id, name, tag, tag_label, notes))))')
     .eq('id', myProfile.current_week_id)
     .single()
     .then(function(r) {
-      if (r.error || !r.data) { renderNoProg(); return; }
+      if (r.error) { showDebug(['loadWeek ERR: ' + JSON.stringify(r.error)]); renderNoProg(); return; }
+      if (!r.data) { showDebug(['loadWeek: data NULL']); renderNoProg(); return; }
       currentWeek = r.data;
       currentWeek.week_days = (currentWeek.week_days || []).sort(function(a,b){return a.day_of_week-b.day_of_week;});
-      // Load logbook for this week
+      showDebug([
+        'SETTIMANA: ' + currentWeek.name,
+        'week_days: ' + currentWeek.week_days.length,
+        currentWeek.week_days.map(function(d){return 'G'+d.day_of_week+':'+(d.sessions?d.sessions.name:'null');}).join(' | ')
+      ]);
       return loadLogbook();
-    }).catch(function() { renderNoProg(); });
+    }).catch(function(e) { showDebug(['loadWeek CATCH: ' + String(e)]); renderNoProg(); });
 }
 
 function loadLogbook() {
