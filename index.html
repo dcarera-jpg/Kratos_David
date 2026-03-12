@@ -1440,21 +1440,22 @@ function aiGenerate() {
 
       // STEP 2 PROMPT: mesocycle + cycles + days
       var sys2=[
-        'Coach bodybuilding. Genera la struttura mesociclo con 4 cicli x 10 giorni.',
-        'SESSIONI DISPONIBILI (usa SOLO questi nomi esatti): '+sessNames,
-        'RISPONDI SOLO JSON VALIDO, zero markdown:',
-        '{"mesocycle":{"name":"str","objective":"str","description":"str"},"cycles":[{"cycle_number":1,"name":"str","cycle_type":"blast|deload|taper|test","days":[{"day_number":1,"session_name":"nome esatto"}]}]}',
-        'REGOLE:',
-        '- 4 cicli esatti, 10 giorni ognuno, tutti i 10 giorni devono avere una session_name.',
-        '- Ciclo 4: deload, usa sessioni piu leggere.',
-        '- Distribuisci carenti con piu frequenza (2-3x per ciclo), sviluppati 1x.',
-        '- Cardio HIIT/LISS nei giorni appropriati se presenti nelle sessioni.',
-        '- session_name IDENTICO ai nomi nella lista. Sii CONCISO.'
+        'Coach bodybuilding. Genera struttura mesociclo 4 cicli x 10 giorni.',
+        'SESSIONI (usa SOLO questi nomi esatti): '+sessNames,
+        'RISPONDI SOLO JSON VALIDO, zero markdown, zero testo extra, zero description lunghe:',
+        '{"mesocycle":{"name":"max 5 parole","objective":"max 5 parole"},"cycles":[{"cycle_number":1,"name":"max 3 parole","cycle_type":"blast|deload|taper|test","days":[{"day_number":1,"session_name":"nome esatto dalla lista"}]}]}',
+        'REGOLE STRINGENTI:',
+        '- name e objective: MASSIMO 5 parole ciascuno. NO description.',
+        '- 4 cicli, 10 giorni ognuno, tutti i giorni devono avere session_name.',
+        '- Ciclo 4: deload.',
+        '- Carenti 2-3x per ciclo, sviluppati 1x per ciclo.',
+        '- session_name IDENTICO alla lista sopra.',
+        '- Rispondi con SOLO il JSON, inizia con { e finisci con }.'
       ].join(' ');
 
       var usr2='Stessi parametri del passo 1. Carenti:'+carenti+'. Sviluppati:'+(meno||'nessuno')+'. Cardio:'+cardioStr+'. Obiettivo:'+obj;
 
-      aiCallWorker(sys2, usr2, 2500, function(plan2){
+      aiCallWorker(sys2, usr2, 1800, function(plan2){
         btn.disabled=false; btn.textContent='⚡ Genera programma completo';
         // Merge
         aiGeneratedPlan = {
