@@ -529,19 +529,16 @@ select.inp{cursor:pointer}
 <!-- VIDEO ESERCIZIO MODAL -->
 <div id="video-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:400;align-items:flex-start;justify-content:center;padding-top:20px" onclick="closeVideoModal()">
   <div onclick="event.stopPropagation()" style="width:100%;max-width:480px;padding:0 14px 40px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div id="video-modal-title" style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--orn);flex:1;padding-right:10px"></div>
-      <button onclick="closeVideoModal()" style="background:none;border:none;color:var(--mu);font-size:1.4rem;cursor:pointer;flex-shrink:0">&#10005;</button>
+      <button onclick="closeVideoModal()" style="background:none;border:none;color:var(--mu);font-size:1.4rem;cursor:pointer">&#10005;</button>
     </div>
-    <!-- GIF preview -->
-    <div id="video-gif-area" style="margin-bottom:12px"></div>
-    <!-- YouTube button -->
-    <div id="video-yt-area"></div>
-    <!-- Admin edit fields -->
-    <div id="video-edit-area" style="display:none;margin-top:16px;border-top:1px solid var(--bdr);padding-top:14px">
-      <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px">MODIFICA LINKS (admin)</div>
-      <div class="field"><label>YouTube URL</label><input class="inp" id="video-edit-yt" placeholder="https://youtube.com/..."></div>
-      <div class="field"><label>GIF URL</label><input class="inp" id="video-edit-gif" placeholder="https://..."></div>
+    <!-- Thumbnail + play -->
+    <div id="video-thumb-area" style="margin-bottom:14px"></div>
+    <!-- Admin edit -->
+    <div id="video-edit-area" style="display:none;margin-top:4px;border-top:1px solid var(--bdr);padding-top:14px">
+      <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px">MODIFICA LINK VIDEO</div>
+      <div class="field"><label>YouTube URL (link diretto o ricerca)</label><input class="inp" id="video-edit-yt" placeholder="https://www.youtube.com/watch?v=..."></div>
       <button class="btn-red" style="width:100%" onclick="saveExMedia()">Salva</button>
       <div id="video-edit-msg" style="display:none;margin-top:6px;font-size:.76rem;padding:6px 10px;border-radius:8px"></div>
     </div>
@@ -1498,72 +1495,65 @@ function dndDrop(event) {
 }
 
 // ── VIDEO MODAL ──────────────────────────────────────────────
-var videoExCache = {}; // exId -> exercise data
+function ytVideoId(url) {
+  if (!url) return null;
+  var m = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
 
 function openVideoModal(exId) {
-  // Find exercise in allEx or fetch
   var ex = allEx.find(function(e){ return e.id === exId; });
-  if (!ex) {
-    // Fetch from DB
-    sb.from('exercises').select('id,name,video_url,gif_url').eq('id', exId).single()
-      .then(function(r){ if(r.data){ videoExCache[exId]=r.data; _showVideoModal(r.data); } })
-      .catch(function(){});
-    return;
-  }
-  _showVideoModal(ex);
+  if (ex) { _showVideoModal(ex, false); return; }
+  sb.from('exercises').select('id,name,video_url').eq('id', exId).single()
+    .then(function(r){ if(r.data) _showVideoModal(r.data, false); })
+    .catch(function(){});
 }
 
 function openVideoModalAdmin(exId) {
   var ex = allEx.find(function(e){ return e.id === exId; });
-  if (!ex) return;
-  _showVideoModal(ex, true);
+  if (ex) _showVideoModal(ex, true);
 }
 
 function _showVideoModal(ex, isAdmin) {
-  videoExCache[ex.id] = ex;
   document.getElementById('video-modal-title').textContent = ex.name;
   document.getElementById('video-edit-area').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('video-edit-area').dataset.exId = ex.id;
+  document.getElementById('video-edit-msg').style.display = 'none';
 
   if (isAdmin) {
-    document.getElementById('video-edit-yt').value  = ex.video_url || '';
-    document.getElementById('video-edit-gif').value = ex.gif_url   || '';
-    document.getElementById('video-edit-area').dataset.exId = ex.id;
-    document.getElementById('video-edit-msg').style.display = 'none';
+    document.getElementById('video-edit-yt').value = ex.video_url || '';
   }
 
-  // GIF area
-  var gifArea = document.getElementById('video-gif-area');
-  if (ex.gif_url) {
-    gifArea.innerHTML =
-      '<a href="' + escHtml(ex.gif_url) + '" target="_blank" style="display:block">' +
-        '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center;color:var(--mu2);font-size:.8rem">' +
-          '<div style="font-size:2rem;margin-bottom:6px">🎞️</div>' +
-          'Apri GIF su Tenor' +
-        '</div>' +
-      '</a>';
-  } else {
-    // Auto-search on Tenor
-    var q = encodeURIComponent(ex.name + ' exercise gym');
-    gifArea.innerHTML =
-      '<a href="https://tenor.com/search/' + encodeURIComponent(ex.name.toLowerCase().replace(/\s+/g,'-')) + '-gifs" target="_blank" style="display:block">' +
-        '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center;color:var(--mu2);font-size:.8rem">' +
-          '<div style="font-size:2rem;margin-bottom:6px">🎞️</div>' +
-          'Cerca GIF su Tenor' +
-        '</div>' +
-      '</a>';
-  }
-
-  // YouTube area
-  var ytArea = document.getElementById('video-yt-area');
+  // Build YouTube URL — use saved link or auto search
   var ytUrl = ex.video_url || ('https://www.youtube.com/results?search_query=' + encodeURIComponent(ex.name + ' esecuzione tutorial palestra'));
-  ytArea.innerHTML =
-    '<a href="' + escHtml(ytUrl) + '" target="_blank" style="display:flex;align-items:center;gap:10px;background:rgba(255,0,0,.08);border:1px solid rgba(255,0,0,.2);border-radius:12px;padding:14px;text-decoration:none">' +
-      '<div style="font-size:1.8rem;flex-shrink:0">▶️</div>' +
-      '<div>' +
-        '<div style="font-weight:700;font-size:.85rem;color:var(--txt)">Guarda su YouTube</div>' +
-        '<div style="font-size:.7rem;color:var(--mu2);margin-top:2px">' + escHtml(ex.name) + ' — tutorial esecuzione</div>' +
-      '</div>' +
-    '</a>';
+  var vidId = ytVideoId(ytUrl);
+
+  var thumbArea = document.getElementById('video-thumb-area');
+  if (vidId) {
+    // Direct video — show thumbnail
+    thumbArea.innerHTML =
+      '<a href="' + escHtml(ytUrl) + '" target="_blank" style="display:block;position:relative;border-radius:12px;overflow:hidden">' +
+        '<img src="https://img.youtube.com/vi/' + vidId + '/hqdefault.jpg" style="width:100%;display:block;border-radius:12px">' +
+        '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3)">' +
+          '<div style="width:56px;height:56px;background:rgba(255,0,0,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem">▶</div>' +
+        '</div>' +
+        '<div style="position:absolute;bottom:0;left:0;right:0;padding:10px 12px;background:linear-gradient(transparent,rgba(0,0,0,.8));font-size:.75rem;color:#fff">' +
+          escHtml(ex.name) +
+        '</div>' +
+      '</a>' +
+      (isAdmin ? '' : '<div style="text-align:center;font-size:.65rem;color:var(--mu2);margin-top:6px">Tocca per aprire su YouTube</div>');
+  } else {
+    // Search URL — show search button
+    thumbArea.innerHTML =
+      '<a href="' + escHtml(ytUrl) + '" target="_blank" style="display:flex;align-items:center;gap:12px;background:rgba(255,0,0,.08);border:1px solid rgba(255,0,0,.25);border-radius:12px;padding:16px;text-decoration:none">' +
+        '<div style="width:48px;height:48px;background:rgba(255,0,0,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">▶</div>' +
+        '<div>' +
+          '<div style="font-weight:700;font-size:.88rem;color:var(--txt)">Cerca su YouTube</div>' +
+          '<div style="font-size:.7rem;color:var(--mu2);margin-top:2px">' + escHtml(ex.name) + ' — tutorial esecuzione</div>' +
+          (isAdmin ? '<div style="font-size:.65rem;color:var(--orn);margin-top:4px">💡 Incolla un link diretto per mostrare la thumbnail</div>' : '') +
+        '</div>' +
+      '</a>';
+  }
 
   document.getElementById('video-overlay').style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -1578,10 +1568,9 @@ function saveExMedia() {
   var area  = document.getElementById('video-edit-area');
   var exId  = parseInt(area.dataset.exId);
   var ytUrl = document.getElementById('video-edit-yt').value.trim() || null;
-  var gifUrl= document.getElementById('video-edit-gif').value.trim() || null;
   var msgEl = document.getElementById('video-edit-msg');
 
-  sb.from('exercises').update({ video_url: ytUrl, gif_url: gifUrl }).eq('id', exId)
+  sb.from('exercises').update({ video_url: ytUrl }).eq('id', exId)
     .then(function(r) {
       if (r.error) {
         msgEl.textContent = 'Errore: ' + r.error.message;
@@ -1589,9 +1578,8 @@ function saveExMedia() {
       } else {
         msgEl.textContent = '✓ Salvato!';
         msgEl.style.background = 'rgba(16,185,129,.12)'; msgEl.style.color = 'var(--grn)';
-        // Update local cache
         var ex = allEx.find(function(e){ return e.id === exId; });
-        if (ex) { ex.video_url = ytUrl; ex.gif_url = gifUrl; }
+        if (ex) ex.video_url = ytUrl;
         setTimeout(function(){ closeVideoModal(); renderEx(); }, 800);
       }
       msgEl.style.display = 'block';
@@ -2135,7 +2123,7 @@ function renderNoProg(reason) {
 function loadCycle() {
   var debugEl = document.getElementById('day-session-area');
   if(debugEl) debugEl.innerHTML='<div style="padding:16px;font-size:.75rem;color:var(--orn)">Caricamento ciclo id='+myProfile.current_cycle_id+'...</div>';
-  sb.from('cycles').select('*, cycle_days(*, sessions(id,name,session_type,session_exercises(id,sort_order,sets,reps,rest_sec,notes,exercises(id,name,tag,tag_label,notes))))').eq('id',myProfile.current_cycle_id).single()
+  sb.from('cycles').select('*, cycle_days(*, sessions(id,name,session_type,session_exercises(id,sort_order,sets,reps,rest_sec,notes,exercises(id,name,tag,tag_label,notes,video_url,gif_url))))').eq('id',myProfile.current_cycle_id).single()
     .then(function(r){
       if(r.error||!r.data){ renderNoProg('loadCycle error: '+(r.error?r.error.message:'no data')); return; }
       currentCycle=r.data;
