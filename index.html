@@ -372,6 +372,14 @@ select.inp{cursor:pointer}
         <div class="field"><label>Limitazioni fisiche / preferenze / altro</label>
           <textarea class="inp" id="ai-note" rows="2" placeholder="es. spalla destra da non caricare, preferisce macchine su free weights, recupero veloce..."></textarea></div>
 
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orn);margin-bottom:8px;margin-top:12px">MESOCICLO</div>
+        <div class="field"><label>Nome mesociclo <span style="color:var(--mu);font-weight:400;text-transform:none;font-size:.65rem">(lascia vuoto = generato dall'AI)</span></label>
+          <input class="inp" id="ai-meso-name" placeholder="es. Mesociclo Ipertrofia Primavera 2026"></div>
+        <div class="field"><label>Atleta <span style="color:var(--mu);font-weight:400;text-transform:none;font-size:.65rem">(opzionale — lascia vuoto per meso condiviso)</span></label>
+          <select class="inp" id="ai-meso-athlete">
+            <option value="">— Condiviso (tutti gli atleti) —</option>
+          </select></div>
+
         <button class="btn-red" id="ai-gen-btn" onclick="aiGenerate()" style="background:var(--orn);margin-top:4px">&#9889; Genera programma completo</button>
         <button onclick="aiTestConnection()" style="width:100%;padding:8px;border-radius:9px;background:none;border:1px dashed rgba(255,255,255,.15);color:var(--mu2);font-size:.72rem;cursor:pointer;margin-top:7px;font-family:inherit">&#128267; Test connessione Worker</button>
         <div id="ai-status" style="display:none;font-size:.76rem;padding:8px 10px;border-radius:8px;margin-top:8px"></div>
@@ -662,6 +670,7 @@ function asv(name) {
   if (b) b.classList.add('on');
   if (name === 'msgs') renderAdminMsgs();
   if (name === 'prog' && allEx.length === 0) loadEx();
+  if (name === 'ai') aiPopulateAthleteSelector();
 }
 
 function toggleEl(id) {
@@ -962,16 +971,31 @@ function delSessEx(id) {
 
 // ── MESOCYCLES ───────────────────────────────────────────────
 function loadMeso() {
-  sb.from('mesocycles').select('*, cycles(*, cycle_days(*, sessions(id,name,session_type)))').order('created_at')
+  sb.from('mesocycles').select('*, athlete_id, profiles!mesocycles_athlete_id_fkey(id,full_name,email), cycles(*, cycle_days(*, sessions(id,name,session_type)))').order('created_at')
     .then(function(r){
       allMeso=r.data||[];
-      allMeso.forEach(function(m){
+      // Sort: athlete-specific first, then shared
+    var sortedMeso = allMeso.slice().sort(function(a,b){
+      if(a.athlete_id===ath.id && b.athlete_id!==ath.id) return -1;
+      if(b.athlete_id===ath.id && a.athlete_id!==ath.id) return 1;
+      return 0;
+    });
+    sortedMeso.forEach(function(m){
         m.cycles=(m.cycles||[]).sort(function(a,b){return a.cycle_number-b.cycle_number;});
         m.cycles.forEach(function(c){ c.cycle_days=(c.cycle_days||[]).sort(function(a,b){return a.day_number-b.day_number;}); });
       });
       renderMeso();
     }).catch(function(){});
 }
+function renameMeso(mesoId, currentName) {
+  var newName = prompt('Nuovo nome mesociclo:', currentName);
+  if (newName === null) return;
+  newName = newName.trim();
+  if (!newName) return;
+  sb.from('mesocycles').update({name: newName}).eq('id', mesoId)
+    .then(function(){ loadMeso(); }).catch(function(e){ alert('Errore: ' + e.message); });
+}
+
 function renderMeso() {
   var c=document.getElementById('meso-list'); c.innerHTML='';
   if(!allMeso.length){ c.innerHTML='<div style="color:var(--mu2);font-size:.8rem;padding:8px">Nessun mesociclo. Creane uno o usa AI Coach.</div>'; return; }
@@ -986,9 +1010,16 @@ function renderMeso() {
         buildAdminDayGrid(cyc) + '</div>';
     }).join('');
     var addCycleBtn='<button onclick="openAddCycleModal('+m.id+')" style="width:100%;padding:8px;border-radius:9px;background:none;border:1px dashed rgba(255,255,255,.12);color:var(--mu2);font-size:.72rem;cursor:pointer;margin-top:4px;font-family:inherit">+ Aggiungi ciclo</button>';
+    var athLabel = m.profiles ? (m.profiles.full_name || m.profiles.email) : null;
+    var athBadge = athLabel ? '<span style="font-size:.58rem;background:var(--pdim);color:var(--pur);padding:2px 7px;border-radius:6px;margin-left:4px">👤 '+escHtml(athLabel)+'</span>' : '<span style="font-size:.58rem;background:var(--s3);color:var(--mu2);padding:2px 7px;border-radius:6px;margin-left:4px">Condiviso</span>';
     d.innerHTML='<div class="card-head" onclick="this.closest(\'.card\').classList.toggle(\'open\')">' +
-      '<div style="flex:1"><div style="font-weight:700;font-size:.9rem">'+escHtml(m.name)+'</div>' +
-      '<div style="font-size:.68rem;color:var(--mu2);margin-top:2px">'+(m.objective||'')+' · '+(m.cycles||[]).length+' cicli</div></div>' +
+      '<div style="flex:1">' +
+        '<div style="font-weight:700;font-size:.9rem;display:flex;align-items:center;flex-wrap:wrap;gap:4px">' +
+          escHtml(m.name) +
+          '<span onclick="event.stopPropagation();renameMeso('+m.id+',\''+escHtml(m.name)+'\')" style="cursor:pointer;font-size:.65rem;opacity:.5;padding:1px 4px;border-radius:4px;border:1px solid var(--bdr)" title="Rinomina">✏</span>' +
+        '</div>' +
+        '<div style="font-size:.68rem;color:var(--mu2);margin-top:3px;display:flex;align-items:center;gap:4px">'+(m.objective||'')+' · '+(m.cycles||[]).length+' cicli '+athBadge+'</div>' +
+      '</div>' +
       '<button class="btn-del" onclick="event.stopPropagation();delMeso('+m.id+')">&#215;</button></div>' +
       '<div class="card-body">'+cyclesHtml+addCycleBtn+'</div>';
     c.appendChild(d);
@@ -1673,6 +1704,20 @@ function aiTestConnection() {
   });
 }
 
+function aiPopulateAthleteSelector() {
+  var sel = document.getElementById('ai-meso-athlete');
+  if (!sel || sel.options.length > 1) return; // already populated
+  sb.from('profiles').select('id,full_name,email').eq('role','athlete').order('full_name')
+    .then(function(r){
+      (r.data||[]).forEach(function(a){
+        var o = document.createElement('option');
+        o.value = a.id;
+        o.textContent = a.full_name || a.email;
+        sel.appendChild(o);
+      });
+    });
+}
+
 function aiReset() {
   aiGeneratedPlan=null;
   document.getElementById('ai-preview').style.display='none';
@@ -1688,13 +1733,15 @@ var aiSessionsPlan = null;   // result of step 1
 var aiGeneratedPlan = null;  // merged result
 
 function aiGenerate() {
-  var carenti  = document.getElementById('ai-carenti').value.trim();
-  var meno     = document.getElementById('ai-meno').value.trim();
-  var hiit     = document.getElementById('ai-hiit').value;
-  var liss     = document.getElementById('ai-liss').value;
-  var obj      = document.getElementById('ai-obj').value;
-  var livello  = document.getElementById('ai-livello').value;
-  var note     = document.getElementById('ai-note').value.trim();
+  var carenti    = document.getElementById('ai-carenti').value.trim();
+  var meno       = document.getElementById('ai-meno').value.trim();
+  var hiit       = document.getElementById('ai-hiit').value;
+  var liss       = document.getElementById('ai-liss').value;
+  var obj        = document.getElementById('ai-obj').value;
+  var livello    = document.getElementById('ai-livello').value;
+  var note       = document.getElementById('ai-note').value.trim();
+  var mesoName   = document.getElementById('ai-meso-name').value.trim();
+  var mesoAthId  = document.getElementById('ai-meso-athlete').value;
   if(!carenti){ aiSetStatus('Inserisci i distretti carenti.','err'); return; }
 
   var btn=document.getElementById('ai-gen-btn'); btn.disabled=true; btn.textContent='Passo 1/2...';
@@ -1753,7 +1800,13 @@ function aiGenerate() {
 
       aiCallWorker(sys2, usr2, 1800, function(plan2){
         btn.disabled=false; btn.textContent='⚡ Genera programma completo';
-        // Merge
+        // Merge — apply custom name/athlete if set
+        if (mesoName) plan2.mesocycle.name = mesoName;
+        plan2.mesocycle.athlete_id = mesoAthId || null;
+        // Show athlete label in preview
+        var athSel = document.getElementById('ai-meso-athlete');
+        var athLabel = mesoAthId ? (athSel.options[athSel.selectedIndex].text) : null;
+        plan2.mesocycle._athlete_label = athLabel;
         aiGeneratedPlan = {
           mesocycle: plan2.mesocycle,
           sessions:  plan1.sessions,
@@ -1796,6 +1849,7 @@ function aiShowPreview(plan) {
   html+='<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:13px 14px;margin-bottom:10px">';
   html+='<div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:4px">MESOCICLO</div>';
   html+='<div style="font-weight:700;font-size:.95rem">'+escHtml(plan.mesocycle.name)+'</div>';
+  if(plan.mesocycle._athlete_label) html+='<div style="font-size:.65rem;margin-top:3px"><span style="background:var(--pdim);color:var(--pur);padding:2px 7px;border-radius:6px">👤 '+escHtml(plan.mesocycle._athlete_label)+'</span></div>';
   html+='<div style="font-size:.72rem;color:var(--mu2);margin-top:4px">'+(plan.mesocycle.objective||'')+' · '+(plan.cycles||[]).length+' cicli × 10 giorni</div>';
   if(plan.mesocycle.description) html+='<div style="font-size:.75rem;color:var(--mu2);margin-top:6px;line-height:1.5">'+escHtml(plan.mesocycle.description)+'</div>';
   html+='</div>';
@@ -1873,7 +1927,7 @@ function aiUpload() {
 
   function uploadMesocycle(){
     aiSetUploadStatus('Fase 2/3 — Creazione mesociclo...','loading');
-    sb.from('mesocycles').insert({name:plan.mesocycle.name,description:plan.mesocycle.description||null,objective:plan.mesocycle.objective||null,created_by:ME.id}).select().single()
+    sb.from('mesocycles').insert({name:plan.mesocycle.name,description:plan.mesocycle.description||null,objective:plan.mesocycle.objective||null,created_by:ME.id,athlete_id:plan.mesocycle.athlete_id||null}).select().single()
       .then(function(r){
         if(r.error) throw new Error(r.error.message);
         var mesoId=r.data.id; var cycles=plan.cycles||[]; var ci=0;
