@@ -526,6 +526,28 @@ select.inp{cursor:pointer}
   </div>
 </div>
 
+<!-- VIDEO ESERCIZIO MODAL -->
+<div id="video-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:400;align-items:flex-start;justify-content:center;padding-top:20px" onclick="closeVideoModal()">
+  <div onclick="event.stopPropagation()" style="width:100%;max-width:480px;padding:0 14px 40px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div id="video-modal-title" style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--orn);flex:1;padding-right:10px"></div>
+      <button onclick="closeVideoModal()" style="background:none;border:none;color:var(--mu);font-size:1.4rem;cursor:pointer;flex-shrink:0">&#10005;</button>
+    </div>
+    <!-- GIF preview -->
+    <div id="video-gif-area" style="margin-bottom:12px"></div>
+    <!-- YouTube button -->
+    <div id="video-yt-area"></div>
+    <!-- Admin edit fields -->
+    <div id="video-edit-area" style="display:none;margin-top:16px;border-top:1px solid var(--bdr);padding-top:14px">
+      <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px">MODIFICA LINKS (admin)</div>
+      <div class="field"><label>YouTube URL</label><input class="inp" id="video-edit-yt" placeholder="https://youtube.com/..."></div>
+      <div class="field"><label>GIF URL</label><input class="inp" id="video-edit-gif" placeholder="https://..."></div>
+      <button class="btn-red" style="width:100%" onclick="saveExMedia()">Salva</button>
+      <div id="video-edit-msg" style="display:none;margin-top:6px;font-size:.76rem;padding:6px 10px;border-radius:8px"></div>
+    </div>
+  </div>
+</div>
+
 <!-- OVERRIDE MODAL -->
 <div id="override-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center" onclick="closeOverrideModal()">
   <div onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 16px 32px;max-height:85vh;overflow-y:auto">
@@ -879,9 +901,13 @@ function renderEx(list) {
   var tm={mec:'t-mec',met:'t-met',pre:'t-pre',str:'t-str'};
   (list||allEx).forEach(function(e){
     var d=document.createElement('div'); d.className='card';
+    var hasMedia = e.video_url || e.gif_url;
     d.innerHTML='<div class="card-head" onclick="this.closest(\'.card\').classList.toggle(\'open\')">' +
-      '<div style="flex:1"><div style="font-weight:600;font-size:.87rem">'+escHtml(e.name)+'</div>' +
+      '<div style="flex:1"><div style="font-weight:600;font-size:.87rem">'+escHtml(e.name)+
+        (hasMedia ? ' <span style="font-size:.6rem;color:var(--orn)">🎬</span>' : ' <span style="font-size:.6rem;color:var(--mu2)">○</span>')+
+      '</div>' +
       '<span class="tag '+(tm[e.tag]||'t-mec')+'" style="margin-top:3px;display:inline-block">'+escHtml(e.tag_label)+'</span></div>' +
+      '<button onclick="event.stopPropagation();openVideoModalAdmin('+e.id+')" style="background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:8px;padding:3px 7px;font-size:.65rem;cursor:pointer;margin-right:6px">🎬 Edit</button>'+
       '<button class="btn-del" onclick="event.stopPropagation();delEx('+e.id+')">&#215;</button></div>' +
       (e.notes?'<div class="card-body"><div style="font-size:.78rem;color:var(--mu2);line-height:1.5">'+escHtml(e.notes)+'</div></div>':'');
     c.appendChild(d);
@@ -1239,7 +1265,7 @@ function openAthleteVista(ath) {
     .then(function(mr) {
       var meso = mr.data;
       return sb.from('cycles')
-        .select('*, cycle_days(id, day_number, sessions(id, name, session_type, session_exercises(id, sort_order, sets, reps, rest_sec, notes, exercises(id, name, tag))))')
+        .select('*, cycle_days(id, day_number, sessions(id, name, session_type, session_exercises(id, sort_order, sets, reps, rest_sec, notes, exercises(id, name, tag, video_url, gif_url))))')
         .eq('mesocycle_id', meso.id)
         .order('cycle_number')
         .then(function(cr) {
@@ -1469,6 +1495,107 @@ function dndDrop(event) {
       dndDragData.el.style.opacity = '';
       dndDragData = null;
     });
+}
+
+// ── VIDEO MODAL ──────────────────────────────────────────────
+var videoExCache = {}; // exId -> exercise data
+
+function openVideoModal(exId) {
+  // Find exercise in allEx or fetch
+  var ex = allEx.find(function(e){ return e.id === exId; });
+  if (!ex) {
+    // Fetch from DB
+    sb.from('exercises').select('id,name,video_url,gif_url').eq('id', exId).single()
+      .then(function(r){ if(r.data){ videoExCache[exId]=r.data; _showVideoModal(r.data); } })
+      .catch(function(){});
+    return;
+  }
+  _showVideoModal(ex);
+}
+
+function openVideoModalAdmin(exId) {
+  var ex = allEx.find(function(e){ return e.id === exId; });
+  if (!ex) return;
+  _showVideoModal(ex, true);
+}
+
+function _showVideoModal(ex, isAdmin) {
+  videoExCache[ex.id] = ex;
+  document.getElementById('video-modal-title').textContent = ex.name;
+  document.getElementById('video-edit-area').style.display = isAdmin ? 'block' : 'none';
+
+  if (isAdmin) {
+    document.getElementById('video-edit-yt').value  = ex.video_url || '';
+    document.getElementById('video-edit-gif').value = ex.gif_url   || '';
+    document.getElementById('video-edit-area').dataset.exId = ex.id;
+    document.getElementById('video-edit-msg').style.display = 'none';
+  }
+
+  // GIF area
+  var gifArea = document.getElementById('video-gif-area');
+  if (ex.gif_url) {
+    gifArea.innerHTML =
+      '<a href="' + escHtml(ex.gif_url) + '" target="_blank" style="display:block">' +
+        '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center;color:var(--mu2);font-size:.8rem">' +
+          '<div style="font-size:2rem;margin-bottom:6px">🎞️</div>' +
+          'Apri GIF su Tenor' +
+        '</div>' +
+      '</a>';
+  } else {
+    // Auto-search on Tenor
+    var q = encodeURIComponent(ex.name + ' exercise gym');
+    gifArea.innerHTML =
+      '<a href="https://tenor.com/search/' + encodeURIComponent(ex.name.toLowerCase().replace(/\s+/g,'-')) + '-gifs" target="_blank" style="display:block">' +
+        '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center;color:var(--mu2);font-size:.8rem">' +
+          '<div style="font-size:2rem;margin-bottom:6px">🎞️</div>' +
+          'Cerca GIF su Tenor' +
+        '</div>' +
+      '</a>';
+  }
+
+  // YouTube area
+  var ytArea = document.getElementById('video-yt-area');
+  var ytUrl = ex.video_url || ('https://www.youtube.com/results?search_query=' + encodeURIComponent(ex.name + ' esecuzione tutorial palestra'));
+  ytArea.innerHTML =
+    '<a href="' + escHtml(ytUrl) + '" target="_blank" style="display:flex;align-items:center;gap:10px;background:rgba(255,0,0,.08);border:1px solid rgba(255,0,0,.2);border-radius:12px;padding:14px;text-decoration:none">' +
+      '<div style="font-size:1.8rem;flex-shrink:0">▶️</div>' +
+      '<div>' +
+        '<div style="font-weight:700;font-size:.85rem;color:var(--txt)">Guarda su YouTube</div>' +
+        '<div style="font-size:.7rem;color:var(--mu2);margin-top:2px">' + escHtml(ex.name) + ' — tutorial esecuzione</div>' +
+      '</div>' +
+    '</a>';
+
+  document.getElementById('video-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeVideoModal() {
+  document.getElementById('video-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function saveExMedia() {
+  var area  = document.getElementById('video-edit-area');
+  var exId  = parseInt(area.dataset.exId);
+  var ytUrl = document.getElementById('video-edit-yt').value.trim() || null;
+  var gifUrl= document.getElementById('video-edit-gif').value.trim() || null;
+  var msgEl = document.getElementById('video-edit-msg');
+
+  sb.from('exercises').update({ video_url: ytUrl, gif_url: gifUrl }).eq('id', exId)
+    .then(function(r) {
+      if (r.error) {
+        msgEl.textContent = 'Errore: ' + r.error.message;
+        msgEl.style.background = 'rgba(232,17,42,.12)'; msgEl.style.color = 'var(--red)';
+      } else {
+        msgEl.textContent = '✓ Salvato!';
+        msgEl.style.background = 'rgba(16,185,129,.12)'; msgEl.style.color = 'var(--grn)';
+        // Update local cache
+        var ex = allEx.find(function(e){ return e.id === exId; });
+        if (ex) { ex.video_url = ytUrl; ex.gif_url = gifUrl; }
+        setTimeout(function(){ closeVideoModal(); renderEx(); }, 800);
+      }
+      msgEl.style.display = 'block';
+    }).catch(function(e){ msgEl.textContent = String(e); msgEl.style.display = 'block'; });
 }
 
 // ── OVERRIDE PANEL ───────────────────────────────────────────
@@ -2179,10 +2306,12 @@ function buildExItem(se, dayData) {
   item.className='ex-item'+(isDone?' done':''); item.id='exi-'+dayData.id+'-'+se.id;
 
   var hdr=document.createElement('div'); hdr.className='ex-header';
+  var hasMedia = ex.video_url || ex.gif_url;
   hdr.innerHTML='<div class="ex-check" id="chk-'+dayData.id+'-'+se.id+'">'+(isDone?'&#10003;':'')+'</div>' +
     '<div class="ex-info"><div class="ex-name">'+escHtml(ex.name||'?')+'</div>' +
     '<span class="ex-tag t-'+(ex.tag||'mec')+'">'+escHtml(ex.tag_label||'Mec')+'</span></div>' +
-    '<div class="ex-sets-pill">'+se.sets+'&#215;'+(se.reps||'8-10')+'</div>';
+    '<div class="ex-sets-pill">'+se.sets+'&#215;'+(se.reps||'8-10')+'</div>' +
+    (hasMedia ? '<button onclick="event.stopPropagation();openVideoModal('+ex.id+')" style="background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:8px;padding:4px 7px;font-size:.7rem;cursor:pointer;margin-left:4px;flex-shrink:0">🎬</button>' : '');
   hdr.onclick=(function(ddid,seid){ return function(){ toggleEx(ddid,seid); }; })(dayData.id,se.id);
 
   var body=document.createElement('div'); body.className='ex-body'; body.id='exb-'+dayData.id+'-'+se.id;
