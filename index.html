@@ -1530,27 +1530,24 @@ function _showVideoModal(ex, isAdmin) {
 
   var thumbArea = document.getElementById('video-thumb-area');
   if (vidId) {
-    // Direct video — show thumbnail
+    // Direct video ID — embed iframe (works on iOS Safari)
     thumbArea.innerHTML =
-      '<a href="' + escHtml(ytUrl) + '" target="_blank" style="display:block;position:relative;border-radius:12px;overflow:hidden">' +
-        '<img src="https://img.youtube.com/vi/' + vidId + '/hqdefault.jpg" style="width:100%;display:block;border-radius:12px">' +
-        '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3)">' +
-          '<div style="width:56px;height:56px;background:rgba(255,0,0,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem">▶</div>' +
-        '</div>' +
-        '<div style="position:absolute;bottom:0;left:0;right:0;padding:10px 12px;background:linear-gradient(transparent,rgba(0,0,0,.8));font-size:.75rem;color:#fff">' +
-          escHtml(ex.name) +
-        '</div>' +
-      '</a>' +
-      (isAdmin ? '' : '<div style="text-align:center;font-size:.65rem;color:var(--mu2);margin-top:6px">Tocca per aprire su YouTube</div>');
+      '<div style="position:relative;padding-bottom:56.25%;border-radius:12px;overflow:hidden;background:#000">' +
+        '<iframe src="https://www.youtube.com/embed/' + vidId + '?rel=0&playsinline=1" ' +
+          'style="position:absolute;inset:0;width:100%;height:100%;border:none" ' +
+          'allowfullscreen allow="autoplay; encrypted-media; picture-in-picture">' +
+        '</iframe>' +
+      '</div>' +
+      (isAdmin ? '' : '<div style="text-align:center;font-size:.65rem;color:var(--mu2);margin-top:6px">Tocca ▶ per riprodurre</div>');
   } else {
-    // Search URL — show search button
+    // Search URL — show button to open YouTube
     thumbArea.innerHTML =
       '<a href="' + escHtml(ytUrl) + '" target="_blank" style="display:flex;align-items:center;gap:12px;background:rgba(255,0,0,.08);border:1px solid rgba(255,0,0,.25);border-radius:12px;padding:16px;text-decoration:none">' +
-        '<div style="width:48px;height:48px;background:rgba(255,0,0,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">▶</div>' +
+        '<div style="width:48px;height:48px;background:rgba(255,0,0,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;color:#fff">▶</div>' +
         '<div>' +
           '<div style="font-weight:700;font-size:.88rem;color:var(--txt)">Cerca su YouTube</div>' +
           '<div style="font-size:.7rem;color:var(--mu2);margin-top:2px">' + escHtml(ex.name) + ' — tutorial esecuzione</div>' +
-          (isAdmin ? '<div style="font-size:.65rem;color:var(--orn);margin-top:4px">💡 Incolla un link diretto per mostrare la thumbnail</div>' : '') +
+          (isAdmin ? '<div style="font-size:.65rem;color:var(--orn);margin-top:4px">💡 Incolla un link diretto (youtube.com/watch?v=...) per il video embed</div>' : '') +
         '</div>' +
       '</a>';
   }
@@ -1560,6 +1557,10 @@ function _showVideoModal(ex, isAdmin) {
 }
 
 function closeVideoModal() {
+  // Stop iframe video
+  var ta = document.getElementById('video-thumb-area');
+  var iframe = ta ? ta.querySelector('iframe') : null;
+  if (iframe) iframe.src = iframe.src; // reload stops playback
   document.getElementById('video-overlay').style.display = 'none';
   document.body.style.overflow = '';
 }
@@ -2298,8 +2299,17 @@ function buildExItem(se, dayData) {
   hdr.innerHTML='<div class="ex-check" id="chk-'+dayData.id+'-'+se.id+'">'+(isDone?'&#10003;':'')+'</div>' +
     '<div class="ex-info"><div class="ex-name">'+escHtml(ex.name||'?')+'</div>' +
     '<span class="ex-tag t-'+(ex.tag||'mec')+'">'+escHtml(ex.tag_label||'Mec')+'</span></div>' +
-    '<div class="ex-sets-pill">'+se.sets+'&#215;'+(se.reps||'8-10')+'</div>' +
-    (hasMedia ? '<button onclick="event.stopPropagation();openVideoModal('+ex.id+')" style="background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:8px;padding:4px 7px;font-size:.7rem;cursor:pointer;margin-left:4px;flex-shrink:0">🎬</button>' : '');
+    '<div class="ex-sets-pill">'+se.sets+'&#215;'+(se.reps||'8-10')+'</div>';
+  if (hasMedia) {
+    var vidBtn = document.createElement('button');
+    vidBtn.textContent = '🎬';
+    vidBtn.setAttribute('style', 'background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer;margin-left:4px;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation');
+    (function(eid){ 
+      vidBtn.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openVideoModal(eid); }, {passive:false});
+      vidBtn.addEventListener('click', function(e){ e.stopPropagation(); openVideoModal(eid); });
+    })(ex.id);
+    hdr.appendChild(vidBtn);
+  }
   hdr.onclick=(function(ddid,seid){ return function(){ toggleEx(ddid,seid); }; })(dayData.id,se.id);
 
   var body=document.createElement('div'); body.className='ex-body'; body.id='exb-'+dayData.id+'-'+se.id;
