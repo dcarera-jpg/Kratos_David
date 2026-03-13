@@ -400,12 +400,19 @@ select.inp{cursor:pointer}
         <div style="font-size:.75rem;color:var(--mu2);margin-bottom:14px;line-height:1.6">L'AI genera sessioni, esercizi con sets/reps/intensita e il mesociclo completo 4×10 giorni. Niente da creare manualmente.</div>
 
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orn);margin-bottom:8px;margin-top:4px">PROFILO ATLETA</div>
-        <div class="field"><label>Livello</label>
-          <select class="inp" id="ai-livello">
-            <option value="intermedio">Intermedio (2-4 anni)</option>
-            <option value="avanzato">Avanzato (4+ anni)</option>
-            <option value="principiante">Principiante (0-2 anni)</option>
-          </select></div>
+        <div style="display:flex;gap:8px">
+          <div class="field" style="flex:1"><label>Livello</label>
+            <select class="inp" id="ai-livello">
+              <option value="intermedio">Intermedio (2-4 anni)</option>
+              <option value="avanzato">Avanzato (4+ anni)</option>
+              <option value="principiante">Principiante (0-2 anni)</option>
+            </select></div>
+          <div class="field" style="flex:1"><label>Genere atleta</label>
+            <select class="inp" id="ai-gender">
+              <option value="uomo">Uomo</option>
+              <option value="donna">Donna</option>
+            </select></div>
+        </div>
         <div class="field"><label>Obiettivo principale</label>
           <select class="inp" id="ai-obj">
             <option value="ipertrofia">Ipertrofia massima</option>
@@ -2129,6 +2136,7 @@ function aiGenerate() {
   var liss       = document.getElementById('ai-liss').value;
   var obj        = document.getElementById('ai-obj').value;
   var livello    = document.getElementById('ai-livello').value;
+  var gender     = document.getElementById('ai-gender').value;
   var note       = document.getElementById('ai-note').value.trim();
   var mesoName   = document.getElementById('ai-meso-name').value.trim();
   var mesoAthId  = document.getElementById('ai-meso-athlete').value;
@@ -2139,8 +2147,10 @@ function aiGenerate() {
   document.getElementById('ai-preview').style.display='none';
   aiSessionsPlan=null; aiGeneratedPlan=null;
 
-  sb.from('exercises').select('id,name,tag').order('name').then(function(exr){
-    var exText=(exr.data||[]).map(function(e){ return e.id+':'+e.name+'['+e.tag+']'; }).join(',');
+  var exQuery = sb.from('exercises').select('id,name,tag,muscle_group,gender').order('muscle_group').order('name');
+  if (gender === 'donna') exQuery = exQuery.in('gender', ['unisex','donna']);
+  exQuery.then(function(exr){
+    var exText=(exr.data||[]).map(function(e){ return e.id+':'+e.name+'['+e.tag+']['+(e.muscle_group||'')+']'; }).join(',');
 
     var cardioStr='';
     if(parseInt(hiit)>0) cardioStr+=hiit+'xHIIT ';
@@ -2155,6 +2165,7 @@ function aiGenerate() {
       '{"sessions":[{"name":"string","session_type":"gym|cardio","exercises":[{"exercise_id":N,"exercise_name":"str","sort_order":N,"sets":"str","reps":"str","rest_sec":N,"notes":"max30char"}]}]}',
       'REGOLE:',
       '- Crea 4-7 sessioni gym uniche per coprire tutti i distretti + 1 "Cardio HIIT" se HIIT>0 + 1 "Cardio LISS" se LISS>0.',
+      (gender==='donna' ? '- ATLETA DONNA: priorità assoluta a esercizi glutei, posteriore coscia, core. Usa esercizi [glutei_post] e [core] in ogni sessione gym. Includi almeno 1 esercizio corpo libero di attivazione glutei per sessione. Evita carichi massimali, preferisci volume e controllo.' : '- ATLETA UOMO: priorità ipertrofia e forza, carichi progressivi, tecniche intensità.'),
       '- Cardio: session_type=cardio, exercises=[].',
       '- Distretti carenti: 3-4 esercizi per sessione, tecniche avanzate nelle notes (max 30 char).',
       '- Distretti sviluppati: 2-3 esercizi, volume ridotto.',
@@ -2162,7 +2173,7 @@ function aiGenerate() {
       '- Sii CONCISO, nessun testo extra.'
     ].join(' ');
 
-    var usr1='Livello:'+livello+'. Obiettivo:'+obj+'. Carenti:'+carenti+'. Sviluppati:'+(meno||'nessuno')+'. Cardio:'+cardioStr+(note?'. Note:'+note:'');
+    var usr1='Genere:'+gender+'. Livello:'+livello+'. Obiettivo:'+obj+'. Carenti:'+carenti+'. Sviluppati:'+(meno||'nessuno')+'. Cardio:'+cardioStr+(note?'. Note:'+note:'');
 
     aiCallWorker(sys1, usr1, 3000, function(plan1){
       aiSessionsPlan = plan1;
