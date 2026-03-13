@@ -265,7 +265,39 @@ select.inp{cursor:pointer}
         <button class="tab"    id="apt-meso" onclick="aPTab('meso')">Mesocicli</button>
       </div>
       <div id="apc-ex">
-        <input class="inp" id="ex-q" placeholder="Cerca esercizio..." oninput="filterEx()" style="margin-bottom:10px">
+        <input class="inp" id="ex-q" placeholder="Cerca esercizio..." oninput="filterEx()" style="margin-bottom:8px">
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <select class="inp" id="ex-muscle" onchange="filterEx()" style="flex:1;padding:8px;font-size:.75rem">
+            <option value="">Tutti i muscoli</option>
+            <option value="petto">Petto</option>
+            <option value="schiena">Schiena</option>
+            <option value="spalle">Spalle</option>
+            <option value="braccia">Braccia</option>
+            <option value="gambe_quad">Gambe (Quad)</option>
+            <option value="glutei_post">Glutei & Post. coscia</option>
+            <option value="polpacci">Polpacci</option>
+            <option value="core">Core & Addome</option>
+            <option value="cardio_hiit">Cardio HIIT</option>
+            <option value="cardio_circuit">Circuiti</option>
+            <option value="cardio_liss">LISS</option>
+            <option value="altro">Altro</option>
+          </select>
+          <select class="inp" id="ex-equip" onchange="filterEx()" style="flex:1;padding:8px;font-size:.75rem">
+            <option value="">Tutti gli attrezzi</option>
+            <option value="bilanciere">Bilanciere</option>
+            <option value="manubri">Manubri</option>
+            <option value="cavi">Cavi</option>
+            <option value="macchina">Macchina</option>
+            <option value="corpo_libero">Corpo libero</option>
+            <option value="attrezzo">Attrezzo</option>
+          </select>
+          <select class="inp" id="ex-gender" onchange="filterEx()" style="flex:1;padding:8px;font-size:.75rem">
+            <option value="">Tutti</option>
+            <option value="unisex">Unisex</option>
+            <option value="donna">Donna</option>
+          </select>
+        </div>
+        <div id="ex-count" style="font-size:.68rem;color:var(--mu2);margin-bottom:8px"></div>
         <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('ex-form')">+ Nuovo esercizio</button>
         <div id="ex-form" class="iform" style="display:none">
           <div class="iform-title">NUOVO ESERCIZIO</div>
@@ -275,6 +307,42 @@ select.inp{cursor:pointer}
               <option value="mec">Meccanico</option><option value="met">Metabolico</option>
               <option value="pre">Pre-Attivazione</option><option value="str">Stretching</option>
             </select></div>
+          <div style="display:flex;gap:6px">
+            <div class="field" style="flex:1"><label>Gruppo muscolare</label>
+              <select class="inp" id="exf-mg" style="font-size:.78rem">
+                <option value="altro">Altro</option>
+                <option value="petto">Petto</option>
+                <option value="schiena">Schiena</option>
+                <option value="spalle">Spalle</option>
+                <option value="braccia">Braccia</option>
+                <option value="gambe_quad">Gambe (Quad)</option>
+                <option value="glutei_post">Glutei & Post.</option>
+                <option value="polpacci">Polpacci</option>
+                <option value="core">Core</option>
+                <option value="cardio_hiit">Cardio HIIT</option>
+                <option value="cardio_circuit">Circuiti</option>
+                <option value="cardio_liss">LISS</option>
+              </select>
+            </div>
+            <div class="field" style="flex:1"><label>Attrezzo</label>
+              <select class="inp" id="exf-eq" style="font-size:.78rem">
+                <option value="altro">Altro</option>
+                <option value="bilanciere">Bilanciere</option>
+                <option value="manubri">Manubri</option>
+                <option value="cavi">Cavi</option>
+                <option value="macchina">Macchina</option>
+                <option value="corpo_libero">Corpo libero</option>
+                <option value="attrezzo">Attrezzo</option>
+                <option value="misto">Misto</option>
+              </select>
+            </div>
+            <div class="field" style="flex:1"><label>Genere</label>
+              <select class="inp" id="exf-gd" style="font-size:.78rem">
+                <option value="unisex">Unisex</option>
+                <option value="donna">Donna</option>
+              </select>
+            </div>
+          </div>
           <div class="field"><label>Note / istruzioni</label><textarea class="inp" id="exf-no" rows="2" placeholder="Tecnica, parametri..."></textarea></div>
           <div class="btn-row">
             <button class="btn-red" style="flex:1" onclick="saveEx()">Salva</button>
@@ -985,12 +1053,24 @@ function adminSendMsgFull(aid) {
 
 // ── EXERCISES ────────────────────────────────────────────────
 function loadEx() {
-  sb.from('exercises').select('*').order('name')
+  sb.from('exercises').select('*').order('muscle_group').order('name')
     .then(function(r){ allEx=r.data||[]; renderEx(); }).catch(function(){});
 }
 function filterEx() {
-  var q=(document.getElementById('ex-q').value||'').toLowerCase();
-  renderEx(allEx.filter(function(e){ return e.name.toLowerCase().includes(q); }));
+  var q      = (document.getElementById('ex-q').value||'').toLowerCase();
+  var muscle = document.getElementById('ex-muscle') ? document.getElementById('ex-muscle').value : '';
+  var equip  = document.getElementById('ex-equip')  ? document.getElementById('ex-equip').value  : '';
+  var gender = document.getElementById('ex-gender') ? document.getElementById('ex-gender').value : '';
+  var filtered = allEx.filter(function(e){
+    if (q      && !e.name.toLowerCase().includes(q))    return false;
+    if (muscle && e.muscle_group !== muscle)             return false;
+    if (equip  && e.equipment    !== equip)              return false;
+    if (gender && e.gender       !== gender)             return false;
+    return true;
+  });
+  var countEl = document.getElementById('ex-count');
+  if (countEl) countEl.textContent = filtered.length + ' esercizi';
+  renderEx(filtered);
 }
 function renderEx(list) {
   var c=document.getElementById('ex-list'); c.innerHTML='';
@@ -998,12 +1078,20 @@ function renderEx(list) {
   (list||allEx).forEach(function(e){
     var d=document.createElement('div'); d.className='card';
     var hasMedia = e.video_url || e.gif_url;
+    var mgLabel = {'petto':'Petto','schiena':'Schiena','spalle':'Spalle','braccia':'Braccia','gambe_quad':'Gambe','glutei_post':'Glutei','polpacci':'Polpacci','core':'Core','cardio_hiit':'HIIT','cardio_circuit':'Circuit','cardio_liss':'LISS','altro':'Altro'};
+    var eqLabel = {'bilanciere':'BB','manubri':'DB','cavi':'Cavi','macchina':'Macch.','corpo_libero':'CL','attrezzo':'Attr.','misto':'Misto','altro':''};
+    var mgBadge = e.muscle_group ? '<span style="font-size:.55rem;background:var(--s4);color:var(--mu2);padding:1px 5px;border-radius:5px;margin-right:3px">'+(mgLabel[e.muscle_group]||e.muscle_group)+'</span>' : '';
+    var eqBadge = e.equipment   ? '<span style="font-size:.55rem;background:var(--s4);color:var(--mu2);padding:1px 5px;border-radius:5px;margin-right:3px">'+(eqLabel[e.equipment]||e.equipment)+'</span>' : '';
+    var gBadge  = e.gender==='donna' ? '<span style="font-size:.55rem;background:rgba(236,72,153,.1);color:#ec4899;padding:1px 5px;border-radius:5px">♀</span>' : '';
     d.innerHTML='<div class="card-head" onclick="this.closest(\'.card\').classList.toggle(\'open\')">' +
       '<div style="flex:1"><div style="font-weight:600;font-size:.87rem">'+escHtml(e.name)+
-        (hasMedia ? ' <span style="font-size:.6rem;color:var(--orn)">🎬</span>' : ' <span style="font-size:.6rem;color:var(--mu2)">○</span>')+
+        (hasMedia ? ' <span style="font-size:.6rem;color:var(--orn)">🎬</span>' : '')+
       '</div>' +
-      '<span class="tag '+(tm[e.tag]||'t-mec')+'" style="margin-top:3px;display:inline-block">'+escHtml(e.tag_label)+'</span></div>' +
-      '<button onclick="event.stopPropagation();openVideoModalAdmin('+e.id+')" style="background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:8px;padding:3px 7px;font-size:.65rem;cursor:pointer;margin-right:6px">🎬 Edit</button>'+
+      '<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:2px;align-items:center">'+
+        '<span class="tag '+(tm[e.tag]||'t-mec')+'" style="font-size:.55rem">'+escHtml(e.tag_label)+'</span>'+
+        mgBadge + eqBadge + gBadge +
+      '</div></div>' +
+      '<button onclick="event.stopPropagation();openVideoModalAdmin('+e.id+')" style="background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:8px;padding:3px 7px;font-size:.65rem;cursor:pointer;margin-right:6px">🎬</button>'+
       '<button class="btn-del" onclick="event.stopPropagation();delEx('+e.id+')">&#215;</button></div>' +
       (e.notes?'<div class="card-body"><div style="font-size:.78rem;color:var(--mu2);line-height:1.5">'+escHtml(e.notes)+'</div></div>':'');
     c.appendChild(d);
@@ -1013,9 +1101,12 @@ function saveEx() {
   var n=document.getElementById('exf-n').value.trim();
   var t=document.getElementById('exf-t').value;
   var no=document.getElementById('exf-no').value.trim();
+  var mg=document.getElementById('exf-mg') ? document.getElementById('exf-mg').value : 'altro';
+  var eq=document.getElementById('exf-eq') ? document.getElementById('exf-eq').value : 'altro';
+  var gd=document.getElementById('exf-gd') ? document.getElementById('exf-gd').value : 'unisex';
   if(!n){ showFmsg('exf-msg','Nome obbligatorio','err'); return; }
   var lm={mec:'Meccanico',met:'Metabolico',pre:'Pre-Attivazione',str:'Stretching'};
-  sb.from('exercises').insert({name:n,tag:t,tag_label:lm[t],notes:no||null,created_by:ME.id})
+  sb.from('exercises').insert({name:n,tag:t,tag_label:lm[t],notes:no||null,created_by:ME.id,muscle_group:mg,equipment:eq,gender:gd})
     .then(function(r){
       if(r.error){ showFmsg('exf-msg',r.error.message,'err'); return; }
       showFmsg('exf-msg','Salvato!','ok');
