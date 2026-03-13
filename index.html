@@ -507,6 +507,17 @@ select.inp{cursor:pointer}
 </div>
 
 <!-- ── DAY ASSIGN MODAL (admin) ── -->
+<!-- VISTA ATLETA MODAL (coach) -->
+<div id="vista-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;overflow-y:auto">
+  <div style="max-width:480px;margin:0 auto;padding:16px 14px 40px">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 16px;position:sticky;top:0;background:rgba(0,0,0,.9);z-index:1">
+      <div id="vista-title" style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.1em;color:var(--blu)">VISTA ATLETA</div>
+      <button onclick="closeVistaModal()" style="background:none;border:none;color:var(--mu);font-size:1.2rem;cursor:pointer">&#10005;</button>
+    </div>
+    <div id="vista-content"></div>
+  </div>
+</div>
+
 <!-- OVERRIDE MODAL -->
 <div id="override-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center" onclick="closeOverrideModal()">
   <div onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 16px 32px;max-height:85vh;overflow-y:auto">
@@ -726,7 +737,11 @@ function buildAthCard(a) {
   btnOverride.style.cssText='border-color:rgba(168,85,247,.3);color:var(--pur)';
   btnOverride.onclick = (function(ath){ return function(){ openOverridePanel(ath); }; })(a);
 
-  btnRow.appendChild(btnAssign); btnRow.appendChild(btnAdv); btnRow.appendChild(btnOverride); btnRow.appendChild(btnReset);
+  var btnVista = document.createElement('button'); btnVista.className='btn-out'; btnVista.textContent='👁 Vista';
+  btnVista.style.cssText='border-color:rgba(14,165,233,.3);color:var(--blu)';
+  btnVista.onclick = (function(ath){ return function(){ openAthleteVista(ath); }; })(a);
+
+  btnRow.appendChild(btnAssign); btnRow.appendChild(btnAdv); btnRow.appendChild(btnOverride); btnRow.appendChild(btnVista); btnRow.appendChild(btnReset);
   progSec.appendChild(progInfo); progSec.appendChild(btnRow);
 
   // Messages
@@ -1165,6 +1180,256 @@ function showResetMsg(text,ok) {
 }
 
 // ── CREATE ATHLETE ────────────────────────────────────────────
+// ── VISTA ATLETA (coach) ─────────────────────────────────────
+function openAthleteVista(ath) {
+  document.getElementById('vista-title').textContent = '👁 ' + (ath.full_name || ath.email).toUpperCase();
+  document.getElementById('vista-content').innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2)">Caricamento...</div>';
+  document.getElementById('vista-overlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+
+  if (!ath.current_mesocycle_id) {
+    document.getElementById('vista-content').innerHTML =
+      '<div style="text-align:center;padding:40px;color:var(--mu2)"><div style="font-size:2rem;margin-bottom:10px">📋</div>Nessun programma assegnato.</div>';
+    return;
+  }
+
+  // Load full mesocycle data
+  sb.from('mesocycles').select('*').eq('id', ath.current_mesocycle_id).single()
+    .then(function(mr) {
+      var meso = mr.data;
+      return sb.from('cycles')
+        .select('*, cycle_days(id, day_number, sessions(id, name, session_type, session_exercises(id, sort_order, sets, reps, rest_sec, notes, exercises(id, name, tag))))')
+        .eq('mesocycle_id', meso.id)
+        .order('cycle_number')
+        .then(function(cr) {
+          // Load overrides for this athlete
+          return sb.from('athlete_day_overrides')
+            .select('cycle_day_id, session_id, coach_note, sessions(id,name,session_type)')
+            .eq('athlete_id', ath.id)
+            .then(function(ovr) {
+              var overrideMap = {};
+              (ovr.data||[]).forEach(function(o){ overrideMap[o.cycle_day_id] = o; });
+              renderVistaContent(ath, meso, cr.data||[], overrideMap);
+            });
+        });
+    }).catch(function(e) {
+      document.getElementById('vista-content').innerHTML =
+        '<div style="color:var(--red);padding:20px">Errore: ' + escHtml(String(e)) + '</div>';
+    });
+}
+
+function renderVistaContent(ath, meso, cycles, overrideMap) {
+  var CT = {blast:'var(--red)',deload:'var(--blu)',taper:'var(--pur)',test:'var(--orn)'};
+  var CTB = {blast:'var(--rdim)',deload:'var(--bdim)',taper:'var(--pdim)',test:'var(--odim)'};
+  var currentCycleId = ath.current_cycle_id;
+  var currentDay = ath.current_day || 1;
+
+  var html = '';
+
+  // Meso header
+  html += '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:14px">';
+  html += '<div style="font-size:.58rem;font-weight:700;letter-spacing:.12em;color:var(--mu2);text-transform:uppercase;margin-bottom:4px">MESOCICLO</div>';
+  html += '<div style="font-weight:700;font-size:1rem">' + escHtml(meso.name) + '</div>';
+  if (meso.objective) html += '<div style="font-size:.75rem;color:var(--mu2);margin-top:4px">' + escHtml(meso.objective) + '</div>';
+  html += '</div>';
+
+  cycles.forEach(function(cyc) {
+    var isCurrent = cyc.id === currentCycleId;
+    var tc = CT[cyc.cycle_type] || '#888';
+    var bg = CTB[cyc.cycle_type] || 'rgba(255,255,255,.04)';
+    var dayMap = {};
+    (cyc.cycle_days||[]).forEach(function(d){ dayMap[d.day_number] = d; });
+
+    html += '<div style="border:1px solid ' + (isCurrent ? 'rgba(14,165,233,.4)' : 'var(--bdr)') + ';border-radius:12px;margin-bottom:10px;overflow:hidden">';
+
+    // Cycle header
+    html += '<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;background:' + (isCurrent ? 'rgba(14,165,233,.06)' : 'var(--s2)') + '">';
+    html += '<span style="font-size:.58rem;font-weight:700;padding:2px 8px;border-radius:6px;background:' + bg + ';color:' + tc + '">' + (cyc.cycle_type||'blast').toUpperCase() + '</span>';
+    html += '<span style="font-weight:700;font-size:.88rem">' + escHtml(cyc.name) + '</span>';
+    if (isCurrent) html += '<span style="margin-left:auto;font-size:.6rem;font-weight:700;color:var(--blu)">▶ IN CORSO · G' + currentDay + '</span>';
+    html += '</div>';
+
+    // Days grid — 5 columns
+    html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:8px">';
+    for (var i = 1; i <= 10; i++) {
+      var d = dayMap[i];
+      var ov = d ? overrideMap[d.id] : null;
+      var sess = ov && ov.sessions ? ov.sessions : (d && d.sessions ? d.sessions : null);
+      var isCardio = sess && sess.session_type === 'cardio';
+      var isToday = isCurrent && i === currentDay;
+      var isPast = isCurrent && i < currentDay;
+      var hasNote = ov && ov.coach_note;
+
+      var cellBg = isToday ? 'rgba(14,165,233,.15)' : isPast ? 'rgba(255,255,255,.03)' : sess ? (isCardio ? 'rgba(14,165,233,.08)' : 'rgba(232,17,42,.08)') : 'var(--s3)';
+      var cellBdr = isToday ? 'rgba(14,165,233,.5)' : ov ? 'rgba(168,85,247,.4)' : sess ? (isCardio ? 'rgba(14,165,233,.2)' : 'rgba(232,17,42,.2)') : 'var(--bdr)';
+
+      html += '<div style="background:' + cellBg + ';border:1px solid ' + cellBdr + ';border-radius:8px;padding:5px 3px;text-align:center;min-height:52px">';
+      html += '<div style="font-size:.52rem;font-weight:700;color:' + (isToday ? 'var(--blu)' : 'var(--mu2)') + '">G' + i + '</div>';
+      if (sess) {
+        var label = sess.name.length > 10 ? sess.name.substring(0,10)+'…' : sess.name;
+        html += '<div style="font-size:.48rem;margin-top:2px;color:' + (isCardio ? 'var(--blu)' : 'var(--red)') + ';line-height:1.3">' + escHtml(label) + '</div>';
+        var exCount = (d && d.sessions && d.sessions.session_exercises) ? d.sessions.session_exercises.length : 0;
+        if (exCount) html += '<div style="font-size:.44rem;color:var(--mu2);margin-top:1px">' + exCount + ' es.</div>';
+      }
+      if (ov && ov.session_id) html += '<div style="font-size:.44rem;color:var(--pur)">✏</div>';
+      if (hasNote) html += '<div style="font-size:.44rem;color:var(--orn)">📝</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // Sessions detail (collapsible)
+    html += '<div style="padding:0 8px 8px">';
+    var seenSessions = {};
+    for (var i = 1; i <= 10; i++) {
+      var d = dayMap[i];
+      if (!d || !d.sessions) continue;
+      var sess = d.sessions;
+      if (seenSessions[sess.id]) continue;
+      seenSessions[sess.id] = true;
+      var sexs = sess.session_exercises || [];
+      if (!sexs.length) continue;
+
+      html += '<div style="margin-bottom:6px;background:var(--s3);border-radius:8px;padding:8px 10px">';
+      html += '<div style="font-size:.7rem;font-weight:700;margin-bottom:5px">' + (sess.session_type==='cardio'?'🚴 ':'🏋️ ') + escHtml(sess.name) + '</div>';
+      sexs.sort(function(a,b){ return a.sort_order-b.sort_order; }).forEach(function(se){
+        html += '<div style="font-size:.66rem;color:var(--mu2);padding:3px 0;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between">';
+        html += '<span style="color:var(--txt)">' + escHtml(se.exercises ? se.exercises.name : '?') + '</span>';
+        html += '<span>' + escHtml(String(se.sets||'')) + '×' + escHtml(String(se.reps||''));
+        if (se.notes) html += ' <span style="color:var(--orn);font-size:.6rem">· ' + escHtml(se.notes) + '</span>';
+        html += '</span></div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // Drag & drop section for current/future cycles
+    html += '<div style="padding:0 8px 10px">';
+    html += '<div style="font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:6px">RIORDINA GIORNI</div>';
+    html += '<div id="dnd-grid-' + cyc.id + '" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px" ondragover="event.preventDefault()">';
+    for (var i = 1; i <= 10; i++) {
+      var d = dayMap[i];
+      var ov = d ? overrideMap[d.id] : null;
+      var sess = ov && ov.sessions ? ov.sessions : (d && d.sessions ? d.sessions : null);
+      var isCardio = sess && sess.session_type === 'cardio';
+      var sessId = d ? d.id : null;
+      html += '<div class="dnd-cell" draggable="true"';
+      html += ' data-cycle-day-id="' + (sessId||'') + '"';
+      html += ' data-day-num="' + i + '"';
+      html += ' data-cycle-id="' + cyc.id + '"';
+      html += ' ondragstart="dndDragStart(event)"';
+      html += ' ondrop="dndDrop(event)"';
+      html += ' ondragover="event.preventDefault();dndHover(this,true)"';
+      html += ' ondragleave="dndHover(this,false)"';
+      html += ' style="background:var(--s3);border:1px solid var(--bdr);border-radius:8px;padding:6px 3px;text-align:center;min-height:50px;cursor:grab;user-select:none">';
+      html += '<div style="font-size:.52rem;font-weight:700;color:var(--mu2)">G' + i + '</div>';
+      if (sess) {
+        var ic = isCardio ? '🚴' : '🏋️';
+        var lbl = sess.name.length > 9 ? sess.name.substring(0,9)+'…' : sess.name;
+        html += '<div style="font-size:.48rem;margin-top:2px;line-height:1.3;color:' + (isCardio?'var(--blu)':'var(--red)') + '">' + ic + ' ' + escHtml(lbl) + '</div>';
+      } else {
+        html += '<div style="font-size:.5rem;color:var(--mu2);margin-top:4px">—</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div id="dnd-status-' + cyc.id + '" style="display:none;font-size:.68rem;padding:6px 8px;border-radius:7px;margin-top:6px"></div>';
+    html += '</div>';
+
+    html += '</div>'; // end cycle card
+  });
+
+  document.getElementById('vista-content').innerHTML = html;
+}
+
+function closeVistaModal() {
+  document.getElementById('vista-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// ── DRAG & DROP DAYS ─────────────────────────────────────────
+var dndDragData = null;
+
+function dndHover(el, on) {
+  el.style.outline = on ? '2px dashed var(--blu)' : '';
+}
+
+function dndDragStart(event) {
+  dndDragData = {
+    cycleDayId: event.currentTarget.dataset.cycleDayId,
+    dayNum:     parseInt(event.currentTarget.dataset.dayNum),
+    cycleId:    parseInt(event.currentTarget.dataset.cycleId),
+    el:         event.currentTarget
+  };
+  event.currentTarget.style.opacity = '0.4';
+  event.dataTransfer.effectAllowed = 'move';
+}
+
+function dndDrop(event) {
+  event.preventDefault();
+  var target = event.currentTarget;
+  target.style.outline = '';
+
+  if (!dndDragData) return;
+
+  var fromDayNum = dndDragData.dayNum;
+  var toDayNum   = parseInt(target.dataset.dayNum);
+  var cycleId    = dndDragData.cycleId;
+
+  if (fromDayNum === toDayNum) { dndDragData.el.style.opacity=''; dndDragData=null; return; }
+
+  var fromCdId = dndDragData.cycleDayId;
+  var toCdId   = target.dataset.cycleDayId;
+
+  // Show saving status
+  var statusEl = document.getElementById('dnd-status-' + cycleId);
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'rgba(245,158,11,.12)';
+  statusEl.style.color = 'var(--orn)';
+  statusEl.textContent = 'Salvataggio scambio G' + fromDayNum + ' ↔ G' + toDayNum + '...';
+
+  // Swap session_ids in DB by updating day_number of both cycle_days
+  // Strategy: set fromCd to day 99 (temp), set toCd to fromDay, set fromCd to toDay
+  var fromSessId = null;
+  var toSessId   = null;
+
+  sb.from('cycle_days').select('id,day_number,session_id').eq('cycle_id', cycleId)
+    .then(function(r) {
+      var days = r.data || [];
+      var fromDay = days.find(function(d){ return d.day_number === fromDayNum; });
+      var toDay   = days.find(function(d){ return d.day_number === toDayNum; });
+
+      fromSessId = fromDay ? fromDay.session_id : null;
+      toSessId   = toDay   ? toDay.session_id   : null;
+
+      // Update both rows
+      var updates = [];
+      if (fromDay) updates.push(sb.from('cycle_days').update({session_id: toSessId}).eq('id', fromDay.id));
+      if (toDay)   updates.push(sb.from('cycle_days').update({session_id: fromSessId}).eq('id', toDay.id));
+      // If one day doesn't exist, create it
+      if (!fromDay && toSessId) updates.push(sb.from('cycle_days').insert({cycle_id:cycleId, day_number:fromDayNum, session_id:toSessId}));
+      if (!toDay && fromSessId) updates.push(sb.from('cycle_days').insert({cycle_id:cycleId, day_number:toDayNum, session_id:fromSessId}));
+
+      return Promise.all(updates);
+    })
+    .then(function() {
+      statusEl.style.background = 'rgba(16,185,129,.12)';
+      statusEl.style.color = 'var(--grn)';
+      statusEl.textContent = '✓ G' + fromDayNum + ' ↔ G' + toDayNum + ' scambiati!';
+      dndDragData.el.style.opacity = '';
+      dndDragData = null;
+      setTimeout(function(){ statusEl.style.display='none'; }, 2000);
+      // Reload meso in admin view
+      loadMeso();
+    })
+    .catch(function(e) {
+      statusEl.style.background = 'rgba(232,17,42,.12)';
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = 'Errore: ' + String(e);
+      dndDragData.el.style.opacity = '';
+      dndDragData = null;
+    });
+}
+
 // ── OVERRIDE PANEL ───────────────────────────────────────────
 var overrideTargetAth = null;
 var overrideCycleDays = []; // days of current cycle for this athlete
