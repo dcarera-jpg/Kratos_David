@@ -2150,7 +2150,16 @@ function aiGenerate() {
   var exQuery = sb.from('exercises').select('id,name,tag,muscle_group,gender').order('muscle_group').order('name');
   if (gender === 'donna') exQuery = exQuery.in('gender', ['unisex','donna']);
   exQuery.then(function(exr){
-    var exText=(exr.data||[]).map(function(e){ return e.id+':'+e.name+'['+e.tag+']['+(e.muscle_group||'')+']'; }).join(',');
+    // Exclude pure cardio entries (HIIT/circuit/LISS) from gym exercise list to save tokens
+    var gymEx = (exr.data||[]).filter(function(e){
+      var mg = e.muscle_group||'';
+      return mg !== 'cardio_hiit' && mg !== 'cardio_circuit' && mg !== 'cardio_liss';
+    });
+    // Compact format: id:shortname[mg] — no tag to save tokens
+    var exText = gymEx.map(function(e){
+      var short = e.name.substring(0,35); // truncate long names
+      return e.id+':'+short+'['+(e.muscle_group||'altro')+']';
+    }).join(',');
 
     var cardioStr='';
     if(parseInt(hiit)>0) cardioStr+=hiit+'xHIIT ';
@@ -2158,24 +2167,19 @@ function aiGenerate() {
     cardioStr=cardioStr.trim()||'nessuno';
 
     // STEP 1 PROMPT: sessions + exercises only
-    var sys1=[
-      'Coach bodybuilding esperto. Genera SOLO le sessioni di allenamento con i relativi esercizi.',
-      'ESERCIZI LIBRERIA (usa questi id): '+exText,
-      'RISPONDI SOLO JSON VALIDO, zero markdown:',
-      '{"sessions":[{"name":"string","session_type":"gym|cardio","exercises":[{"exercise_id":N,"exercise_name":"str","sort_order":N,"sets":"str","reps":"str","rest_sec":N,"notes":"max30char"}]}]}',
-      'REGOLE:',
-      '- Crea 4-7 sessioni gym uniche per coprire tutti i distretti + 1 "Cardio HIIT" se HIIT>0 + 1 "Cardio LISS" se LISS>0.',
-      (gender==='donna' ? '- ATLETA DONNA: priorità assoluta a esercizi glutei, posteriore coscia, core. Usa esercizi [glutei_post] e [core] in ogni sessione gym. Includi almeno 1 esercizio corpo libero di attivazione glutei per sessione. Evita carichi massimali, preferisci volume e controllo.' : '- ATLETA UOMO: priorità ipertrofia e forza, carichi progressivi, tecniche intensità.'),
-      '- Cardio: session_type=cardio, exercises=[].',
-      '- Distretti carenti: 3-4 esercizi per sessione, tecniche avanzate nelle notes (max 30 char).',
-      '- Distretti sviluppati: 2-3 esercizi, volume ridotto.',
-      '- sets/reps come stringhe. rest_sec intero. exercise_id dalla libreria.',
-      '- Sii CONCISO, nessun testo extra.'
+    var genderRule = gender==='donna'
+      ? 'DONNA: ogni sessione gym usa [glutei_post]+[core]. Volume alto, controllo eccentrico, no massimali.'
+      : 'UOMO: ipertrofia forza, carichi progressivi.';
+    var sys1 = [
+      'Coach bodybuilding. Output SOLO JSON valido, zero testo extra.',
+      'LIBRERIA ID:NOME[GRUPPO]: '+exText,
+      'SCHEMA: {"sessions":[{"name":"str","session_type":"gym|cardio","exercises":[{"exercise_id":N,"exercise_name":"str","sort_order":N,"sets":"str","reps":"str","rest_sec":N,"notes":"str"}]}]}',
+      'REGOLE: 4-6 sessioni gym. Cardio session_type=cardio exercises=[]. Carenti 3-4 es/sess. Sviluppati 2 es/sess. '+genderRule
     ].join(' ');
 
     var usr1='Genere:'+gender+'. Livello:'+livello+'. Obiettivo:'+obj+'. Carenti:'+carenti+'. Sviluppati:'+(meno||'nessuno')+'. Cardio:'+cardioStr+(note?'. Note:'+note:'');
 
-    aiCallWorker(sys1, usr1, 3000, function(plan1){
+    aiCallWorker(sys1, usr1, 4000, function(plan1){
       aiSessionsPlan = plan1;
       aiSetStatus('Passo 2/2 — Genero struttura cicli...','loading');
       btn.textContent='Passo 2/2...';
