@@ -699,8 +699,13 @@ function buildAthCard(a) {
 
   var head = document.createElement('div'); head.className = 'ath-head';
   head.innerHTML = '<div class="ath-av">' + init + '</div>' +
-    '<div class="ath-info"><div class="ath-name">' + escHtml(a.full_name||'Atleta') + '</div>' +
-    '<div class="ath-email">' + escHtml(a.email||'') + '</div></div>' +
+    '<div class="ath-info">' +
+      '<div class="ath-name" style="display:flex;align-items:center;gap:5px">' +
+        escHtml(a.full_name||'Atleta') +
+        '<span onclick="event.stopPropagation();openRenameAthlete(\''+a.id+'\',\''+escHtml(a.full_name||'')+'\')" style="cursor:pointer;font-size:.7rem;opacity:.5;padding:1px 4px;border-radius:4px;border:1px solid var(--bdr);line-height:1.4" title="Rinomina">✏</span>' +
+      '</div>' +
+      '<div class="ath-email">' + escHtml(a.email||'') + '</div>' +
+    '</div>' +
     '<span style="color:var(--mu);font-size:1.1rem">&#8250;</span>';
   head.onclick = (function(id){ return function(){ document.getElementById('ac-'+id).classList.toggle('open'); }; })(a.id);
 
@@ -1587,6 +1592,18 @@ function showOverrideMsg(text, ok) {
 function closeOverrideModal() {
   document.getElementById('override-overlay').style.display = 'none';
   overrideTargetAth = null; overrideSelectedDayId = null; overrideSelectedDayNum = null;
+}
+
+function openRenameAthlete(athId, currentName) {
+  var newName = prompt('Nuovo nome:', currentName);
+  if (newName === null) return;
+  newName = newName.trim();
+  if (!newName) return;
+  sb.from('profiles').update({full_name: newName}).eq('id', athId)
+    .then(function(r) {
+      if (r.error) { alert('Errore: ' + r.error.message); return; }
+      loadAthletes();
+    });
 }
 
 function adminCreateAthlete() {
