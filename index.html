@@ -25,7 +25,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--txt);font-size:15px;display:fl
 
 /* ── LOADER ── */
 #loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
-.logo-big{font-family:'Bebas Neue',sans-serif;font-size:4rem;letter-spacing:.2em;color:var(--red)}
+.logo-big{font-family:Bebas Neue,sans-serif;font-size:4rem;letter-spacing:.2em;color:var(--red)}
 .spin{width:26px;height:26px;border:2px solid var(--s4);border-top-color:var(--red);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .sub-text{font-size:.65rem;color:var(--mu2);letter-spacing:.2em;text-transform:uppercase}
@@ -47,7 +47,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--txt);font-size:15px;display:fl
 .view{display:none;flex-direction:column;flex:1;overflow:hidden}
 .view.on{display:flex}
 .topbar{padding:13px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--bdr)}
-.topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.1em;color:var(--red)}
+.topbar-logo{font-family:Bebas Neue,sans-serif;font-size:1.4rem;letter-spacing:.1em;color:var(--red)}
 .badge{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:20px}
 .badge-pur{background:var(--pdim);color:var(--pur)}
 .badge-red{background:var(--rdim);color:var(--red)}
@@ -178,7 +178,7 @@ select.inp{cursor:pointer}
 
 /* ── TIMER ── */
 .timer-wrap{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:16px;text-align:center;margin-bottom:10px}
-.timer-disp{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.1em;transition:color .3s}
+.timer-disp{font-family:Bebas Neue,sans-serif;font-size:3rem;letter-spacing:.1em;transition:color .3s}
 .timer-disp.running{color:var(--red)}
 .timer-presets{display:flex;gap:6px;justify-content:center;margin:10px 0 12px}
 .pre-btn{padding:6px 12px;border-radius:8px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu2);font-size:.75rem;cursor:pointer;font-family:inherit}
@@ -452,6 +452,21 @@ select.inp{cursor:pointer}
   </div>
 
   <!-- ATHLETE: COACH MESSAGES -->
+  <!-- STATS VIEW -->
+  <div class="view" id="vv-stats" style="display:none">
+    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">Progressi</span></div>
+    <div style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px">
+      <div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--orn)">I TUOI PROGRESSI</div>
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:14px;padding:14px">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">ESERCIZIO</div>
+        <select id="pr-ex-select" class="inp" onchange="loadPRChart()" style="margin-bottom:14px">
+          <option value="">— Scegli esercizio —</option>
+        </select>
+        <div id="pr-chart-canvas"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="view" id="vv-coach">
     <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">Coach</span></div>
     <div style="display:flex;flex-direction:column;flex:1;padding:12px;gap:0;overflow:hidden">
@@ -468,6 +483,7 @@ select.inp{cursor:pointer}
     <button class="bni on" id="vbn-cycle" onclick="vsv('cycle')"><span class="bni-ic">&#128197;</span><span class="bni-lb">Ciclo</span></button>
     <button class="bni"    id="vbn-timer" onclick="vsv('timer')"><span class="bni-ic">&#9201;</span><span class="bni-lb">Timer</span></button>
     <button class="bni"    id="vbn-coach" onclick="vsv('coach')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Coach</span></button>
+    <button class="bni"    id="vbn-stats" onclick="vsv('stats');loadPRChart()"><span class="bni-ic">&#128200;</span><span class="bni-lb">Stats</span></button>
   </nav>
 
 </div><!-- end #app -->
@@ -476,7 +492,7 @@ select.inp{cursor:pointer}
 <div id="assign-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center" onclick="closeAssignModal()">
   <div onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 16px 32px;max-height:80vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.1em;color:var(--red)">ASSEGNA PROGRAMMA</div>
+      <div style="font-family:Bebas Neue,sans-serif;font-size:1.2rem;letter-spacing:.1em;color:var(--red)">ASSEGNA PROGRAMMA</div>
       <button onclick="closeAssignModal()" style="background:none;border:none;color:var(--mu);font-size:1.2rem;cursor:pointer">&#10005;</button>
     </div>
     <div id="assign-athlete-name" style="font-size:.75rem;color:var(--mu2);margin-bottom:14px"></div>
@@ -519,10 +535,45 @@ select.inp{cursor:pointer}
 <div id="vista-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;overflow-y:auto">
   <div style="max-width:480px;margin:0 auto;padding:16px 14px 40px">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 16px;position:sticky;top:0;background:rgba(0,0,0,.9);z-index:1">
-      <div id="vista-title" style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.1em;color:var(--blu)">VISTA ATLETA</div>
+      <div id="vista-title" style="font-family:Bebas Neue,sans-serif;font-size:1.2rem;letter-spacing:.1em;color:var(--blu)">VISTA ATLETA</div>
       <button onclick="closeVistaModal()" style="background:none;border:none;color:var(--mu);font-size:1.2rem;cursor:pointer">&#10005;</button>
     </div>
     <div id="vista-content"></div>
+  </div>
+</div>
+
+<!-- TIMER RECUPERO MODAL -->
+<div id="timer-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:600;align-items:center;justify-content:center" onclick="closeTimer()">
+  <div onclick="event.stopPropagation()" style="width:92%;max-width:320px;background:var(--s2);border:1px solid var(--bdr);border-radius:20px;padding:28px 20px;text-align:center">
+    <div style="font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--mu2);margin-bottom:14px">RECUPERO</div>
+    <div id="timer-display" style="font-family:Bebas Neue,sans-serif;font-size:4.5rem;letter-spacing:.05em;color:var(--orn);line-height:1">2:00</div>
+    <div id="timer-exname" style="font-size:.72rem;color:var(--mu2);margin:6px 0 20px;min-height:18px"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">
+      <button onclick="setTimerPreset(60)"  id="tp-60"  style="flex:1;padding:8px 4px;border-radius:9px;border:1px solid var(--bdr);background:var(--s3);color:var(--mu2);font-size:.75rem;cursor:pointer;font-family:inherit">1:00</button>
+      <button onclick="setTimerPreset(90)"  id="tp-90"  style="flex:1;padding:8px 4px;border-radius:9px;border:1px solid var(--bdr);background:var(--s3);color:var(--mu2);font-size:.75rem;cursor:pointer;font-family:inherit">1:30</button>
+      <button onclick="setTimerPreset(120)" id="tp-120" style="flex:1;padding:8px 4px;border-radius:9px;border:1px solid var(--bdr);background:rgba(232,17,42,.15);color:var(--red);border-color:rgba(232,17,42,.3);font-size:.75rem;cursor:pointer;font-family:inherit">2:00</button>
+      <button onclick="setTimerPreset(180)" id="tp-180" style="flex:1;padding:8px 4px;border-radius:9px;border:1px solid var(--bdr);background:var(--s3);color:var(--mu2);font-size:.75rem;cursor:pointer;font-family:inherit">3:00</button>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button id="timer-startstop" onclick="toggleTimer()" style="flex:2;padding:13px;border-radius:12px;background:var(--red);border:none;color:#fff;font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:.1em;cursor:pointer">START</button>
+      <button onclick="resetTimer()" style="flex:1;padding:13px;border-radius:12px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu2);font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:.1em;cursor:pointer">RESET</button>
+    </div>
+    <button onclick="closeTimer()" style="margin-top:14px;background:none;border:none;color:var(--mu2);font-size:.72rem;cursor:pointer;font-family:inherit">chiudi</button>
+  </div>
+</div>
+
+<!-- RIEPILOGO ALLENAMENTO MODAL -->
+<div id="summary-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:500;align-items:flex-start;justify-content:center;padding-top:20px;overflow-y:auto" onclick="closeSummary()">
+  <div onclick="event.stopPropagation()" style="width:100%;max-width:480px;padding:0 14px 60px">
+    <div style="text-align:center;padding:24px 0 16px">
+      <div style="font-size:3rem;margin-bottom:8px">🏆</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.1em;color:var(--orn)">ALLENAMENTO COMPLETATO</div>
+      <div id="summary-sessname" style="font-size:.8rem;color:var(--mu2);margin-top:4px"></div>
+    </div>
+    <div id="summary-stats" style="display:flex;gap:10px;margin-bottom:16px"></div>
+    <div id="summary-prs" style="margin-bottom:16px"></div>
+    <div id="summary-exlist" style="margin-bottom:20px"></div>
+    <button onclick="closeSummary()" style="width:100%;padding:14px;background:var(--orn);border:none;border-radius:12px;color:#000;font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:.1em;cursor:pointer">CHIUDI</button>
   </div>
 </div>
 
@@ -549,7 +600,7 @@ select.inp{cursor:pointer}
 <div id="override-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center" onclick="closeOverrideModal()">
   <div onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 16px 32px;max-height:85vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--pur)">MODIFICA GIORNO</div>
+      <div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--pur)">MODIFICA GIORNO</div>
       <button onclick="closeOverrideModal()" style="background:none;border:none;color:var(--mu);font-size:1.2rem;cursor:pointer">&#10005;</button>
     </div>
     <div id="override-ctx" style="font-size:.72rem;color:var(--mu2);margin-bottom:14px"></div>
@@ -743,7 +794,8 @@ function buildAthCard(a) {
   var stats = document.createElement('div'); stats.className = 'stat-row';
   stats.innerHTML = '<div class="stat-box"><div class="stat-val" id="sv-sess-'+a.id+'">—</div><div class="stat-lb">Sessioni</div></div>' +
     '<div class="stat-box"><div class="stat-val" id="sv-day-'+a.id+'">' + (a.current_day||'—') + '</div><div class="stat-lb">Giorno ciclo</div></div>' +
-    '<div class="stat-box"><div class="stat-val" id="sv-cycle-'+a.id+'">—</div><div class="stat-lb">Ciclo</div></div>';
+    '<div class="stat-box"><div class="stat-val" id="sv-cycle-'+a.id+'">—</div><div class="stat-lb">Ciclo</div></div>' +
+    '<div class="stat-box"><div class="stat-val" id="sv-comp-'+a.id+'">—</div><div class="stat-lb">Compliance</div></div>';
 
   // Program section
   var progSec = document.createElement('div');
@@ -800,6 +852,7 @@ function buildAthCard(a) {
 function loadAthStats(a) {
   sb.from('logbook').select('id',{count:'exact',head:true}).eq('athlete_id',a.id).eq('done',true)
     .then(function(r){ var el=document.getElementById('sv-sess-'+a.id); if(el) el.textContent=r.count||0; }).catch(function(){});
+  loadCompliance(a);
   if (a.current_cycle_id) {
     sb.from('cycles').select('cycle_number').eq('id',a.current_cycle_id).single()
       .then(function(r){ var el=document.getElementById('sv-cycle-'+a.id); if(el&&r.data) el.textContent=r.data.cycle_number; }).catch(function(){});
@@ -821,9 +874,55 @@ function loadAthProgInfo(a) {
 function advanceDay(ath) {
   if (!ath.current_cycle_id) { alert('Nessun ciclo assegnato'); return; }
   var nd = (ath.current_day||1) + 1;
-  if (nd > 10) { alert('Fine ciclo 10. Assegna ciclo successivo.'); return; }
-  sb.from('profiles').update({current_day:nd}).eq('id',ath.id)
-    .then(function(){ loadAthletes(); }).catch(function(){});
+
+  if (nd <= 10) {
+    // Normal day advance
+    sb.from('profiles').update({current_day: nd}).eq('id', ath.id)
+      .then(function(){ loadAthletes(); }).catch(function(){});
+    return;
+  }
+
+  // Day > 10 — look for next cycle in same mesocycle
+  if (!ath.current_mesocycle_id) {
+    alert('Fine ciclo. Nessun mesociclo assegnato — assegna il prossimo ciclo manualmente.');
+    return;
+  }
+
+  sb.from('cycles')
+    .select('id, name, order_index')
+    .eq('mesocycle_id', ath.current_mesocycle_id)
+    .order('order_index', {ascending: true})
+    .then(function(r) {
+      var cycles = r.data || [];
+      var curIdx = cycles.findIndex(function(c){ return c.id === ath.current_cycle_id; });
+      var nextCycle = curIdx >= 0 ? cycles[curIdx + 1] : null;
+
+      if (!nextCycle) {
+        // End of mesocycle
+        if (confirm('🏆 Mesociclo completato!\n\n' + (ath.full_name||'Atleta') + ' ha terminato tutti i cicli.\nVuoi assegnare un nuovo programma manualmente?')) {
+          // Reset — coach will assign new meso
+          sb.from('profiles').update({
+            current_cycle_id: null,
+            current_day: 1,
+            cycle_start_date: null
+          }).eq('id', ath.id).then(function(){ loadAthletes(); });
+        }
+        return;
+      }
+
+      // Auto-advance to next cycle
+      if (confirm('✅ Ciclo completato!\nAvanzare automaticamente a: ' + nextCycle.name + '?')) {
+        sb.from('profiles').update({
+          current_cycle_id:  nextCycle.id,
+          current_day:       1,
+          cycle_start_date:  new Date().toISOString().split('T')[0]
+        }).eq('id', ath.id)
+          .then(function(){
+            showToast((ath.full_name||'Atleta') + ' → ' + nextCycle.name);
+            loadAthletes();
+          }).catch(function(){});
+      }
+    }).catch(function(){ alert('Errore caricamento cicli'); });
 }
 
 function loadAthMessages(aid) {
@@ -960,6 +1059,7 @@ function renderSess() {
       '<div style="font-size:1.2rem">'+ic+'</div>' +
       '<div style="flex:1"><div style="font-weight:600;font-size:.87rem">'+escHtml(s.name)+'</div>' +
       '<div style="font-size:.68rem;color:var(--mu2);margin-top:1px">'+(s.session_exercises||[]).length+' esercizi</div></div>' +
+      '<button onclick="event.stopPropagation();dupSess('+s.id+')" style="background:none;border:1px solid rgba(255,255,255,.12);color:var(--mu2);border-radius:8px;padding:3px 8px;font-size:.7rem;cursor:pointer;margin-right:5px" title="Duplica">📋</button>'+
       '<button class="btn-del" onclick="event.stopPropagation();delSess('+s.id+')">&#215;</button></div>' +
       '<div class="card-body">'+exHtml+exAddHtml+'</div>';
     c.appendChild(d);
@@ -1034,6 +1134,7 @@ function renderMeso() {
         '<div style="display:flex;align-items:center;gap:7px;margin-bottom:9px">' +
         '<span class="tag ct-'+cyc.cycle_type+'" style="font-size:.56rem">'+(cyc.cycle_type||'blast').toUpperCase()+'</span>' +
         '<span style="font-weight:700;font-size:.84rem">'+escHtml(cyc.name)+'</span>' +
+        '<button onclick="dupCycle('+cyc.id+','+m.id+')" style="background:none;border:1px solid rgba(255,255,255,.12);color:var(--mu2);border-radius:8px;padding:3px 8px;font-size:.7rem;cursor:pointer;margin-right:5px" title="Duplica">📋</button>'+
         '<button class="btn-del" style="margin-left:auto" onclick="delCycle('+cyc.id+')">&#215;</button></div>' +
         buildAdminDayGrid(cyc) + '</div>';
     }).join('');
@@ -1492,6 +1593,83 @@ function dndDrop(event) {
       dndDragData.el.style.opacity = '';
       dndDragData = null;
     });
+}
+
+// ── DUPLICA SESSIONE / CICLO ─────────────────────────────────
+async function dupSess(sessId) {
+  var orig = allSess.find(function(s){ return s.id === sessId; });
+  if (!orig) return;
+  var newName = 'Copia di ' + orig.name;
+
+  // 1. Insert new session
+  var r1 = await sb.from('sessions').insert({
+    name: newName,
+    session_type: orig.session_type,
+    created_by: ME.id
+  }).select().single();
+  if (r1.error) { alert('Errore: ' + r1.error.message); return; }
+  var newSessId = r1.data.id;
+
+  // 2. Copy all session_exercises
+  var exList = (orig.session_exercises || []).map(function(se) {
+    return {
+      session_id:  newSessId,
+      exercise_id: se.exercise_id || (se.exercises && se.exercises.id),
+      sets:        se.sets,
+      reps:        se.reps,
+      rest_sec:    se.rest_sec,
+      notes:       se.notes,
+      sort_order:  se.sort_order
+    };
+  });
+  if (exList.length) {
+    var r2 = await sb.from('session_exercises').insert(exList);
+    if (r2.error) { alert('Esercizi non copiati: ' + r2.error.message); }
+  }
+
+  showToast('Sessione duplicata: ' + newName);
+  loadSess();
+}
+
+async function dupCycle(cycleId, mesoId) {
+  // Load full cycle with days
+  var r = await sb.from('cycles')
+    .select('*, cycle_days(*, sessions(id))')
+    .eq('id', cycleId).single();
+  if (r.error || !r.data) { alert('Errore caricamento ciclo'); return; }
+  var orig = r.data;
+
+  // Count existing cycles in meso
+  var meso = allMeso.find(function(m){ return m.id === mesoId; });
+  var cycNum = meso ? (meso.cycles||[]).length + 1 : 1;
+  var newName = 'Ciclo ' + cycNum + ' (copia di ' + orig.name + ')';
+
+  // 1. Insert new cycle
+  var r2 = await sb.from('cycles').insert({
+    mesocycle_id: mesoId,
+    name:         newName,
+    cycle_type:   orig.cycle_type,
+    order_index:  cycNum,
+    created_by:   ME.id
+  }).select().single();
+  if (r2.error) { alert('Errore: ' + r2.error.message); return; }
+  var newCycId = r2.data.id;
+
+  // 2. Copy all 10 days (preserving session_id links)
+  var days = (orig.cycle_days || []).map(function(d) {
+    return {
+      cycle_id:   newCycId,
+      day_number: d.day_number,
+      session_id: d.session_id || (d.sessions && d.sessions.id) || null
+    };
+  });
+  if (days.length) {
+    var r3 = await sb.from('cycle_days').insert(days);
+    if (r3.error) { alert('Giorni non copiati: ' + r3.error.message); return; }
+  }
+
+  showToast('Ciclo duplicato: ' + newName);
+  loadMeso();
 }
 
 // ── VIDEO MODAL ──────────────────────────────────────────────
@@ -2087,8 +2265,6 @@ var overrideCache = {};      // cycleDayId -> {session_id, coach_note, sessions}
 var selectedDayNum = null;
 var today = new Date();
 
-// TIMER
-var timerSecs=120, timerRunning=false, timerInterval=null, activePreset=120;
 
 function startAthlete() {
   document.getElementById('app').style.display='flex';
@@ -2347,6 +2523,16 @@ function buildExItem(se, dayData) {
   btnDone.innerHTML=isDone?'&#10003; Completato':'Segna come fatto';
   btnDone.onclick=(function(seid,ddid,ddobj){ return function(){ toggleDone(seid,ddid,ddobj); }; })(se.id,dayData.id,dayData);
 
+  // Timer recupero button
+  if (se.rest_sec) {
+    var btnTimer = document.createElement('button');
+    btnTimer.style.cssText = 'width:100%;padding:8px;border-radius:9px;background:none;border:1px solid rgba(232,17,42,.2);color:var(--red);font-size:.72rem;cursor:pointer;margin-top:5px;font-family:inherit';
+    btnTimer.innerHTML = '⏱ Timer recupero (' + formatRestSec(se.rest_sec) + ')';
+    (function(rsec, ename){
+      btnTimer.addEventListener('click', function(){ openTimer(rsec, ename); });
+    })(se.rest_sec, ex.name||'');
+    body.appendChild(btnTimer);
+  }
   body.appendChild(btnSave); body.appendChild(btnDone);
   item.appendChild(hdr); item.appendChild(body);
   return item;
@@ -2400,6 +2586,13 @@ function toggleDone(seId, cycleDayId, dayData) {
     if(chk) chk.innerHTML=newDone?'&#10003;':'';
     if(btn){ btn.className='btn-done'+(newDone?' marked':''); btn.innerHTML=newDone?'&#10003; Completato':'Segna come fatto'; }
     if(dot) dot.className='prog-dot'+(newDone?' done':'');
+    if(newDone) {
+      var currentDay=myProfile.current_day||1;
+      var dayData=(currentCycle.cycle_days||[]).find(function(d){ return d.day_number===currentDay; });
+      if(dayData && isSessionDone(dayData)) {
+        setTimeout(function(){ showWorkoutSummary(dayData); }, 600);
+      }
+    }
   }).catch(function(){});
 }
 
@@ -2414,6 +2607,343 @@ function isSessionDone(dayData) {
   var sexs=dayData.sessions.session_exercises||[];
   if(!sexs.length) return false;
   return sexs.every(function(se){ return logbookCache[dayData.id+'_'+se.id]&&logbookCache[dayData.id+'_'+se.id].done; });
+}
+
+// ── TIMER RECUPERO ───────────────────────────────────────────
+var timerInterval = null;
+var timerSecsLeft = 120;
+var timerTotal = 120;
+var timerRunning = false;
+
+function formatRestSec(s) {
+  return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+}
+function openTimer(restSec, exName) {
+  timerSecsLeft = restSec || 120;
+  timerTotal = timerSecsLeft;
+  timerRunning = false;
+  clearInterval(timerInterval);
+  document.getElementById('timer-exname').textContent = exName || '';
+  document.getElementById('timer-startstop').textContent = 'START';
+  document.getElementById('timer-startstop').style.background = 'var(--red)';
+  updateTimerDisplay();
+  highlightTimerPreset(timerTotal);
+  document.getElementById('timer-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  document.getElementById('timer-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('timer-startstop').textContent = 'START';
+    document.getElementById('timer-startstop').style.background = 'var(--red)';
+  } else {
+    if (timerSecsLeft <= 0) { timerSecsLeft = timerTotal; updateTimerDisplay(); }
+    timerRunning = true;
+    document.getElementById('timer-startstop').textContent = 'PAUSA';
+    document.getElementById('timer-startstop').style.background = 'rgba(245,158,11,.8)';
+    timerInterval = setInterval(function(){
+      timerSecsLeft--;
+      updateTimerDisplay();
+      if (timerSecsLeft <= 0) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        document.getElementById('timer-startstop').textContent = 'START';
+        document.getElementById('timer-startstop').style.background = 'var(--grn)';
+        document.getElementById('timer-display').style.color = 'var(--grn)';
+        if ('vibrate' in navigator) navigator.vibrate([200,100,200]);
+      } else if (timerSecsLeft <= 5) {
+        document.getElementById('timer-display').style.color = 'var(--red)';
+      }
+    }, 1000);
+  }
+}
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerSecsLeft = timerTotal;
+  document.getElementById('timer-startstop').textContent = 'START';
+  document.getElementById('timer-startstop').style.background = 'var(--red)';
+  document.getElementById('timer-display').style.color = 'var(--orn)';
+  updateTimerDisplay();
+}
+function setTimerPreset(secs) {
+  timerTotal = secs; timerSecsLeft = secs;
+  clearInterval(timerInterval); timerRunning = false;
+  document.getElementById('timer-startstop').textContent = 'START';
+  document.getElementById('timer-startstop').style.background = 'var(--red)';
+  document.getElementById('timer-display').style.color = 'var(--orn)';
+  updateTimerDisplay();
+  highlightTimerPreset(secs);
+}
+function updateTimerDisplay() {
+  document.getElementById('timer-display').textContent = formatRestSec(timerSecsLeft);
+}
+function highlightTimerPreset(secs) {
+  [60,90,120,180].forEach(function(s){
+    var btn = document.getElementById('tp-'+s);
+    if (!btn) return;
+    if (s === secs) {
+      btn.style.background = 'rgba(232,17,42,.15)';
+      btn.style.color = 'var(--red)';
+      btn.style.borderColor = 'rgba(232,17,42,.3)';
+    } else {
+      btn.style.background = 'var(--s3)';
+      btn.style.color = 'var(--mu2)';
+      btn.style.borderColor = 'var(--bdr)';
+    }
+  });
+}
+
+// ── COMPLIANCE ────────────────────────────────────────────────
+function loadCompliance(ath) {
+  if (!ath.current_cycle_id) return;
+  // Count done exercises in current cycle
+  sb.from('logbook').select('id', {count:'exact', head:true})
+    .eq('athlete_id', ath.id)
+    .eq('cycle_id', ath.current_cycle_id)
+    .eq('done', true)
+    .then(function(done){
+      // Count total expected (cycle_days × session_exercises)
+      sb.from('cycle_days').select('sessions(session_exercises(id))')
+        .eq('cycle_id', ath.current_cycle_id)
+        .then(function(r){
+          var total = 0;
+          (r.data||[]).forEach(function(d){
+            if(d.sessions) total += (d.sessions.session_exercises||[]).length;
+          });
+          var doneCount = done.count || 0;
+          var expected = Math.min(total, (ath.current_day||1) * Math.ceil(total/10));
+          var pct = expected > 0 ? Math.round(doneCount / expected * 100) : 0;
+          pct = Math.min(pct, 100);
+          var el = document.getElementById('sv-comp-'+ath.id);
+          if (el) {
+            el.textContent = pct + '%';
+            el.style.color = pct >= 80 ? 'var(--grn)' : pct >= 50 ? 'var(--orn)' : 'var(--red)';
+          }
+        }).catch(function(){});
+    }).catch(function(){});
+}
+
+// ── PR CHART (athlete stats view) ────────────────────────────
+var prHistoryCache = {};
+
+function loadPRChart() {
+  var sel = document.getElementById('pr-ex-select');
+  if (!sel) return;
+
+  // Populate select if empty
+  if (sel.options.length <= 1 && allEx && allEx.length) {
+    // Only show exercises the athlete has logged
+    sb.from('logbook').select('session_exercise_id, session_exercises(exercise_id, exercises(id,name))')
+      .eq('athlete_id', ME.id).eq('done', true)
+      .then(function(r){
+        var seen = {}; var opts = ['<option value="">— Scegli esercizio —</option>'];
+        (r.data||[]).forEach(function(l){
+          var ex = l.session_exercises && l.session_exercises.exercises;
+          if (ex && !seen[ex.id]) {
+            seen[ex.id] = true;
+            opts.push('<option value="'+ex.id+'">'+escHtml(ex.name)+'</option>');
+          }
+        });
+        sel.innerHTML = opts.join('');
+      }).catch(function(){});
+    return;
+  }
+
+  var exId = sel.value;
+  var canvas = document.getElementById('pr-chart-canvas');
+  if (!exId) { canvas.innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2);font-size:.8rem">Seleziona un esercizio per vedere i progressi</div>'; return; }
+  canvas.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mu2);font-size:.75rem">Caricamento...</div>';
+
+  sb.from('logbook')
+    .select('logged_date, set1_kg, set1_reps, set2_kg, set2_reps, set3_kg, set3_reps, session_exercises!inner(exercise_id)')
+    .eq('athlete_id', ME.id)
+    .eq('done', true)
+    .eq('session_exercises.exercise_id', exId)
+    .order('logged_date', {ascending: true})
+    .then(function(r){
+      var rows = r.data || [];
+      if (!rows.length) {
+        canvas.innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2);font-size:.8rem">Nessun dato registrato per questo esercizio</div>';
+        return;
+      }
+      // Get best kg per session date
+      var points = rows.map(function(row){
+        var kgs = [row.set1_kg, row.set2_kg, row.set3_kg].filter(Boolean).map(Number);
+        var best = kgs.length ? Math.max.apply(null, kgs) : 0;
+        return { date: row.logged_date, kg: best };
+      }).filter(function(p){ return p.kg > 0; });
+
+      if (!points.length) {
+        canvas.innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2);font-size:.8rem">Nessun kg registrato</div>';
+        return;
+      }
+
+      renderPRChart(canvas, points);
+    }).catch(function(e){ canvas.innerHTML = '<div style="color:var(--red);font-size:.75rem">Errore: '+String(e)+'</div>'; });
+}
+
+function renderPRChart(container, points) {
+  var maxKg = Math.max.apply(null, points.map(function(p){ return p.kg; }));
+  var minKg = Math.min.apply(null, points.map(function(p){ return p.kg; }));
+  var range = maxKg - minKg || 1;
+  var W = 300, H = 140, PAD = 30;
+  var n = points.length;
+
+  var svgPts = points.map(function(p, i){
+    var x = PAD + (n > 1 ? i / (n-1) : 0.5) * (W - PAD*2);
+    var y = H - PAD - ((p.kg - minKg) / range) * (H - PAD*2);
+    return {x: x, y: y, kg: p.kg, date: p.date};
+  });
+
+  // Build polyline
+  var poly = svgPts.map(function(p){ return p.x+','+p.y; }).join(' ');
+
+  // Y axis labels
+  var yLabels = '';
+  for (var i=0; i<=2; i++) {
+    var kg = minKg + (range * i / 2);
+    var y = H - PAD - (i/2) * (H - PAD*2);
+    yLabels += '<text x="'+(PAD-4)+'" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="#666">'+Math.round(kg)+'</text>';
+    yLabels += '<line x1="'+PAD+'" y1="'+y+'" x2="'+(W-PAD)+'" y2="'+y+'" stroke="rgba(255,255,255,.05)" stroke-width="1"/>';
+  }
+
+  // X axis date labels (first, middle, last)
+  var xLabels = '';
+  [0, Math.floor(n/2), n-1].forEach(function(i){
+    if (i < n) {
+      var p = svgPts[i];
+      var d = points[i].date ? points[i].date.substring(5) : '';
+      xLabels += '<text x="'+p.x+'" y="'+(H-4)+'" text-anchor="middle" font-size="8" fill="#555">'+d+'</text>';
+    }
+  });
+
+  // Dots + tooltips
+  var dots = svgPts.map(function(p, i){
+    var isMax = p.kg === maxKg;
+    return '<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(isMax?5:3)+'" fill="'+(isMax?'#f59e0b':'#e8111a')+'">' +
+      '<title>'+p.kg+'kg — '+p.date+'</title></circle>';
+  }).join('');
+
+  // PR badge
+  var prBadge = '<text x="'+(W-PAD)+'" y="'+(H-PAD - ((maxKg-minKg)/range)*(H-PAD*2) - 8)+'" text-anchor="end" font-size="9" fill="#f59e0b">▲ '+maxKg+'kg PR</text>';
+
+  var svg = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">' +
+    yLabels + xLabels +
+    '<polyline points="'+poly+'" fill="none" stroke="var(--red)" stroke-width="2" stroke-linejoin="round"/>' +
+    dots + prBadge +
+    '</svg>';
+
+  container.innerHTML = svg +
+    '<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.7rem;color:var(--mu2)">' +
+      '<span>'+points.length+' sessioni</span>' +
+      '<span style="color:var(--orn)">Max: '+maxKg+'kg</span>' +
+      '<span style="color:'+(maxKg > points[0].kg ? 'var(--grn)' : 'var(--mu2)')+'">+'+Math.round(maxKg-points[0].kg)+'kg</span>' +
+    '</div>';
+}
+
+// ── RIEPILOGO ALLENAMENTO ────────────────────────────────────
+function showWorkoutSummary(dayData) {
+  var sess = dayData.sessions;
+  if (!sess) return;
+  var sexs = sess.session_exercises || [];
+
+  // Session name
+  document.getElementById('summary-sessname').textContent = sess.name + ' · ' + new Date().toLocaleDateString('it-IT');
+
+  // Calc stats
+  var totalVol = 0; // kg × reps totali
+  var totalSets = 0;
+  var newPRs = [];
+  var exRows = [];
+
+  sexs.forEach(function(se) {
+    var log = logbookCache[dayData.id + '_' + se.id];
+    if (!log) return;
+    var exName = se.exercises ? se.exercises.name : '?';
+    var sets = [];
+    [[log.set1_kg, log.set1_reps],[log.set2_kg, log.set2_reps],[log.set3_kg, log.set3_reps]].forEach(function(s) {
+      if (s[0] && s[1]) {
+        sets.push(s);
+        totalVol += parseFloat(s[0]) * parseInt(s[1]);
+        totalSets++;
+      }
+    });
+
+    // Check PR
+    var pr = prCache[se.id];
+    var isPR = false;
+    if (sets.length && pr && pr.kg) {
+      var bestKg = Math.max.apply(null, sets.map(function(s){ return parseFloat(s[0]); }));
+      if (bestKg > parseFloat(pr.kg)) isPR = true;
+    } else if (sets.length && !pr) {
+      isPR = true; // first time logged = PR
+    }
+    if (isPR) newPRs.push(exName);
+
+    if (sets.length) {
+      exRows.push({
+        name: exName,
+        sets: sets,
+        isPR: isPR
+      });
+    }
+  });
+
+  // Render stats boxes
+  var statsHtml =
+    '<div style="flex:1;background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:12px;text-align:center">' +
+      '<div style="font-family:Bebas Neue,sans-serif;font-size:1.6rem;color:var(--orn)">' + Math.round(totalVol) + '</div>' +
+      '<div style="font-size:.6rem;color:var(--mu2);text-transform:uppercase;letter-spacing:.08em">kg totali</div>' +
+    '</div>' +
+    '<div style="flex:1;background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:12px;text-align:center">' +
+      '<div style="font-family:Bebas Neue,sans-serif;font-size:1.6rem;color:var(--grn)">' + totalSets + '</div>' +
+      '<div style="font-size:.6rem;color:var(--mu2);text-transform:uppercase;letter-spacing:.08em">serie</div>' +
+    '</div>' +
+    '<div style="flex:1;background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:12px;text-align:center">' +
+      '<div style="font-family:Bebas Neue,sans-serif;font-size:1.6rem;color:var(--pur)">' + newPRs.length + '</div>' +
+      '<div style="font-size:.6rem;color:var(--mu2);text-transform:uppercase;letter-spacing:.08em">new PR</div>' +
+    '</div>';
+  document.getElementById('summary-stats').innerHTML = statsHtml;
+
+  // PR list
+  var prHtml = '';
+  if (newPRs.length) {
+    prHtml = '<div style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:12px 14px">' +
+      '<div style="font-size:.65rem;font-weight:700;letter-spacing:.1em;color:var(--pur);margin-bottom:8px">🏅 NUOVI PERSONAL RECORD</div>' +
+      newPRs.map(function(n){ return '<div style="font-size:.82rem;color:var(--txt);padding:3px 0">&#10003; ' + escHtml(n) + '</div>'; }).join('') +
+    '</div>';
+  }
+  document.getElementById('summary-prs').innerHTML = prHtml;
+
+  // Exercise breakdown
+  var exHtml = '<div style="font-size:.65rem;font-weight:700;letter-spacing:.1em;color:var(--mu2);margin-bottom:8px;text-transform:uppercase">Dettaglio esercizi</div>';
+  exRows.forEach(function(ex) {
+    exHtml += '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px">' +
+      '<div style="flex:1">' +
+        '<div style="font-size:.82rem;font-weight:600">' + escHtml(ex.name) + (ex.isPR ? ' <span style="font-size:.6rem;background:rgba(168,85,247,.15);color:var(--pur);padding:1px 5px;border-radius:5px">PR</span>' : '') + '</div>' +
+        '<div style="font-size:.72rem;color:var(--mu2);margin-top:3px">' +
+          ex.sets.map(function(s){ return s[0]+'kg×'+s[1]; }).join(' · ') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  document.getElementById('summary-exlist').innerHTML = exHtml;
+
+  document.getElementById('summary-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSummary() {
+  document.getElementById('summary-overlay').style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 // ── ATHLETE MESSAGES ─────────────────────────────────────────
