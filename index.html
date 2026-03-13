@@ -971,21 +971,26 @@ function delSessEx(id) {
 
 // ── MESOCYCLES ───────────────────────────────────────────────
 function loadMeso() {
-  sb.from('mesocycles').select('*, athlete_id, profiles!mesocycles_athlete_id_fkey(id,full_name,email), cycles(*, cycle_days(*, sessions(id,name,session_type)))').order('created_at')
+  sb.from('mesocycles').select('*, cycles(*, cycle_days(*, sessions(id,name,session_type)))').order('created_at')
     .then(function(r){
-      allMeso=r.data||[];
-      // Sort: athlete-specific first, then shared
-    var sortedMeso = allMeso.slice().sort(function(a,b){
-      if(a.athlete_id===ath.id && b.athlete_id!==ath.id) return -1;
-      if(b.athlete_id===ath.id && a.athlete_id!==ath.id) return 1;
-      return 0;
-    });
-    sortedMeso.forEach(function(m){
-        m.cycles=(m.cycles||[]).sort(function(a,b){return a.cycle_number-b.cycle_number;});
-        m.cycles.forEach(function(c){ c.cycle_days=(c.cycle_days||[]).sort(function(a,b){return a.day_number-b.day_number;}); });
+      if(r.error){ console.error('loadMeso:', r.error); return; }
+      allMeso = r.data || [];
+      allMeso.forEach(function(m){
+        m.profiles = null;
+        m.cycles = (m.cycles||[]).sort(function(a,b){ return a.cycle_number-b.cycle_number; });
+        m.cycles.forEach(function(c){ c.cycle_days=(c.cycle_days||[]).sort(function(a,b){ return a.day_number-b.day_number; }); });
       });
-      renderMeso();
-    }).catch(function(){});
+      // Enrich with athlete names
+      var athIds = allMeso.filter(function(m){ return m.athlete_id; }).map(function(m){ return m.athlete_id; });
+      if(!athIds.length){ renderMeso(); return; }
+      sb.from('profiles').select('id,full_name,email').in('id', athIds)
+        .then(function(pr){
+          var pMap = {};
+          (pr.data||[]).forEach(function(p){ pMap[p.id] = p; });
+          allMeso.forEach(function(m){ if(m.athlete_id) m.profiles = pMap[m.athlete_id] || null; });
+          renderMeso();
+        }).catch(function(){ renderMeso(); });
+    }).catch(function(e){ console.error('loadMeso err:', e); });
 }
 function renameMeso(mesoId, currentName) {
   var newName = prompt('Nuovo nome mesociclo:', currentName);
