@@ -534,7 +534,7 @@ select.inp{cursor:pointer}
       <div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--orn)">I TUOI PROGRESSI</div>
       <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:14px;padding:14px">
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">ESERCIZIO</div>
-        <select id="pr-ex-select" class="inp" onchange="loadPRChart()" style="margin-bottom:14px">
+        <select id="pr-ex-select" class="inp" onchange="_loadChartForEx(this.value)" style="margin-bottom:14px">
           <option value="">— Scegli esercizio —</option>
         </select>
         <div id="pr-chart-canvas"></div>
@@ -614,26 +614,6 @@ select.inp{cursor:pointer}
       <button onclick="closeVistaModal()" style="background:none;border:none;color:var(--mu);font-size:1.2rem;cursor:pointer">&#10005;</button>
     </div>
     <div id="vista-content"></div>
-  </div>
-</div>
-
-<!-- TIMER RECUPERO MODAL -->
-<div id="timer-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:600;align-items:center;justify-content:center" onclick="closeTimer()">
-  <div onclick="event.stopPropagation()" style="width:92%;max-width:320px;background:var(--s2);border:1px solid var(--bdr);border-radius:20px;padding:28px 20px;text-align:center">
-    <div style="font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--mu2);margin-bottom:14px">RECUPERO</div>
-    <div id="timer-display" style="font-family:Bebas Neue,sans-serif;font-size:4.5rem;letter-spacing:.05em;color:var(--orn);line-height:1">2:00</div>
-    <div id="timer-exname" style="font-size:.72rem;color:var(--mu2);margin:6px 0 20px;min-height:18px"></div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">
-      <button onclick="setTimerPreset(60)"  id="tp-60"  style="flex:1;padding:8px 4px;border-radius:9px;border:1px solid var(--bdr);background:var(--s3);color:var(--mu2);font-size:.75rem;cursor:pointer;font-family:inherit">1:00</button>
-      <button onclick="setTimerPreset(90)"  id="tp-90"  style="flex:1;padding:8px 4px;border-radius:9px;border:1px solid var(--bdr);background:var(--s3);color:var(--mu2);font-size:.75rem;cursor:pointer;font-family:inherit">1:30</button>
-      <button onclick="setTimerPreset(120)" id="tp-120" style="flex:1;padding:8px 4px;border-radius:9px;border:1px solid var(--bdr);background:rgba(232,17,42,.15);color:var(--red);border-color:rgba(232,17,42,.3);font-size:.75rem;cursor:pointer;font-family:inherit">2:00</button>
-      <button onclick="setTimerPreset(180)" id="tp-180" style="flex:1;padding:8px 4px;border-radius:9px;border:1px solid var(--bdr);background:var(--s3);color:var(--mu2);font-size:.75rem;cursor:pointer;font-family:inherit">3:00</button>
-    </div>
-    <div style="display:flex;gap:10px">
-      <button id="timer-startstop" onclick="toggleTimer()" style="flex:2;padding:13px;border-radius:12px;background:var(--red);border:none;color:#fff;font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:.1em;cursor:pointer">START</button>
-      <button onclick="resetTimer()" style="flex:1;padding:13px;border-radius:12px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu2);font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:.1em;cursor:pointer">RESET</button>
-    </div>
-    <button onclick="closeTimer()" style="margin-top:14px;background:none;border:none;color:var(--mu2);font-size:.72rem;cursor:pointer;font-family:inherit">chiudi</button>
   </div>
 </div>
 
@@ -2629,15 +2609,40 @@ function buildExItem(se, dayData) {
   btnDone.innerHTML=isDone?'&#10003; Completato':'Segna come fatto';
   btnDone.onclick=(function(seid,ddid,ddobj){ return function(){ toggleDone(seid,ddid,ddobj); }; })(se.id,dayData.id,dayData);
 
-  // Timer recupero button
+  // Inline timer recupero
   if (se.rest_sec) {
-    var btnTimer = document.createElement('button');
-    btnTimer.style.cssText = 'width:100%;padding:8px;border-radius:9px;background:none;border:1px solid rgba(232,17,42,.2);color:var(--red);font-size:.72rem;cursor:pointer;margin-top:5px;font-family:inherit';
-    btnTimer.innerHTML = '⏱ Timer recupero (' + formatRestSec(se.rest_sec) + ')';
-    (function(rsec, ename){
-      btnTimer.addEventListener('click', function(){ openTimer(rsec, ename); });
-    })(se.rest_sec, ex.name||'');
-    body.appendChild(btnTimer);
+    var restFmt = fmtSecs(se.rest_sec);
+    var timerId = 'ex-'+dayData.id+'-'+se.id;
+    var timerWrap = document.createElement('div');
+    timerWrap.style.cssText = 'margin-top:6px';
+    // Trigger button (shown by default)
+    timerWrap.innerHTML =
+      '<div id="inline-timer-trigger-'+timerId+'" style="display:flex;align-items:center;gap:8px">' +
+        '<button id="inline-timer-trigbtn-'+timerId+'" style="flex:1;padding:9px;border-radius:9px;background:none;border:1px solid rgba(232,17,42,.25);color:var(--red);font-size:.75rem;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;-webkit-tap-highlight-color:transparent;touch-action:manipulation">'+
+          '<span>⏱</span><span>Recupero '+restFmt+'</span>'+
+        '</button>'+
+      '</div>'+
+      // Inline countdown (hidden by default)
+      '<div id="inline-timer-wrap-'+timerId+'" style="display:none;align-items:center;gap:8px;background:var(--s3);border-radius:9px;padding:8px 12px;border:1px solid rgba(232,17,42,.2)">' +
+        '<div id="inline-timer-disp-'+timerId+'" style="font-family:Bebas Neue,sans-serif;font-size:1.6rem;color:var(--red);min-width:52px;letter-spacing:.05em">'+restFmt+'</div>'+
+        '<div style="flex:1;height:4px;background:var(--s4);border-radius:2px;overflow:hidden"><div id="inline-timer-bar-'+timerId+'" style="height:100%;background:var(--red);width:100%;transition:width 1s linear"></div></div>'+
+        '<button id="inline-timer-btn-'+timerId+'" onclick="toggleTimer()" style="background:none;border:none;color:var(--orn);font-size:1.1rem;cursor:pointer;padding:4px;-webkit-tap-highlight-color:transparent;touch-action:manipulation">⏸</button>'+
+        '<button id="inline-timer-close-'+timerId+'" style="background:none;border:none;color:var(--mu2);font-size:.8rem;cursor:pointer;padding:4px">✕</button>'+
+      '</div>';
+    // Wire buttons via addEventListener (avoids quote issues in innerHTML)
+    (function(tid, rsec){
+      var trigBtn  = timerWrap.querySelector('#inline-timer-trigbtn-'+tid);
+      var closeBtn = timerWrap.querySelector('#inline-timer-close-'+tid);
+      if (trigBtn) {
+        trigBtn.addEventListener('click', function(){ startInlineTimer(tid, rsec); });
+        trigBtn.addEventListener('touchend', function(e){ e.preventDefault(); startInlineTimer(tid, rsec); }, {passive:false});
+      }
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function(){ hideInlineTimer(tid); });
+        closeBtn.addEventListener('touchend', function(e){ e.preventDefault(); hideInlineTimer(tid); }, {passive:false});
+      }
+    })(timerId, se.rest_sec);
+    body.appendChild(timerWrap);
   }
   body.appendChild(btnSave); body.appendChild(btnDone);
   item.appendChild(hdr); item.appendChild(body);
@@ -2715,96 +2720,130 @@ function isSessionDone(dayData) {
   return sexs.every(function(se){ return logbookCache[dayData.id+'_'+se.id]&&logbookCache[dayData.id+'_'+se.id].done; });
 }
 
-// ── TIMER RECUPERO ───────────────────────────────────────────
+// ── TIMER UNIFICATO ──────────────────────────────────────────
+// Usato sia dal tab Timer che inline negli esercizi
 var timerInterval = null;
 var timerSecsLeft = 120;
-var timerTotal = 120;
-var timerRunning = false;
+var timerTotal    = 120;
+var timerRunning  = false;
+var timerActiveExId = null; // id del mini-timer attivo
 
-function formatRestSec(s) {
-  return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
-}
-function openTimer(restSec, exName) {
-  timerSecsLeft = restSec || 120;
-  timerTotal = timerSecsLeft;
-  timerRunning = false;
-  clearInterval(timerInterval);
-  document.getElementById('timer-exname').textContent = exName || '';
-  document.getElementById('timer-startstop').textContent = 'START';
-  document.getElementById('timer-startstop').style.background = 'var(--red)';
-  updateTimerDisplay();
-  highlightTimerPreset(timerTotal);
-  document.getElementById('timer-overlay').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-function closeTimer() {
-  clearInterval(timerInterval);
-  timerRunning = false;
-  document.getElementById('timer-overlay').style.display = 'none';
-  document.body.style.overflow = '';
-}
-function toggleTimer() {
-  if (timerRunning) {
-    clearInterval(timerInterval);
-    timerRunning = false;
-    document.getElementById('timer-startstop').textContent = 'START';
-    document.getElementById('timer-startstop').style.background = 'var(--red)';
-  } else {
-    if (timerSecsLeft <= 0) { timerSecsLeft = timerTotal; updateTimerDisplay(); }
-    timerRunning = true;
-    document.getElementById('timer-startstop').textContent = 'PAUSA';
-    document.getElementById('timer-startstop').style.background = 'rgba(245,158,11,.8)';
-    timerInterval = setInterval(function(){
-      timerSecsLeft--;
-      updateTimerDisplay();
-      if (timerSecsLeft <= 0) {
-        clearInterval(timerInterval);
-        timerRunning = false;
-        document.getElementById('timer-startstop').textContent = 'START';
-        document.getElementById('timer-startstop').style.background = 'var(--grn)';
-        document.getElementById('timer-display').style.color = 'var(--grn)';
-        if ('vibrate' in navigator) navigator.vibrate([200,100,200]);
-      } else if (timerSecsLeft <= 5) {
-        document.getElementById('timer-display').style.color = 'var(--red)';
-      }
-    }, 1000);
+function pad2(n){ return String(n).padStart(2,'0'); }
+
+function fmtSecs(s){ return pad2(Math.floor(s/60))+':'+pad2(s%60); }
+
+function _timerTick() {
+  timerSecsLeft--;
+  // Update tab display
+  var d = document.getElementById('timerDisp');
+  if (d) d.textContent = fmtSecs(timerSecsLeft);
+  // Update inline display and progress bar if active
+  if (timerActiveExId) {
+    var id = document.getElementById('inline-timer-disp-'+timerActiveExId);
+    if (id) id.textContent = fmtSecs(timerSecsLeft);
+    var bar = document.getElementById('inline-timer-bar-'+timerActiveExId);
+    if (bar) bar.style.width = Math.round(timerSecsLeft / timerTotal * 100) + '%';
+  }
+  if (timerSecsLeft <= 0) {
+    clearInterval(timerInterval); timerRunning = false;
+    _timerSetBtnState('START', 'var(--grn)');
+    if ('vibrate' in navigator) navigator.vibrate([200,100,200]);
+  } else if (timerSecsLeft <= 5) {
+    _timerSetBtnState('STOP', 'var(--red)');
   }
 }
+
+function _timerSetBtnState(txt, col) {
+  // Tab button
+  var btn = document.getElementById('timerBtn');
+  if (btn) { btn.textContent = txt; btn.style.background = col; }
+  // Inline button
+  if (timerActiveExId) {
+    var ib = document.getElementById('inline-timer-btn-'+timerActiveExId);
+    if (ib) { ib.textContent = txt === 'START' ? '▶' : txt === 'STOP' ? '⏸' : '✓'; ib.style.color = col; }
+  }
+}
+
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval); timerRunning = false;
+    _timerSetBtnState('START', 'var(--red)');
+  } else {
+    if (timerSecsLeft <= 0) { timerSecsLeft = timerTotal; _updateAllDisplays(); }
+    timerRunning = true;
+    _timerSetBtnState('STOP', 'var(--orn)');
+    timerInterval = setInterval(_timerTick, 1000);
+  }
+}
+
 function resetTimer() {
-  clearInterval(timerInterval);
-  timerRunning = false;
-  timerSecsLeft = timerTotal;
-  document.getElementById('timer-startstop').textContent = 'START';
-  document.getElementById('timer-startstop').style.background = 'var(--red)';
-  document.getElementById('timer-display').style.color = 'var(--orn)';
-  updateTimerDisplay();
-}
-function setTimerPreset(secs) {
-  timerTotal = secs; timerSecsLeft = secs;
   clearInterval(timerInterval); timerRunning = false;
-  document.getElementById('timer-startstop').textContent = 'START';
-  document.getElementById('timer-startstop').style.background = 'var(--red)';
-  document.getElementById('timer-display').style.color = 'var(--orn)';
-  updateTimerDisplay();
-  highlightTimerPreset(secs);
+  timerSecsLeft = timerTotal;
+  _updateAllDisplays();
+  _timerSetBtnState('START', 'var(--red)');
 }
-function updateTimerDisplay() {
-  document.getElementById('timer-display').textContent = formatRestSec(timerSecsLeft);
+
+function setPreset(s) {
+  clearInterval(timerInterval); timerRunning = false;
+  timerTotal = s; timerSecsLeft = s;
+  _updateAllDisplays();
+  _timerSetBtnState('START', 'var(--red)');
+  // Highlight preset button in tab
+  document.querySelectorAll('.pre-btn').forEach(function(b){ b.classList.remove('on'); });
+  var presets = [60,90,120,180,300];
+  var idx = presets.indexOf(s);
+  var btns = document.querySelectorAll('.pre-btn');
+  if (idx >= 0 && btns[idx]) btns[idx].classList.add('on');
+  // Auto-start
+  toggleTimer();
 }
-function highlightTimerPreset(secs) {
-  [60,90,120,180].forEach(function(s){
-    var btn = document.getElementById('tp-'+s);
-    if (!btn) return;
-    if (s === secs) {
-      btn.style.background = 'rgba(232,17,42,.15)';
-      btn.style.color = 'var(--red)';
-      btn.style.borderColor = 'rgba(232,17,42,.3)';
-    } else {
-      btn.style.background = 'var(--s3)';
-      btn.style.color = 'var(--mu2)';
-      btn.style.borderColor = 'var(--bdr)';
-    }
-  });
+
+function _updateAllDisplays() {
+  var txt = fmtSecs(timerSecsLeft);
+  var d = document.getElementById('timerDisp');
+  if (d) d.textContent = txt;
+  if (timerActiveExId) {
+    var id = document.getElementById('inline-timer-disp-'+timerActiveExId);
+    if (id) id.textContent = txt;
+  }
+}
+
+// Called from inline timer button on exercise card
+function startInlineTimer(exId, secs) {
+  // Stop any running timer
+  clearInterval(timerInterval); timerRunning = false;
+  // Reset previous inline display
+  if (timerActiveExId && timerActiveExId !== exId) {
+    var old = document.getElementById('inline-timer-wrap-'+timerActiveExId);
+    if (old) old.style.display = 'none';
+    var oldb = document.getElementById('inline-timer-trigger-'+timerActiveExId);
+    if (oldb) oldb.style.display = 'flex';
+  }
+  timerActiveExId = exId;
+  timerTotal = secs; timerSecsLeft = secs;
+  // Show inline timer, hide trigger button
+  var wrap = document.getElementById('inline-timer-wrap-'+exId);
+  var trig = document.getElementById('inline-timer-trigger-'+exId);
+  if (wrap) wrap.style.display = 'flex';
+  if (trig) trig.style.display = 'none';
+  _updateAllDisplays();
+  // Also sync tab timer preset
+  document.querySelectorAll('.pre-btn').forEach(function(b){ b.classList.remove('on'); });
+  // Auto-start
+  timerRunning = true;
+  _timerSetBtnState('STOP', 'var(--orn)');
+  timerInterval = setInterval(_timerTick, 1000);
+}
+
+function hideInlineTimer(exId) {
+  clearInterval(timerInterval); timerRunning = false;
+  timerActiveExId = null;
+  var wrap = document.getElementById('inline-timer-wrap-'+exId);
+  var trig = document.getElementById('inline-timer-trigger-'+exId);
+  var bar  = document.getElementById('inline-timer-bar-'+exId);
+  if (wrap) wrap.style.display = 'none';
+  if (trig) trig.style.display = 'flex';
+  if (bar) bar.style.width = '100%';
 }
 
 // ── COMPLIANCE ────────────────────────────────────────────────
@@ -2843,29 +2882,47 @@ var prHistoryCache = {};
 function loadPRChart() {
   var sel = document.getElementById('pr-ex-select');
   if (!sel) return;
-
-  // Populate select if empty
-  if (sel.options.length <= 1 && allEx && allEx.length) {
-    // Only show exercises the athlete has logged
-    sb.from('logbook').select('session_exercise_id, session_exercises(exercise_id, exercises(id,name))')
-      .eq('athlete_id', ME.id).eq('done', true)
-      .then(function(r){
-        var seen = {}; var opts = ['<option value="">— Scegli esercizio —</option>'];
-        (r.data||[]).forEach(function(l){
-          var ex = l.session_exercises && l.session_exercises.exercises;
-          if (ex && !seen[ex.id]) {
-            seen[ex.id] = true;
-            opts.push('<option value="'+ex.id+'">'+escHtml(ex.name)+'</option>');
-          }
-        });
-        sel.innerHTML = opts.join('');
-      }).catch(function(){});
-    return;
-  }
-
-  var exId = sel.value;
   var canvas = document.getElementById('pr-chart-canvas');
-  if (!exId) { canvas.innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2);font-size:.8rem">Seleziona un esercizio per vedere i progressi</div>'; return; }
+
+  // Always repopulate select with logged exercises, then show chart
+  sb.from('logbook')
+    .select('session_exercise_id, session_exercises(exercise_id, exercises(id,name))')
+    .eq('athlete_id', ME.id).eq('done', true)
+    .then(function(r){
+      var seen = {}; var opts = ['<option value="">— Scegli esercizio —</option>'];
+      var prevVal = sel.value;
+      (r.data||[]).forEach(function(l){
+        var ex = l.session_exercises && l.session_exercises.exercises;
+        if (ex && !seen[ex.id]) {
+          seen[ex.id] = true;
+          opts.push('<option value="'+ex.id+'">'+escHtml(ex.name)+'</option>');
+        }
+      });
+      sel.innerHTML = opts.join('');
+      // Restore previous selection if still valid
+      if (prevVal) sel.value = prevVal;
+
+      if (!opts.length || opts.length === 1) {
+        canvas.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--mu2);font-size:.8rem">' +
+          '<div style="font-size:2rem;margin-bottom:10px">📊</div>' +
+          '<div style="font-weight:600;margin-bottom:6px">Nessun dato ancora</div>' +
+          '<div>Completa almeno un allenamento con i kg registrati per vedere i progressi.</div>' +
+          '</div>';
+        return;
+      }
+
+      // If an exercise is selected, load its chart
+      if (sel.value) _loadChartForEx(sel.value, canvas);
+      else canvas.innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2);font-size:.8rem">Seleziona un esercizio per vedere i progressi</div>';
+    }).catch(function(e){
+      canvas.innerHTML = '<div style="color:var(--red);font-size:.75rem;padding:10px">Errore caricamento: '+String(e)+'</div>';
+    });
+}
+
+function _loadChartForEx(exId, canvas) {
+  if (!exId) return;
+  var canvas = canvas || document.getElementById('pr-chart-canvas');
+  canvas.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mu2);font-size:.75rem">Caricamento...</div>';
   canvas.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mu2);font-size:.75rem">Caricamento...</div>';
 
   sb.from('logbook')
@@ -3074,38 +3131,7 @@ function athSendMsg() {
     .then(function(){ athLoadMessages(); }).catch(function(){});
 }
 
-// ── TIMER ─────────────────────────────────────────────────────
-function pad(n){ return String(n).padStart(2,'0'); }
-function updateTimerDisp(){
-  var d=document.getElementById('timerDisp');
-  if(d) d.textContent=pad(Math.floor(timerSecs/60))+':'+pad(timerSecs%60);
-}
-function setPreset(s){
-  resetTimer(); timerSecs=s; activePreset=s; updateTimerDisp();
-  document.querySelectorAll('.pre-btn').forEach(function(b){ b.classList.remove('on'); });
-  var pr=[60,90,120,180,300]; var idx=pr.indexOf(s);
-  var btns=document.querySelectorAll('.pre-btn');
-  if(idx>=0&&btns[idx]) btns[idx].classList.add('on');
-  toggleTimer();
-}
-function toggleTimer(){
-  var btn=document.getElementById('timerBtn'); var disp=document.getElementById('timerDisp');
-  if(timerRunning){ clearInterval(timerInterval); timerRunning=false; if(btn) btn.textContent='START'; if(disp) disp.classList.remove('running'); }
-  else {
-    if(timerSecs===0&&activePreset) timerSecs=activePreset;
-    timerInterval=setInterval(function(){
-      if(timerSecs>0){ timerSecs--; updateTimerDisp(); }
-      else { clearInterval(timerInterval); timerRunning=false; if(btn) btn.textContent='START'; if(disp) disp.classList.remove('running'); }
-    },1000);
-    timerRunning=true; if(btn) btn.textContent='STOP'; if(disp) disp.classList.add('running');
-  }
-}
-function resetTimer(){
-  clearInterval(timerInterval); timerRunning=false;
-  timerSecs=activePreset||120; updateTimerDisp();
-  var btn=document.getElementById('timerBtn'); var disp=document.getElementById('timerDisp');
-  if(btn) btn.textContent='START'; if(disp) disp.classList.remove('running');
-}
+// timer unified below
 
 // ════════════════════════════════════════════════════════════════
 // SHARED UTILS
