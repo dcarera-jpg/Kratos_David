@@ -200,7 +200,7 @@ select.inp{cursor:pointer}
 <!-- LOADER -->
 <div id="loader">
   <div class="logo-big">KRATOS</div>
-  <div class="sub-text">Caricamento...</div>
+  <div class="sub-text">Loading...</div>
   <div class="spin"></div>
 </div>
 
@@ -217,7 +217,7 @@ select.inp{cursor:pointer}
       <label>Password</label>
       <input class="login-inp" type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password">
     </div>
-    <button class="btn-login" id="li-btn" onclick="doLogin()">Accedi</button>
+    <button class="btn-login" id="li-btn" onclick="doLogin()">Sign In</button>
     <div class="login-err" id="li-err"></div>
   </div>
 </div>
@@ -232,25 +232,25 @@ select.inp{cursor:pointer}
     <div class="topbar">
       <div class="topbar-logo">KRATOS</div>
       <span class="badge badge-pur">COACH</span>
-      <button class="btn-out" onclick="doLogout()">Esci</button>
+      <button class="btn-out" onclick="doLogout()">Logout</button>
     </div>
     <div class="scroll">
       <!-- DASHBOARD COMPLIANCE -->
       <div id="dashboard-wrap" style="margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <div class="sec-label" style="margin:0">Dashboard</div>
-          <button onclick="loadDashboard()" style="background:none;border:none;color:var(--mu2);font-size:.7rem;cursor:pointer;font-family:inherit">↻ Aggiorna</button>
+          <button onclick="loadDashboard()" style="background:none;border:none;color:var(--mu2);font-size:.7rem;cursor:pointer;font-family:inherit">↻ Refresh</button>
         </div>
         <div id="dashboard-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
       </div>
-      <div class="sec-label">Dettaglio atleti</div>
+      <div class="sec-label">Athlete Details</div>
       <div id="ath-list"></div>
     </div>
   </div>
 
   <!-- ADMIN: NUOVO ATLETA -->
   <div class="view" id="av-new">
-    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">NUOVO ATLETA</span></div>
+    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">NEW ATHLETE</span></div>
     <div class="scroll">
       <div class="iform">
         <div class="iform-title">CREA ACCOUNT ATLETA</div>
@@ -265,96 +265,96 @@ select.inp{cursor:pointer}
 
   <!-- ADMIN: PROGRAMMI -->
   <div class="view" id="av-prog">
-    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">PROGRAMMI</span></div>
+    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">PROGRAMS</span></div>
     <div class="scroll">
       <div class="tabs">
-        <button class="tab on" id="apt-ex"   onclick="aPTab('ex')">Esercizi</button>
-        <button class="tab"    id="apt-sess" onclick="aPTab('sess')">Sessioni</button>
-        <button class="tab"    id="apt-meso" onclick="aPTab('meso')">Mesocicli</button>
+        <button class="tab on" id="apt-ex"   onclick="aPTab('ex')">Exercises</button>
+        <button class="tab"    id="apt-sess" onclick="aPTab('sess')">Sessions</button>
+        <button class="tab"    id="apt-meso" onclick="aPTab('meso')">Mesocycles</button>
       </div>
       <div id="apc-ex">
-        <input class="inp" id="ex-q" placeholder="Cerca esercizio..." oninput="filterEx()" style="margin-bottom:8px">
+        <input class="inp" id="ex-q" placeholder="Search exercises..." oninput="filterEx()" style="margin-bottom:8px">
         <div style="display:flex;gap:6px;margin-bottom:8px">
           <select class="inp" id="ex-muscle" onchange="filterEx()" style="flex:1;padding:8px;font-size:.75rem">
-            <option value="">Tutti i muscoli</option>
-            <option value="petto">Petto</option>
-            <option value="schiena">Schiena</option>
-            <option value="spalle">Spalle</option>
-            <option value="braccia">Braccia</option>
-            <option value="gambe_quad">Gambe (Quad)</option>
+            <option value="">All muscles</option>
+            <option value="petto">Chest</option>
+            <option value="schiena">Back</option>
+            <option value="spalle">Shoulders</option>
+            <option value="braccia">Arms</option>
+            <option value="gambe_quad">Legs (Quad)</option>
             <option value="glutei_post">Glutei & Post. coscia</option>
-            <option value="polpacci">Polpacci</option>
+            <option value="polpacci">Calves</option>
             <option value="core">Core & Addome</option>
             <option value="cardio_hiit">Cardio HIIT</option>
             <option value="cardio_circuit">Circuiti</option>
             <option value="cardio_liss">LISS</option>
-            <option value="altro">Altro</option>
+            <option value="altro">Other</option>
           </select>
           <select class="inp" id="ex-equip" onchange="filterEx()" style="flex:1;padding:8px;font-size:.75rem">
-            <option value="">Tutti gli attrezzi</option>
-            <option value="bilanciere">Bilanciere</option>
-            <option value="manubri">Manubri</option>
-            <option value="cavi">Cavi</option>
-            <option value="macchina">Macchina</option>
-            <option value="corpo_libero">Corpo libero</option>
+            <option value="">All equipment</option>
+            <option value="bilanciere">Barbell</option>
+            <option value="manubri">Dumbbells</option>
+            <option value="cavi">Cables</option>
+            <option value="macchina">Machine</option>
+            <option value="corpo_libero">Bodyweight</option>
             <option value="attrezzo">Attrezzo</option>
           </select>
           <select class="inp" id="ex-gender" onchange="filterEx()" style="flex:1;padding:8px;font-size:.75rem">
-            <option value="">Tutti</option>
+            <option value="">All</option>
             <option value="unisex">Unisex</option>
-            <option value="donna">Donna</option>
+            <option value="donna">Female</option>
           </select>
         </div>
         <div id="ex-count" style="font-size:.68rem;color:var(--mu2);margin-bottom:8px"></div>
-        <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('ex-form')">+ Nuovo esercizio</button>
+        <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('ex-form')">+ Nuovo exerciseso</button>
         <div id="ex-form" class="iform" style="display:none">
-          <div class="iform-title">NUOVO ESERCIZIO</div>
-          <div class="field"><label>Nome *</label><input class="inp" id="exf-n" placeholder="es. Panca Piana"></div>
-          <div class="field"><label>Tipo</label>
+          <div class="iform-title">NEW EXERCISE</div>
+          <div class="field"><label>Name *</label><input class="inp" id="exf-n" placeholder="e.g. Panca Piana"></div>
+          <div class="field"><label>Type</label>
             <select class="inp" id="exf-t">
-              <option value="mec">Meccanico</option><option value="met">Metabolico</option>
-              <option value="pre">Pre-Attivazione</option><option value="str">Stretching</option>
+              <option value="mec">Mechanical</option><option value="met">Metabolic</option>
+              <option value="pre">Pre-Activation</option><option value="str">Stretching</option>
             </select></div>
           <div style="display:flex;gap:6px">
-            <div class="field" style="flex:1"><label>Gruppo muscolare</label>
+            <div class="field" style="flex:1"><label>Muscle group</label>
               <select class="inp" id="exf-mg" style="font-size:.78rem">
-                <option value="altro">Altro</option>
-                <option value="petto">Petto</option>
-                <option value="schiena">Schiena</option>
-                <option value="spalle">Spalle</option>
-                <option value="braccia">Braccia</option>
-                <option value="gambe_quad">Gambe (Quad)</option>
-                <option value="glutei_post">Glutei & Post.</option>
-                <option value="polpacci">Polpacci</option>
+                <option value="altro">Other</option>
+                <option value="petto">Chest</option>
+                <option value="schiena">Back</option>
+                <option value="spalle">Shoulders</option>
+                <option value="braccia">Arms</option>
+                <option value="gambe_quad">Legs (Quad)</option>
+                <option value="glutei_post">Glutes & Hamstrings</option>
+                <option value="polpacci">Calves</option>
                 <option value="core">Core</option>
                 <option value="cardio_hiit">Cardio HIIT</option>
                 <option value="cardio_circuit">Circuiti</option>
                 <option value="cardio_liss">LISS</option>
               </select>
             </div>
-            <div class="field" style="flex:1"><label>Attrezzo</label>
+            <div class="field" style="flex:1"><label>Equipment</label>
               <select class="inp" id="exf-eq" style="font-size:.78rem">
-                <option value="altro">Altro</option>
-                <option value="bilanciere">Bilanciere</option>
-                <option value="manubri">Manubri</option>
-                <option value="cavi">Cavi</option>
-                <option value="macchina">Macchina</option>
-                <option value="corpo_libero">Corpo libero</option>
+                <option value="altro">Other</option>
+                <option value="bilanciere">Barbell</option>
+                <option value="manubri">Dumbbells</option>
+                <option value="cavi">Cables</option>
+                <option value="macchina">Machine</option>
+                <option value="corpo_libero">Bodyweight</option>
                 <option value="attrezzo">Attrezzo</option>
-                <option value="misto">Misto</option>
+                <option value="misto">Mixed</option>
               </select>
             </div>
-            <div class="field" style="flex:1"><label>Genere</label>
+            <div class="field" style="flex:1"><label>Gender</label>
               <select class="inp" id="exf-gd" style="font-size:.78rem">
                 <option value="unisex">Unisex</option>
-                <option value="donna">Donna</option>
+                <option value="donna">Female</option>
               </select>
             </div>
           </div>
-          <div class="field"><label>Note / istruzioni</label><textarea class="inp" id="exf-no" rows="2" placeholder="Tecnica, parametri..."></textarea></div>
+          <div class="field"><label>Notes / instructions</label><textarea class="inp" id="exf-no" rows="2" placeholder="Technique, parameters..."></textarea></div>
           <div class="btn-row">
-            <button class="btn-red" style="flex:1" onclick="saveEx()">Salva</button>
-            <button class="btn-out" style="flex:1" onclick="toggleEl('ex-form')">Annulla</button>
+            <button class="btn-red" style="flex:1" onclick="saveEx()">Save</button>
+            <button class="btn-out" style="flex:1" onclick="toggleEl('ex-form')">Cancel</button>
           </div>
           <div class="fmsg" id="exf-msg"></div>
         </div>
@@ -363,13 +363,13 @@ select.inp{cursor:pointer}
       <div id="apc-sess" style="display:none">
         <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('sf-form')">+ Nuova sessione</button>
         <div id="sf-form" class="iform" style="display:none">
-          <div class="iform-title">NUOVA SESSIONE</div>
-          <div class="field"><label>Nome *</label><input class="inp" id="sff-n" placeholder="es. Petto + Tricipiti"></div>
-          <div class="field"><label>Tipo</label>
-            <select class="inp" id="sff-t"><option value="gym">Palestra</option><option value="cardio">Cardio</option></select></div>
+          <div class="iform-title">NEW SESSION</div>
+          <div class="field"><label>Name *</label><input class="inp" id="sff-n" placeholder="e.g. Chest + Triceps"></div>
+          <div class="field"><label>Type</label>
+            <select class="inp" id="sff-t"><option value="gym">Gym</option><option value="cardio">Cardio</option></select></div>
           <div class="btn-row">
-            <button class="btn-red" style="flex:1" onclick="saveSess()">Crea</button>
-            <button class="btn-out" style="flex:1" onclick="toggleEl('sf-form')">Annulla</button>
+            <button class="btn-red" style="flex:1" onclick="saveSess()">Create</button>
+            <button class="btn-out" style="flex:1" onclick="toggleEl('sf-form')">Cancel</button>
           </div>
           <div class="fmsg" id="sff-msg"></div>
         </div>
@@ -378,19 +378,19 @@ select.inp{cursor:pointer}
       <div id="apc-meso" style="display:none">
         <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('mf-form')">+ Nuovo mesociclo</button>
         <div id="mf-form" class="iform" style="display:none">
-          <div class="iform-title">NUOVO MESOCICLO</div>
-          <div class="field"><label>Nome *</label><input class="inp" id="mff-n" placeholder="es. Mesociclo 1 — Ipertrofia"></div>
-          <div class="field"><label>Obiettivo</label>
+          <div class="iform-title">NEW MESOCYCLE</div>
+          <div class="field"><label>Name *</label><input class="inp" id="mff-n" placeholder="e.g. Mesocycle 1 — Ipertrofia"></div>
+          <div class="field"><label>Objective</label>
             <select class="inp" id="mff-obj">
               <option value="ipertrofia">Ipertrofia</option>
               <option value="forza">Forza</option>
               <option value="resistenza">Resistenza</option>
               <option value="ipertrofia + forza">Ipertrofia + Forza</option>
             </select></div>
-          <div class="field"><label>Descrizione</label><textarea class="inp" id="mff-desc" rows="2"></textarea></div>
+          <div class="field"><label>Description</label><textarea class="inp" id="mff-desc" rows="2"></textarea></div>
           <div class="btn-row">
-            <button class="btn-red" style="flex:1" onclick="saveMeso()">Crea</button>
-            <button class="btn-out" style="flex:1" onclick="toggleEl('mf-form')">Annulla</button>
+            <button class="btn-red" style="flex:1" onclick="saveMeso()">Create</button>
+            <button class="btn-out" style="flex:1" onclick="toggleEl('mf-form')">Cancel</button>
           </div>
           <div class="fmsg" id="mff-msg"></div>
         </div>
@@ -405,59 +405,59 @@ select.inp{cursor:pointer}
     <div class="scroll">
       <div class="iform" style="margin-bottom:12px">
         <div class="iform-title" style="color:var(--orn)">&#129504; GENERA MESOCICLO COMPLETO</div>
-        <div style="font-size:.75rem;color:var(--mu2);margin-bottom:14px;line-height:1.6">L'AI genera sessioni, esercizi con sets/reps/intensita e il mesociclo completo 4×10 giorni. Niente da creare manualmente.</div>
+        <div style="font-size:.75rem;color:var(--mu2);margin-bottom:14px;line-height:1.6">L'AI genera sessioni, exercises con sets/reps/intensita e il mesociclo completo 4×10 giorni. Niente da creare manualmente.</div>
 
-        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orn);margin-bottom:8px;margin-top:4px">PROFILO ATLETA</div>
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orn);margin-bottom:8px;margin-top:4px">ATHLETE PROFILE</div>
         <div style="display:flex;gap:8px">
-          <div class="field" style="flex:1"><label>Livello</label>
+          <div class="field" style="flex:1"><label>Level</label>
             <select class="inp" id="ai-livello">
-              <option value="intermedio">Intermedio (2-4 anni)</option>
-              <option value="avanzato">Avanzato (4+ anni)</option>
-              <option value="principiante">Principiante (0-2 anni)</option>
+              <option value="intermedio">Intermediate (2-4 years)</option>
+              <option value="avanzato">Advanced (4+ years)</option>
+              <option value="principiante">Beginner (0-2 years)</option>
             </select></div>
-          <div class="field" style="flex:1"><label>Genere atleta</label>
+          <div class="field" style="flex:1"><label>Athlete gender</label>
             <select class="inp" id="ai-gender">
-              <option value="uomo">Uomo</option>
-              <option value="donna">Donna</option>
+              <option value="uomo">Male</option>
+              <option value="donna">Female</option>
             </select></div>
         </div>
-        <div class="field"><label>Obiettivo principale</label>
+        <div class="field"><label>Main goal</label>
           <select class="inp" id="ai-obj">
-            <option value="ipertrofia">Ipertrofia massima</option>
-            <option value="forza">Forza + ipertrofia</option>
-            <option value="definizione">Definizione (mantenimento massa)</option>
-            <option value="recomposizione">Recomposizione corporea</option>
+            <option value="ipertrofia">Maximum hypertrophy</option>
+            <option value="forza">Strength + hypertrophy</option>
+            <option value="definizione">Definition (mass maintenance)</option>
+            <option value="recomposizione">Body recomposition</option>
           </select></div>
 
-        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orn);margin-bottom:8px;margin-top:12px">DISTRETTI</div>
-        <div class="field"><label>Distretti CARENTI — priorita alta (piu volume e frequenza)</label>
-          <input class="inp" id="ai-carenti" placeholder="es. Petto, Spalle laterali, Braccia"></div>
-        <div class="field"><label>Distretti SVILUPPATI — mantenimento (volume ridotto)</label>
-          <input class="inp" id="ai-meno" placeholder="es. Schiena, Gambe"></div>
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orn);margin-bottom:8px;margin-top:12px">MUSCLE GROUPS</div>
+        <div class="field"><label>LAGGING muscle groups — high priority (more volume & frequency)</label>
+          <input class="inp" id="ai-carenti" placeholder="e.g. Chest, Side delts, Arms"></div>
+        <div class="field"><label>DEVELOPED muscle groups — maintenance (reduced volume)</label>
+          <input class="inp" id="ai-meno" placeholder="e.g. Back, Legs"></div>
 
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orn);margin-bottom:8px;margin-top:12px">CARDIO</div>
-        <div class="field"><label>Sessioni HIIT per ciclo (10 giorni)</label>
+        <div class="field"><label>HIIT sessions per cycle (10 days)</label>
           <select class="inp" id="ai-hiit">
-            <option value="0">Nessuna</option>
-            <option value="1">1 sessione</option>
-            <option value="2">2 sessioni</option>
-            <option value="3">3 sessioni</option>
+            <option value="0">None</option>
+            <option value="1">1 session</option>
+            <option value="2">2 sessions</option>
+            <option value="3">3 sessions</option>
           </select></div>
-        <div class="field"><label>Sessioni LISS per ciclo (10 giorni)</label>
+        <div class="field"><label>LISS sessions per cycle (10 days)</label>
           <select class="inp" id="ai-liss">
-            <option value="0">Nessuna</option>
-            <option value="1">1 sessione</option>
-            <option value="2">2 sessioni</option>
-            <option value="3">3 sessioni</option>
+            <option value="0">None</option>
+            <option value="1">1 session</option>
+            <option value="2">2 sessions</option>
+            <option value="3">3 sessions</option>
           </select></div>
 
-        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orn);margin-bottom:8px;margin-top:12px">NOTE AGGIUNTIVE</div>
-        <div class="field"><label>Limitazioni fisiche / preferenze / altro</label>
-          <textarea class="inp" id="ai-note" rows="2" placeholder="es. spalla destra da non caricare, preferisce macchine su free weights, recupero veloce..."></textarea></div>
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orn);margin-bottom:8px;margin-top:12px">ADDITIONAL NOTES</div>
+        <div class="field"><label>Physical limitations / preferences / other</label>
+          <textarea class="inp" id="ai-note" rows="2" placeholder="e.g. avoid loading right shoulder, preferisce macchine su free weights, recupero veloce..."></textarea></div>
 
-        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orn);margin-bottom:8px;margin-top:12px">MESOCICLO</div>
-        <div class="field"><label>Nome mesociclo <span style="color:var(--mu);font-weight:400;text-transform:none;font-size:.65rem">(lascia vuoto = generato dall'AI)</span></label>
-          <input class="inp" id="ai-meso-name" placeholder="es. Mesociclo Ipertrofia Primavera 2026"></div>
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orn);margin-bottom:8px;margin-top:12px">MESOCYCLE</div>
+        <div class="field"><label>Nome mesociclo <span style="color:var(--mu);font-weight:400;text-transform:none;font-size:.65rem">(leave blank = AI generated)</span></label>
+          <input class="inp" id="ai-meso-name" placeholder="e.g. Mesociclo Ipertrofia Primavera 2026"></div>
         <div class="field"><label>Atleta <span style="color:var(--mu);font-weight:400;text-transform:none;font-size:.65rem">(opzionale — lascia vuoto per meso condiviso)</span></label>
           <select class="inp" id="ai-meso-athlete">
             <option value="">— Condiviso (tutti gli atleti) —</option>
@@ -481,17 +481,17 @@ select.inp{cursor:pointer}
 
   <!-- ADMIN: MESSAGGI -->
   <div class="view" id="av-msgs">
-    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">MESSAGGI</span></div>
+    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">MESSAGES</span></div>
     <div class="scroll"><div id="amsg-list"></div></div>
   </div>
 
   <!-- ADMIN NAV -->
   <nav class="bnav" id="admin-nav">
-    <button class="bni on" id="abn-athletes" onclick="asv('athletes')"><span class="bni-ic">&#128101;</span><span class="bni-lb">Atleti</span></button>
+    <button class="bni on" id="abn-athletes" onclick="asv('athletes')"><span class="bni-ic">&#128101;</span><span class="bni-lb">Athletes</span></button>
     <button class="bni"    id="abn-new"      onclick="asv('new')"><span class="bni-ic">&#10133;</span><span class="bni-lb">Nuovo</span></button>
     <button class="bni"    id="abn-prog"     onclick="asv('prog')"><span class="bni-ic">&#128203;</span><span class="bni-lb">Programmi</span></button>
     <button class="bni"    id="abn-ai"       onclick="asv('ai')"><span class="bni-ic">&#129504;</span><span class="bni-lb">AI</span></button>
-    <button class="bni"    id="abn-msgs"     onclick="asv('msgs')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Messaggi</span></button>
+    <button class="bni"    id="abn-msgs"     onclick="asv('msgs')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Messages</span></button>
   </nav>
 
   <!-- ════════════════════════════════════════════════════ ATHLETE VIEWS -->
@@ -501,11 +501,11 @@ select.inp{cursor:pointer}
     <div class="topbar">
       <div class="topbar-logo">KRATOS</div>
       <span class="badge badge-red" id="ath-cycle-badge">—</span>
-      <button class="btn-out" onclick="doLogout()">Esci</button>
+      <button class="btn-out" onclick="doLogout()">Logout</button>
     </div>
     <div class="scroll">
       <div class="cycle-header">
-        <div class="cycle-title" id="ath-cycle-title">Ciclo</div>
+        <div class="cycle-title" id="ath-cycle-title">Cycle</div>
       </div>
       <div class="cycle-grid" id="cycle-grid"></div>
       <div id="day-session-area"></div>
@@ -530,20 +530,20 @@ select.inp{cursor:pointer}
           <button class="t-reset" onclick="resetTimer()">Reset</button>
         </div>
       </div>
-      <div style="font-size:.75rem;color:var(--mu2);text-align:center;padding-top:8px">Premi START dopo ogni serie</div>
+      <div style="font-size:.75rem;color:var(--mu2);text-align:center;padding-top:8px">Press START after each set</div>
     </div>
   </div>
 
   <!-- ATHLETE: COACH MESSAGES -->
   <!-- STATS VIEW -->
   <div class="view" id="vv-stats" style="display:none">
-    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">Progressi</span></div>
+    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">Progress</span></div>
     <div style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px">
-      <div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--orn)">I TUOI PROGRESSI</div>
+      <div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--orn)">MY PROGRESS</div>
       <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:14px;padding:14px">
-        <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">ESERCIZIO</div>
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">EXERCISE</div>
         <select id="pr-ex-select" class="inp" onchange="_loadChartForEx(this.value)" style="margin-bottom:14px">
-          <option value="">— Scegli esercizio —</option>
+          <option value="">— Select exercise —</option>
         </select>
         <div id="pr-chart-canvas"></div>
       </div>
@@ -552,90 +552,90 @@ select.inp{cursor:pointer}
 
   <!-- ATHLETE: ASSESSMENT -->
   <div class="view" id="vv-assessment" style="display:none">
-    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-orn">Assessment</span></div>
+    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-orn">Profile</span></div>
     <div style="flex:1;overflow-y:auto;padding:14px 14px 80px">
 
-      <div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--orn);margin-bottom:4px">IL MIO PROFILO</div>
-      <div style="font-size:.72rem;color:var(--mu2);margin-bottom:16px">Compila per aiutare il coach a personalizzare il tuo programma.</div>
+      <div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--orn);margin-bottom:4px">MY PROFILE</div>
+      <div style="font-size:.72rem;color:var(--mu2);margin-bottom:16px">Fill in to help your coach personalize your program.</div>
 
       <!-- MORFOLOGICI -->
       <div class="iform" style="margin-bottom:12px">
-        <div class="iform-title">📐 MISURE CORPOREE</div>
+        <div class="iform-title">📐 BODY MEASUREMENTS</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div class="field"><label>Peso (kg)</label><input class="inp" id="ass-peso" type="number" placeholder="75.0" step="0.1" inputmode="decimal"></div>
-          <div class="field"><label>Altezza (cm)</label><input class="inp" id="ass-alt" type="number" placeholder="178" inputmode="numeric"></div>
-          <div class="field"><label>BF% stimato</label><input class="inp" id="ass-bf" type="number" placeholder="18" step="0.1" inputmode="decimal"></div>
-          <div class="field"><label>Anni allenamento</label><input class="inp" id="ass-anni" type="number" placeholder="3" step="0.5" inputmode="decimal"></div>
-          <div class="field"><label>Circ. vita (cm)</label><input class="inp" id="ass-vita" type="number" placeholder="82" inputmode="numeric"></div>
-          <div class="field"><label>Circ. fianchi (cm)</label><input class="inp" id="ass-fianchi" type="number" placeholder="96" inputmode="numeric"></div>
-          <div class="field"><label>Circ. coscia (cm)</label><input class="inp" id="ass-coscia" type="number" placeholder="56" inputmode="numeric"></div>
-          <div class="field"><label>Circ. braccio (cm)</label><input class="inp" id="ass-braccio" type="number" placeholder="34" inputmode="numeric"></div>
-          <div class="field"><label>Circ. petto (cm)</label><input class="inp" id="ass-petto" type="number" placeholder="100" inputmode="numeric"></div>
+          <div class="field"><label>Weight (kg)</label><input class="inp" id="ass-peso" type="number" placeholder="75.0" step="0.1" inputmode="decimal"></div>
+          <div class="field"><label>Height (cm)</label><input class="inp" id="ass-alt" type="number" placeholder="178" inputmode="numeric"></div>
+          <div class="field"><label>Est. Body Fat %</label><input class="inp" id="ass-bf" type="number" placeholder="18" step="0.1" inputmode="decimal"></div>
+          <div class="field"><label>Training years</label><input class="inp" id="ass-anni" type="number" placeholder="3" step="0.5" inputmode="decimal"></div>
+          <div class="field"><label>Waist circ. (cm)</label><input class="inp" id="ass-vita" type="number" placeholder="82" inputmode="numeric"></div>
+          <div class="field"><label>Hip circ. (cm)</label><input class="inp" id="ass-fianchi" type="number" placeholder="96" inputmode="numeric"></div>
+          <div class="field"><label>Thigh circ. (cm)</label><input class="inp" id="ass-coscia" type="number" placeholder="56" inputmode="numeric"></div>
+          <div class="field"><label>Arm circ. (cm)</label><input class="inp" id="ass-braccio" type="number" placeholder="34" inputmode="numeric"></div>
+          <div class="field"><label>Chest circ. (cm)</label><input class="inp" id="ass-petto" type="number" placeholder="100" inputmode="numeric"></div>
         </div>
       </div>
 
       <!-- ALLENAMENTO -->
       <div class="iform" style="margin-bottom:12px">
-        <div class="iform-title">🏋️ ALLENAMENTO</div>
-        <div class="field"><label>Giorni a settimana disponibili</label>
+        <div class="iform-title">🏋️ TRAINING</div>
+        <div class="field"><label>Available days per week</label>
           <select class="inp" id="ass-giorni">
             <option value="">—</option>
             <option value="2">2 giorni</option><option value="3">3 giorni</option>
             <option value="4">4 giorni</option><option value="5">5 giorni</option>
             <option value="6">6 giorni</option><option value="7">7 giorni</option>
           </select></div>
-        <div class="field"><label>Dove ti alleni?</label>
+        <div class="field"><label>Where do you train?</label>
           <select class="inp" id="ass-luogo">
             <option value="">—</option>
-            <option value="palestra">Palestra attrezzata</option>
-            <option value="casa">Casa (attrezzi base)</option>
-            <option value="entrambi">Entrambi</option>
+            <option value="palestra">Fully equipped gym</option>
+            <option value="casa">Home (basic equipment)</option>
+            <option value="entrambi">Both</option>
           </select></div>
-        <div class="field"><label>Preferenza</label>
+        <div class="field"><label>Preference</label>
           <select class="inp" id="ass-pref">
             <option value="">—</option>
-            <option value="pesi">Pesi / forza</option>
-            <option value="cardio">Cardio / resistenza</option>
-            <option value="misto">Misto equilibrato</option>
-            <option value="corpo_libero">Corpo libero / funzionale</option>
+            <option value="pesi">Weights / strength</option>
+            <option value="cardio">Cardio / endurance</option>
+            <option value="misto">Balanced mix</option>
+            <option value="corpo_libero">Bodyweight / functional</option>
           </select></div>
-        <div class="field"><label>Livello</label>
+        <div class="field"><label>Level</label>
           <select class="inp" id="ass-livello">
             <option value="">—</option>
-            <option value="principiante">Principiante (0-2 anni)</option>
-            <option value="intermedio">Intermedio (2-4 anni)</option>
-            <option value="avanzato">Avanzato (4+ anni)</option>
+            <option value="principiante">Beginner (0-2 years)</option>
+            <option value="intermedio">Intermediate (2-4 years)</option>
+            <option value="avanzato">Advanced (4+ years)</option>
           </select></div>
-        <div class="field"><label>Obiettivo principale</label>
-          <textarea class="inp" id="ass-obiettivo" rows="2" placeholder="es. Aumentare massa muscolare, perdere grasso, migliorare resistenza..."></textarea></div>
+        <div class="field"><label>Main goal</label>
+          <textarea class="inp" id="ass-obiettivo" rows="2" placeholder="e.g. Build muscle mass, perdere grasso, migliorare resistenza..."></textarea></div>
       </div>
 
       <!-- STILE DI VITA -->
       <div class="iform" style="margin-bottom:12px">
-        <div class="iform-title">🌙 STILE DI VITA</div>
+        <div class="iform-title">🌙 LIFESTYLE</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div class="field"><label>Ore di sonno/notte</label>
+          <div class="field"><label>Sleep hours/night</label>
             <select class="inp" id="ass-sonno">
               <option value="">—</option>
               <option value="5">~5 ore</option><option value="6">~6 ore</option>
               <option value="7">~7 ore</option><option value="8">~8 ore</option>
               <option value="9">9+ ore</option>
             </select></div>
-          <div class="field"><label>Livello stress (1-5)</label>
+          <div class="field"><label>Stress level (1-5)</label>
             <select class="inp" id="ass-stress">
               <option value="">—</option>
-              <option value="1">1 — Molto basso</option><option value="2">2 — Basso</option>
-              <option value="3">3 — Medio</option><option value="4">4 — Alto</option>
-              <option value="5">5 — Molto alto</option>
+              <option value="1">1 — Very low</option><option value="2">2 — Low</option>
+              <option value="3">3 — Medium</option><option value="4">4 — High</option>
+              <option value="5">5 — Very high</option>
             </select></div>
-          <div class="field"><label>Tipo lavoro</label>
+          <div class="field"><label>Work type</label>
             <select class="inp" id="ass-lavoro">
               <option value="">—</option>
-              <option value="sedentario">Sedentario (ufficio)</option>
-              <option value="attivo">Attivo (in piedi)</option>
-              <option value="molto_attivo">Molto attivo (fisico)</option>
+              <option value="sedentario">Sedentary (office)</option>
+              <option value="attivo">Active (on feet)</option>
+              <option value="molto_attivo">Very active (physical)</option>
             </select></div>
-          <div class="field"><label>Ore lavoro/giorno</label>
+          <div class="field"><label>Work hours/day</label>
             <select class="inp" id="ass-ore-lav">
               <option value="">—</option>
               <option value="4">4 ore</option><option value="6">6 ore</option>
@@ -647,28 +647,28 @@ select.inp{cursor:pointer}
 
       <!-- INFORTUNI & LIMITAZIONI -->
       <div class="iform" style="margin-bottom:12px">
-        <div class="iform-title">⚠️ INFORTUNI & LIMITAZIONI</div>
-        <div class="field"><label>Infortuni passati o recenti</label>
-          <textarea class="inp" id="ass-infortuni" rows="2" placeholder="es. Ernia L4-L5, rottura menisco sinistra (2022)..."></textarea></div>
-        <div class="field"><label>Limitazioni fisiche attuali</label>
-          <textarea class="inp" id="ass-limitazioni" rows="2" placeholder="es. Dolore spalla destra sotto carico, ginocchio fastidioso negli squat..."></textarea></div>
-        <div class="field"><label>Farmaci o integratori</label>
-          <textarea class="inp" id="ass-farmaci" rows="1" placeholder="es. Creatina, vitamina D, metformina..."></textarea></div>
+        <div class="iform-title">⚠️ INJURIES & LIMITATIONS</div>
+        <div class="field"><label>Past or recent injuries</label>
+          <textarea class="inp" id="ass-infortuni" rows="2" placeholder="e.g. L4-L5 herniation, rottura menisco sinistra (2022)..."></textarea></div>
+        <div class="field"><label>Current physical limitations</label>
+          <textarea class="inp" id="ass-limitazioni" rows="2" placeholder="e.g. Right shoulder pain destra sotto carico, ginocchio fastidioso negli squat..."></textarea></div>
+        <div class="field"><label>Medications or supplements</label>
+          <textarea class="inp" id="ass-farmaci" rows="1" placeholder="e.g. Creatine, vitamina D, metformina..."></textarea></div>
       </div>
 
       <!-- NOTE AGGIUNTIVE -->
       <div class="iform" style="margin-bottom:16px">
-        <div class="iform-title">📝 NOTE LIBERE</div>
+        <div class="iform-title">📝 FREE NOTES</div>
         <div class="field">
-          <textarea class="inp" id="ass-note" rows="3" placeholder="Qualsiasi altra informazione utile per il coach..."></textarea></div>
+          <textarea class="inp" id="ass-note" rows="3" placeholder="Any other information useful for your coach..."></textarea></div>
       </div>
 
-      <button class="btn-red" style="width:100%;padding:14px;font-size:.9rem" onclick="saveAssessment()">💾 Salva Assessment</button>
+      <button class="btn-red" style="width:100%;padding:14px;font-size:.9rem" onclick="saveAssessment()">💾 Save Assessment</button>
       <div id="ass-msg" style="display:none;margin-top:10px;padding:10px;border-radius:10px;font-size:.78rem;text-align:center"></div>
 
       <!-- STORICO -->
       <div style="margin-top:20px">
-        <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">STORICO ASSESSMENT</div>
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">ASSESSMENT HISTORY</div>
         <div id="ass-history"></div>
       </div>
     </div>
@@ -679,18 +679,18 @@ select.inp{cursor:pointer}
     <div style="display:flex;flex-direction:column;flex:1;padding:12px;gap:0;overflow:hidden">
       <div class="ath-msg-area" id="ath-msg-area"></div>
       <div class="msg-row" style="flex-shrink:0">
-        <input class="msg-inp" id="ath-msg-inp" placeholder="Scrivi al coach...">
-        <button class="msg-send" onclick="athSendMsg()">Invia</button>
+        <input class="msg-inp" id="ath-msg-inp" placeholder="Message your coach...">
+        <button class="msg-send" onclick="athSendMsg()">Send</button>
       </div>
     </div>
   </div>
 
   <!-- ATHLETE NAV -->
   <nav class="bnav" id="athlete-nav">
-    <button class="bni on" id="vbn-cycle" onclick="vsv('cycle')"><span class="bni-ic">&#128197;</span><span class="bni-lb">Ciclo</span></button>
+    <button class="bni on" id="vbn-cycle" onclick="vsv('cycle')"><span class="bni-ic">&#128197;</span><span class="bni-lb">Cycle</span></button>
     <button class="bni"    id="vbn-timer" onclick="vsv('timer')"><span class="bni-ic">&#9201;</span><span class="bni-lb">Timer</span></button>
     <button class="bni"    id="vbn-coach" onclick="vsv('coach')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Coach</span></button>
-    <button class="bni"    id="vbn-assessment" onclick="vsv('assessment');loadAssessmentForm()"><span class="bni-ic">&#128203;</span><span class="bni-lb">Profilo</span></button>
+    <button class="bni"    id="vbn-assessment" onclick="vsv('assessment');loadAssessmentForm()"><span class="bni-ic">&#128203;</span><span class="bni-lb">Profile</span></button>
     <button class="bni"    id="vbn-stats" onclick="vsv('stats')"><span class="bni-ic">&#128200;</span><span class="bni-lb">Stats</span></button>
   </nav>
 
@@ -700,13 +700,13 @@ select.inp{cursor:pointer}
 <div id="assign-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center" onclick="closeAssignModal()">
   <div onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 16px 32px;max-height:80vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="font-family:Bebas Neue,sans-serif;font-size:1.2rem;letter-spacing:.1em;color:var(--red)">ASSEGNA PROGRAMMA</div>
+      <div style="font-family:Bebas Neue,sans-serif;font-size:1.2rem;letter-spacing:.1em;color:var(--red)">ASSIGN PROGRAM</div>
       <button onclick="closeAssignModal()" style="background:none;border:none;color:var(--mu);font-size:1.2rem;cursor:pointer">&#10005;</button>
     </div>
     <div id="assign-athlete-name" style="font-size:.75rem;color:var(--mu2);margin-bottom:14px"></div>
     <div class="field"><label>Mesociclo</label>
-      <select id="assign-meso-sel" class="inp" onchange="onMesoChange()"><option value="">— Caricamento... —</option></select></div>
-    <div class="field"><label>Ciclo</label>
+      <select id="assign-meso-sel" class="inp" onchange="onMesoChange()"><option value="">— Loading... —</option></select></div>
+    <div class="field"><label>Cycle</label>
       <select id="assign-cycle-sel" class="inp"><option value="">— Prima seleziona mesociclo —</option></select></div>
     <div class="field"><label>Giorno corrente</label>
       <select id="assign-day-sel" class="inp">
@@ -755,13 +755,13 @@ select.inp{cursor:pointer}
   <div onclick="event.stopPropagation()" style="width:100%;max-width:480px;padding:0 14px 60px">
     <div style="text-align:center;padding:24px 0 16px">
       <div style="font-size:3rem;margin-bottom:8px">🏆</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.1em;color:var(--orn)">ALLENAMENTO COMPLETATO</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.1em;color:var(--orn)">WORKOUT COMPLETE</div>
       <div id="summary-sessname" style="font-size:.8rem;color:var(--mu2);margin-top:4px"></div>
     </div>
     <div id="summary-stats" style="display:flex;gap:10px;margin-bottom:16px"></div>
     <div id="summary-prs" style="margin-bottom:16px"></div>
     <div id="summary-exlist" style="margin-bottom:20px"></div>
-    <button onclick="closeSummary()" style="width:100%;padding:14px;background:var(--orn);border:none;border-radius:12px;color:#000;font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:.1em;cursor:pointer">CHIUDI</button>
+    <button onclick="closeSummary()" style="width:100%;padding:14px;background:var(--orn);border:none;border-radius:12px;color:#000;font-family:Bebas Neue,sans-serif;font-size:1rem;letter-spacing:.1em;cursor:pointer">CLOSE</button>
   </div>
 </div>
 
@@ -777,8 +777,8 @@ select.inp{cursor:pointer}
     <!-- Admin edit -->
     <div id="video-edit-area" style="display:none;margin-top:4px;border-top:1px solid var(--bdr);padding-top:14px">
       <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px">MODIFICA LINK VIDEO</div>
-      <div class="field"><label>YouTube URL (link diretto o ricerca)</label><input class="inp" id="video-edit-yt" placeholder="https://www.youtube.com/watch?v=..."></div>
-      <button class="btn-red" style="width:100%" onclick="saveExMedia()">Salva</button>
+      <div class="field"><label>YouTube URL (direct link or search)</label><input class="inp" id="video-edit-yt" placeholder="https://www.youtube.com/watch?v=..."></div>
+      <button class="btn-red" style="width:100%" onclick="saveExMedia()">Save</button>
       <div id="video-edit-msg" style="display:none;margin-top:6px;font-size:.76rem;padding:6px 10px;border-radius:8px"></div>
     </div>
   </div>
@@ -800,7 +800,7 @@ select.inp{cursor:pointer}
     </div>
     <div class="field">
       <label>Nota coach <span style="color:var(--mu);font-weight:400;text-transform:none;font-size:.65rem">(visibile all'atleta)</span></label>
-      <textarea class="inp" id="override-note" rows="3" placeholder="es. Lavora leggero, focus tecnica. Niente carichi massimali."></textarea>
+      <textarea class="inp" id="override-note" rows="3" placeholder="e.g. Lavora leggero, focus tecnica. Niente carichi massimali."></textarea>
     </div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn-red" style="flex:2;background:var(--pur)" onclick="saveOverride()">Salva modifica</button>
@@ -819,7 +819,7 @@ select.inp{cursor:pointer}
     <div class="field"><label>Sessione</label>
       <select id="day-sess-sel" class="inp"></select></div>
     <div style="display:flex;gap:8px">
-      <button class="btn-red" style="flex:2" onclick="saveDaySession()">Salva</button>
+      <button class="btn-red" style="flex:2" onclick="saveDaySession()">Save</button>
       <button class="btn-out" style="flex:1;color:var(--red);border-color:rgba(232,17,42,.3)" onclick="clearDaySession()">Rimuovi</button>
     </div>
     <div id="day-modal-msg" style="display:none;margin-top:8px;font-size:.76rem;padding:8px 10px;border-radius:8px"></div>
@@ -1001,13 +1001,13 @@ function loadDashStats(a) {
       var dotEl  = document.getElementById('dash-dot-'+a.id);
       if (!lastEl) return;
       if (!r.data || !r.data.length) {
-        lastEl.textContent = 'Mai';
+        lastEl.textContent = 'Never';
         if (dotEl) dotEl.style.background = 'var(--mu2)';
         return;
       }
       var lastDate = new Date(r.data[0].logged_date);
       var daysDiff = Math.floor((new Date() - lastDate) / 86400000);
-      lastEl.textContent = daysDiff === 0 ? 'Oggi' : daysDiff === 1 ? 'Ieri' : daysDiff+'gg fa';
+      lastEl.textContent = daysDiff === 0 ? 'Today' : daysDiff === 1 ? 'Yesterday' : daysDiff+'d ago';
       // Traffic light
       var color = daysDiff <= 1 ? 'var(--grn)' : daysDiff <= ALERT_DAYS ? 'var(--orn)' : 'var(--red)';
       if (dotEl) dotEl.style.background = color;
@@ -1036,7 +1036,7 @@ function loadDashStats(a) {
           var dayEl  = document.getElementById('dash-day-'+a.id);
           if (compEl) { compEl.textContent = pct+'%'; compEl.style.color = pct>=80?'var(--grn)':pct>=50?'var(--orn)':'var(--red)'; }
           if (barEl)  { barEl.style.width = pct+'%'; barEl.style.background = pct>=80?'var(--grn)':pct>=50?'var(--orn)':'var(--red)'; }
-          if (dayEl)  { dayEl.textContent = 'G'+(a.current_day||1)+'/10 · '+doneCount+'/'+total+' es.'; }
+          if (dayEl)  { dayEl.textContent = 'D'+(a.current_day||1)+'/10 · '+doneCount+'/'+total+' ex.'; }
         }).catch(function(){});
     }).catch(function(){});
 }
@@ -1062,9 +1062,9 @@ function buildAthCard(a) {
 
   // Stats row
   var stats = document.createElement('div'); stats.className = 'stat-row';
-  stats.innerHTML = '<div class="stat-box"><div class="stat-val" id="sv-sess-'+a.id+'">—</div><div class="stat-lb">Sessioni</div></div>' +
-    '<div class="stat-box"><div class="stat-val" id="sv-day-'+a.id+'">' + (a.current_day||'—') + '</div><div class="stat-lb">Giorno ciclo</div></div>' +
-    '<div class="stat-box"><div class="stat-val" id="sv-cycle-'+a.id+'">—</div><div class="stat-lb">Ciclo</div></div>' +
+  stats.innerHTML = '<div class="stat-box"><div class="stat-val" id="sv-sess-'+a.id+'">—</div><div class="stat-lb">Sessions</div></div>' +
+    '<div class="stat-box"><div class="stat-val" id="sv-day-'+a.id+'">' + (a.current_day||'—') + '</div><div class="stat-lb">Cycle day</div></div>' +
+    '<div class="stat-box"><div class="stat-val" id="sv-cycle-'+a.id+'">—</div><div class="stat-lb">Cycle</div></div>' +
     '<div class="stat-box"><div class="stat-val" id="sv-comp-'+a.id+'">—</div><div class="stat-lb">Compliance</div></div>';
 
   // Program section
@@ -1073,14 +1073,14 @@ function buildAthCard(a) {
   var progInfo = document.createElement('div');
   progInfo.id = 'prog-info-' + a.id;
   progInfo.style.cssText = 'font-size:.8rem;color:var(--mu2);margin-bottom:10px';
-  progInfo.textContent = 'Nessun programma assegnato';
+  progInfo.textContent = 'No program assigned';
 
   var btnRow = document.createElement('div'); btnRow.style.cssText = 'display:flex;gap:7px;flex-wrap:wrap';
 
-  var btnAssign = document.createElement('button'); btnAssign.className='btn-out'; btnAssign.textContent='Assegna';
+  var btnAssign = document.createElement('button'); btnAssign.className='btn-out'; btnAssign.textContent='Assign';
   btnAssign.onclick = (function(ath){ return function(){ openAssignModal(ath); }; })(a);
 
-  var btnAdv = document.createElement('button'); btnAdv.className='btn-out'; btnAdv.textContent='▶ Avanza';
+  var btnAdv = document.createElement('button'); btnAdv.className='btn-out'; btnAdv.textContent='▶ Advance';
   btnAdv.style.cssText='border-color:rgba(16,185,129,.3);color:var(--grn)';
   btnAdv.onclick = (function(ath){ return function(){ advanceDay(ath); }; })(a);
 
@@ -1088,11 +1088,11 @@ function buildAthCard(a) {
   btnReset.style.cssText='border-color:rgba(245,158,11,.3);color:var(--orn)';
   btnReset.onclick = (function(ath){ return function(){ openResetModal(ath); }; })(a);
 
-  var btnOverride = document.createElement('button'); btnOverride.className='btn-out'; btnOverride.textContent='✏ Giorno';
+  var btnOverride = document.createElement('button'); btnOverride.className='btn-out'; btnOverride.textContent='✏ Day';
   btnOverride.style.cssText='border-color:rgba(168,85,247,.3);color:var(--pur)';
   btnOverride.onclick = (function(ath){ return function(){ openOverridePanel(ath); }; })(a);
 
-  var btnVista = document.createElement('button'); btnVista.className='btn-out'; btnVista.textContent='👁 Vista';
+  var btnVista = document.createElement('button'); btnVista.className='btn-out'; btnVista.textContent='👁 View';
   btnVista.style.cssText='border-color:rgba(14,165,233,.3);color:var(--blu)';
   btnVista.onclick = (function(ath){ return function(){ openAthleteVista(ath); }; })(a);
 
@@ -1122,8 +1122,8 @@ function buildAthCard(a) {
   assBody.innerHTML = '<div style="font-size:.72rem;color:var(--mu2)">Nessun assessment</div>';
   var assNoteRow = document.createElement('div');
   assNoteRow.style.cssText = 'margin-top:8px';
-  assNoteRow.innerHTML = '<textarea class="inp" id="ass-coachnote-'+a.id+'" rows="2" placeholder="Note coach (private)..." style="font-size:.75rem"></textarea>' +
-    '<button id="ass-note-btn-'+a.id+'" style="width:100%;margin-top:4px;padding:7px;border-radius:8px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu2);font-size:.72rem;cursor:pointer;font-family:inherit">Salva nota coach</button>';
+  assNoteRow.innerHTML = '<textarea class="inp" id="ass-coachnote-'+a.id+'" rows="2" placeholder="Coach notes (private)..." style="font-size:.75rem"></textarea>' +
+    '<button id="ass-note-btn-'+a.id+'" style="width:100%;margin-top:4px;padding:7px;border-radius:8px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu2);font-size:.72rem;cursor:pointer;font-family:inherit">Save coach note</button>';
   assSec.appendChild(assTitle); assSec.appendChild(assBody); assSec.appendChild(assNoteRow);
   // Wire AI Coach button
   (function(aid){
@@ -1155,18 +1155,18 @@ function loadAthStats(a) {
 
 function loadAthProgInfo(a) {
   var el = document.getElementById('prog-info-'+a.id); if(!el) return;
-  if (!a.current_mesocycle_id) { el.textContent='Nessun programma assegnato'; return; }
+  if (!a.current_mesocycle_id) { el.textContent='No program assigned'; return; }
   sb.from('mesocycles').select('name').eq('id',a.current_mesocycle_id).single()
     .then(function(mr){
       var mn = mr.data?mr.data.name:'?';
       if (!a.current_cycle_id){ el.textContent=mn+' — nessun ciclo'; return; }
       sb.from('cycles').select('name,cycle_number').eq('id',a.current_cycle_id).single()
-        .then(function(cr){ el.textContent = mn+' · '+(cr.data?cr.data.name:'?')+' · Giorno '+(a.current_day||1); }).catch(function(){});
+        .then(function(cr){ el.textContent = mn+' · '+(cr.data?cr.data.name:'?')+' · Day '+(a.current_day||1); }).catch(function(){});
     }).catch(function(){});
 }
 
 function advanceDay(ath) {
-  if (!ath.current_cycle_id) { alert('Nessun ciclo assegnato'); return; }
+  if (!ath.current_cycle_id) { alert('No cycle assigned'); return; }
   var nd = (ath.current_day||1) + 1;
 
   if (nd <= 10) {
@@ -1178,7 +1178,7 @@ function advanceDay(ath) {
 
   // Day > 10 — look for next cycle in same mesocycle
   if (!ath.current_mesocycle_id) {
-    alert('Fine ciclo. Nessun mesociclo assegnato — assegna il prossimo ciclo manualmente.');
+    alert('Cycle ended. No mesocycle assigned — assign the next cycle manually.');
     return;
   }
 
@@ -1193,7 +1193,7 @@ function advanceDay(ath) {
 
       if (!nextCycle) {
         // End of mesocycle
-        if (confirm('🏆 Mesociclo completato!\n\n' + (ath.full_name||'Atleta') + ' ha terminato tutti i cicli.\nVuoi assegnare un nuovo programma manualmente?')) {
+        if (confirm('🏆 Mesocycle complete!\n\n' + (ath.full_name||'Atleta') + ' ha terminato tutti i cycles.\nVuoi assegnare un nuovo programma manualmente?')) {
           // Reset — coach will assign new meso
           sb.from('profiles').update({
             current_cycle_id: null,
@@ -1205,7 +1205,7 @@ function advanceDay(ath) {
       }
 
       // Auto-advance to next cycle
-      if (confirm('✅ Ciclo completato!\nAvanzare automaticamente a: ' + nextCycle.name + '?')) {
+      if (confirm('✅ Cycle complete!\nAuto-advance to: ' + nextCycle.name + '?')) {
         sb.from('profiles').update({
           current_cycle_id:  nextCycle.id,
           current_day:       1,
@@ -1216,7 +1216,7 @@ function advanceDay(ath) {
             loadAthletes();
           }).catch(function(){});
       }
-    }).catch(function(){ alert('Errore caricamento cicli'); });
+    }).catch(function(){ alert('Errore caricamento cycles'); });
 }
 
 function loadAthMessages(aid) {
@@ -1249,8 +1249,8 @@ function renderAdminMsgs() {
       '<div class="ath-av" style="width:30px;height:30px;font-size:.8rem">'+escHtml((a.full_name||'?').charAt(0).toUpperCase())+'</div>' +
       '<div class="ath-info"><div class="ath-name">'+escHtml(a.full_name||'Atleta')+'</div></div></div>' +
       '<div class="card-body"><div class="msg-area" id="mf-'+a.id+'"></div>' +
-      '<div class="msg-row"><input class="msg-inp" id="mfi-'+a.id+'" placeholder="Scrivi...">' +
-      '<button class="msg-send" onclick="adminSendMsgFull(\''+a.id+'\')">Invia</button></div></div>';
+      '<div class="msg-row"><input class="msg-inp" id="mfi-'+a.id+'" placeholder="Write...">' +
+      '<button class="msg-send" onclick="adminSendMsgFull(\''+a.id+'\')">Send</button></div></div>';
     c.appendChild(d);
   });
 }
@@ -1295,7 +1295,7 @@ function filterEx() {
     return true;
   });
   var countEl = document.getElementById('ex-count');
-  if (countEl) countEl.textContent = filtered.length + ' esercizi';
+  if (countEl) countEl.textContent = filtered.length + ' exercises';
   renderEx(filtered);
 }
 function renderEx(list) {
@@ -1304,7 +1304,7 @@ function renderEx(list) {
   (list||allEx).forEach(function(e){
     var d=document.createElement('div'); d.className='card';
     var hasMedia = e.video_url || e.gif_url;
-    var mgLabel = {'petto':'Petto','schiena':'Schiena','spalle':'Spalle','braccia':'Braccia','gambe_quad':'Gambe','glutei_post':'Glutei','polpacci':'Polpacci','core':'Core','cardio_hiit':'HIIT','cardio_circuit':'Circuit','cardio_liss':'LISS','altro':'Altro'};
+    var mgLabel = {'petto':'Chest','schiena':'Back','spalle':'Shoulders','braccia':'Arms','gambe_quad':'Legs','glutei_post':'Glutes','polpacci':'Calves','core':'Core','cardio_hiit':'HIIT','cardio_circuit':'Circuit','cardio_liss':'LISS','altro':'Other'};
     var eqLabel = {'bilanciere':'BB','manubri':'DB','cavi':'Cavi','macchina':'Macch.','corpo_libero':'CL','attrezzo':'Attr.','misto':'Misto','altro':''};
     var mgBadge = e.muscle_group ? '<span style="font-size:.55rem;background:var(--s4);color:var(--mu2);padding:1px 5px;border-radius:5px;margin-right:3px">'+(mgLabel[e.muscle_group]||e.muscle_group)+'</span>' : '';
     var eqBadge = e.equipment   ? '<span style="font-size:.55rem;background:var(--s4);color:var(--mu2);padding:1px 5px;border-radius:5px;margin-right:3px">'+(eqLabel[e.equipment]||e.equipment)+'</span>' : '';
@@ -1331,17 +1331,17 @@ function saveEx() {
   var eq=document.getElementById('exf-eq') ? document.getElementById('exf-eq').value : 'altro';
   var gd=document.getElementById('exf-gd') ? document.getElementById('exf-gd').value : 'unisex';
   if(!n){ showFmsg('exf-msg','Nome obbligatorio','err'); return; }
-  var lm={mec:'Meccanico',met:'Metabolico',pre:'Pre-Attivazione',str:'Stretching'};
+  var lm={mec:'Mechanical',met:'Metabolic',pre:'Pre-Activation',str:'Stretching'};
   sb.from('exercises').insert({name:n,tag:t,tag_label:lm[t],notes:no||null,created_by:ME.id,muscle_group:mg,equipment:eq,gender:gd})
     .then(function(r){
       if(r.error){ showFmsg('exf-msg',r.error.message,'err'); return; }
-      showFmsg('exf-msg','Salvato!','ok');
+      showFmsg('exf-msg','Saved!','ok');
       document.getElementById('exf-n').value=''; document.getElementById('exf-no').value='';
       loadEx();
     }).catch(function(){});
 }
 function delEx(id) {
-  if(!confirm('Elimina?')) return;
+  if(!confirm('Delete?')) return;
   sb.from('exercises').delete().eq('id',id).then(function(){ loadEx(); }).catch(function(){});
 }
 
@@ -1368,14 +1368,14 @@ function renderSess() {
         '<button class="btn-del" onclick="delSessEx('+se.id+','+s.id+')">&#215;</button></div>';
     }).join('');
     var exAddHtml='<div style="display:flex;gap:5px;margin-top:10px;flex-wrap:wrap">' +
-      '<select class="inp" id="exadd-'+s.id+'" style="flex:2;padding:8px 10px;font-size:.78rem"><option value="">— Aggiungi esercizio —</option>' +
+      '<select class="inp" id="exadd-'+s.id+'" style="flex:2;padding:8px 10px;font-size:.78rem"><option value="">— Add exercise —</option>' +
       allEx.map(function(e){ return '<option value="'+e.id+'">'+escHtml(e.name)+'</option>'; }).join('') + '</select>' +
       '<input class="inp" id="sets-'+s.id+'" style="width:52px;padding:8px 6px;font-size:.78rem" placeholder="3×8">' +
       '<button class="btn-red" style="width:auto;padding:8px 12px;margin:0;font-size:.8rem" onclick="addSessEx('+s.id+')">+</button></div>';
     d.innerHTML='<div class="card-head" onclick="this.closest(\'.card\').classList.toggle(\'open\')">' +
       '<div style="font-size:1.2rem">'+ic+'</div>' +
       '<div style="flex:1"><div style="font-weight:600;font-size:.87rem">'+escHtml(s.name)+'</div>' +
-      '<div style="font-size:.68rem;color:var(--mu2);margin-top:1px">'+(s.session_exercises||[]).length+' esercizi</div></div>' +
+      '<div style="font-size:.68rem;color:var(--mu2);margin-top:1px">'+(s.session_exercises||[]).length+' exercises</div></div>' +
       '<button onclick="event.stopPropagation();dupSess('+s.id+')" style="background:none;border:1px solid rgba(255,255,255,.12);color:var(--mu2);border-radius:8px;padding:3px 8px;font-size:.7rem;cursor:pointer;margin-right:5px" title="Duplica">📋</button>'+
       '<button class="btn-del" onclick="event.stopPropagation();delSess('+s.id+')">&#215;</button></div>' +
       '<div class="card-body">'+exHtml+exAddHtml+'</div>';
@@ -1389,13 +1389,13 @@ function saveSess() {
   sb.from('sessions').insert({name:n,session_type:t,created_by:ME.id})
     .then(function(r){
       if(r.error){ showFmsg('sff-msg',r.error.message,'err'); return; }
-      showFmsg('sff-msg','Creata!','ok');
+      showFmsg('sff-msg','Created!','ok');
       document.getElementById('sff-n').value='';
       loadSess();
     }).catch(function(){});
 }
 function delSess(id) {
-  if(!confirm('Elimina sessione?')) return;
+  if(!confirm('Delete session?')) return;
   sb.from('sessions').delete().eq('id',id).then(function(){ loadSess(); }).catch(function(){});
 }
 function addSessEx(sid) {
@@ -1438,7 +1438,7 @@ function renameMeso(mesoId, currentName) {
   newName = newName.trim();
   if (!newName) return;
   sb.from('mesocycles').update({name: newName}).eq('id', mesoId)
-    .then(function(){ loadMeso(); }).catch(function(e){ alert('Errore: ' + e.message); });
+    .then(function(){ loadMeso(); }).catch(function(e){ alert('Error: ' + e.message); });
 }
 
 function renderMeso() {
@@ -1455,16 +1455,16 @@ function renderMeso() {
         '<button class="btn-del" style="margin-left:auto" onclick="delCycle('+cyc.id+')">&#215;</button></div>' +
         buildAdminDayGrid(cyc) + '</div>';
     }).join('');
-    var addCycleBtn='<button onclick="openAddCycleModal('+m.id+')" style="width:100%;padding:8px;border-radius:9px;background:none;border:1px dashed rgba(255,255,255,.12);color:var(--mu2);font-size:.72rem;cursor:pointer;margin-top:4px;font-family:inherit">+ Aggiungi ciclo</button>';
+    var addCycleBtn='<button onclick="openAddCycleModal('+m.id+')" style="width:100%;padding:8px;border-radius:9px;background:none;border:1px dashed rgba(255,255,255,.12);color:var(--mu2);font-size:.72rem;cursor:pointer;margin-top:4px;font-family:inherit">+ Add cycle</button>';
     var athLabel = m.profiles ? (m.profiles.full_name || m.profiles.email) : null;
-    var athBadge = athLabel ? '<span style="font-size:.58rem;background:var(--pdim);color:var(--pur);padding:2px 7px;border-radius:6px;margin-left:4px">👤 '+escHtml(athLabel)+'</span>' : '<span style="font-size:.58rem;background:var(--s3);color:var(--mu2);padding:2px 7px;border-radius:6px;margin-left:4px">Condiviso</span>';
+    var athBadge = athLabel ? '<span style="font-size:.58rem;background:var(--pdim);color:var(--pur);padding:2px 7px;border-radius:6px;margin-left:4px">👤 '+escHtml(athLabel)+'</span>' : '<span style="font-size:.58rem;background:var(--s3);color:var(--mu2);padding:2px 7px;border-radius:6px;margin-left:4px">Shared</span>';
     d.innerHTML='<div class="card-head" onclick="this.closest(\'.card\').classList.toggle(\'open\')">' +
       '<div style="flex:1">' +
         '<div style="font-weight:700;font-size:.9rem;display:flex;align-items:center;flex-wrap:wrap;gap:4px">' +
           escHtml(m.name) +
           '<span onclick="event.stopPropagation();renameMeso('+m.id+',\''+escHtml(m.name)+'\')" style="cursor:pointer;font-size:.65rem;opacity:.5;padding:1px 4px;border-radius:4px;border:1px solid var(--bdr)" title="Rinomina">✏</span>' +
         '</div>' +
-        '<div style="font-size:.68rem;color:var(--mu2);margin-top:3px;display:flex;align-items:center;gap:4px">'+(m.objective||'')+' · '+(m.cycles||[]).length+' cicli '+athBadge+'</div>' +
+        '<div style="font-size:.68rem;color:var(--mu2);margin-top:3px;display:flex;align-items:center;gap:4px">'+(m.objective||'')+' · '+(m.cycles||[]).length+' cycles '+athBadge+'</div>' +
       '</div>' +
       '<button class="btn-del" onclick="event.stopPropagation();delMeso('+m.id+')">&#215;</button></div>' +
       '<div class="card-body">'+cyclesHtml+addCycleBtn+'</div>';
@@ -1495,17 +1495,17 @@ function saveMeso() {
   sb.from('mesocycles').insert({name:n,objective:obj,description:desc||null,created_by:ME.id})
     .then(function(r){
       if(r.error){ showFmsg('mff-msg',r.error.message,'err'); return; }
-      showFmsg('mff-msg','Creato!','ok');
+      showFmsg('mff-msg','Created!','ok');
       document.getElementById('mff-n').value=''; document.getElementById('mff-desc').value='';
       loadMeso();
     }).catch(function(){});
 }
 function delMeso(id) {
-  if(!confirm('Elimina mesociclo e tutti i cicli?')) return;
+  if(!confirm('Delete mesocycle e tutti i cycles?')) return;
   sb.from('mesocycles').delete().eq('id',id).then(function(){ loadMeso(); }).catch(function(){});
 }
 function delCycle(id) {
-  if(!confirm('Elimina ciclo?')) return;
+  if(!confirm('Delete cycle?')) return;
   sb.from('cycles').delete().eq('id',id).then(function(){ loadMeso(); }).catch(function(){});
 }
 function openAddCycleModal(mesoId) {
@@ -1557,11 +1557,11 @@ function saveDaySession() {
   if(dayModalCtx.cycleDayId&&dayModalCtx.cycleDayId!==0){
     var upd=sessId?{session_id:parseInt(sessId)}:{session_id:null};
     sb.from('cycle_days').update(upd).eq('id',dayModalCtx.cycleDayId)
-      .then(function(r){ if(r.error){ showDayMsg(r.error.message,false); return; } showDayMsg('Salvato!',true); setTimeout(function(){ closeDayModal(); loadMeso(); },800); }).catch(function(){});
+      .then(function(r){ if(r.error){ showDayMsg(r.error.message,false); return; } showDayMsg('Saved!',true); setTimeout(function(){ closeDayModal(); loadMeso(); },800); }).catch(function(){});
   } else {
     if(!sessId){ closeDayModal(); return; }
     sb.from('cycle_days').insert({cycle_id:dayModalCtx.cycleId, day_number:dayModalCtx.dayNumber, session_id:parseInt(sessId)})
-      .then(function(r){ if(r.error){ showDayMsg(r.error.message,false); return; } showDayMsg('Salvato!',true); setTimeout(function(){ closeDayModal(); loadMeso(); },800); }).catch(function(){});
+      .then(function(r){ if(r.error){ showDayMsg(r.error.message,false); return; } showDayMsg('Saved!',true); setTimeout(function(){ closeDayModal(); loadMeso(); },800); }).catch(function(){});
   }
 }
 function clearDaySession() {
@@ -1582,7 +1582,7 @@ function openAssignModal(ath) {
   document.getElementById('assign-athlete-name').textContent='Atleta: '+(ath.full_name||ath.email);
   document.getElementById('assign-msg').style.display='none';
   var ms=document.getElementById('assign-meso-sel');
-  ms.innerHTML='<option value="">— Caricamento... —</option>';
+  ms.innerHTML='<option value="">— Loading... —</option>';
   document.getElementById('assign-cycle-sel').innerHTML='<option value="">— Prima seleziona mesociclo —</option>';
   document.getElementById('assign-overlay').style.display='flex';
   sb.from('mesocycles').select('id,name').order('created_at')
@@ -1600,13 +1600,13 @@ function onMesoChange() {
   var mesoId=document.getElementById('assign-meso-sel').value;
   var cs=document.getElementById('assign-cycle-sel');
   if(!mesoId){ cs.innerHTML='<option value="">— Prima seleziona mesociclo —</option>'; return; }
-  cs.innerHTML='<option value="">— Caricamento... —</option>';
+  cs.innerHTML='<option value="">— Loading... —</option>';
   sb.from('cycles').select('id,cycle_number,name,cycle_type').eq('mesocycle_id',mesoId).order('cycle_number')
     .then(function(r){
       cs.innerHTML='<option value="">— Seleziona ciclo —</option>';
       (r.data||[]).forEach(function(c){
         var o=document.createElement('option'); o.value=c.id;
-        o.textContent='Ciclo '+c.cycle_number+' — '+c.name+' ('+c.cycle_type+')';
+        o.textContent='Cycle '+c.cycle_number+' — '+c.name+' ('+c.cycle_type+')';
         if(assignTargetAth&&String(assignTargetAth.current_cycle_id)===String(c.id)) o.selected=true;
         cs.appendChild(o);
       });
@@ -1621,11 +1621,11 @@ function confirmAssign() {
   var btn=document.getElementById('assign-confirm-btn'); btn.disabled=true; btn.textContent='Salvataggio...';
   sb.from('profiles').update({current_mesocycle_id:parseInt(mesoId),current_cycle_id:parseInt(cycleId),current_day:day,cycle_start_date:new Date().toISOString().split('T')[0]}).eq('id',assignTargetAth.id)
     .then(function(r){
-      btn.disabled=false; btn.textContent='Assegna';
-      if(r.error){ showAssignMsg('Errore: '+r.error.message,false); return; }
-      showAssignMsg('Programma assegnato!',true);
+      btn.disabled=false; btn.textContent='Assign';
+      if(r.error){ showAssignMsg('Error: '+r.error.message,false); return; }
+      showAssignMsg('Program assigned!',true);
       setTimeout(function(){ closeAssignModal(); loadAthletes(); },1200);
-    }).catch(function(){ btn.disabled=false; btn.textContent='Assegna'; showAssignMsg('Errore',false); });
+    }).catch(function(){ btn.disabled=false; btn.textContent='Assign'; showAssignMsg('Error',false); });
 }
 function showAssignMsg(text,ok) {
   var el=document.getElementById('assign-msg');
@@ -1647,7 +1647,7 @@ function doReset(deleteLogbook) {
   if(!resetTargetAth) return;
   sb.from('profiles').update({current_mesocycle_id:null,current_cycle_id:null,current_day:1,cycle_start_date:null}).eq('id',resetTargetAth.id)
     .then(function(r){
-      if(r.error){ showResetMsg('Errore: '+r.error.message,false); return; }
+      if(r.error){ showResetMsg('Error: '+r.error.message,false); return; }
       if(!deleteLogbook){ showResetMsg('Programma rimosso.',true); setTimeout(function(){ closeResetModal(); loadAthletes(); },1200); return; }
       sb.from('logbook').delete().eq('athlete_id',resetTargetAth.id)
         .then(function(){ showResetMsg('Reset completo.',true); setTimeout(function(){ closeResetModal(); loadAthletes(); },1200); })
@@ -1665,13 +1665,13 @@ function showResetMsg(text,ok) {
 // ── VISTA ATLETA (coach) ─────────────────────────────────────
 function openAthleteVista(ath) {
   document.getElementById('vista-title').textContent = '👁 ' + (ath.full_name || ath.email).toUpperCase();
-  document.getElementById('vista-content').innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2)">Caricamento...</div>';
+  document.getElementById('vista-content').innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2)">Loading...</div>';
   document.getElementById('vista-overlay').style.display = 'block';
   document.body.style.overflow = 'hidden';
 
   if (!ath.current_mesocycle_id) {
     document.getElementById('vista-content').innerHTML =
-      '<div style="text-align:center;padding:40px;color:var(--mu2)"><div style="font-size:2rem;margin-bottom:10px">📋</div>Nessun programma assegnato.</div>';
+      '<div style="text-align:center;padding:40px;color:var(--mu2)"><div style="font-size:2rem;margin-bottom:10px">📋</div>No program assigned.</div>';
     return;
   }
 
@@ -1710,7 +1710,7 @@ function renderVistaContent(ath, meso, cycles, overrideMap) {
 
   // Meso header
   html += '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:14px">';
-  html += '<div style="font-size:.58rem;font-weight:700;letter-spacing:.12em;color:var(--mu2);text-transform:uppercase;margin-bottom:4px">MESOCICLO</div>';
+  html += '<div style="font-size:.58rem;font-weight:700;letter-spacing:.12em;color:var(--mu2);text-transform:uppercase;margin-bottom:4px">MESOCYCLE</div>';
   html += '<div style="font-weight:700;font-size:1rem">' + escHtml(meso.name) + '</div>';
   if (meso.objective) html += '<div style="font-size:.75rem;color:var(--mu2);margin-top:4px">' + escHtml(meso.objective) + '</div>';
   html += '</div>';
@@ -1906,7 +1906,7 @@ function dndDrop(event) {
     .catch(function(e) {
       statusEl.style.background = 'rgba(232,17,42,.12)';
       statusEl.style.color = 'var(--red)';
-      statusEl.textContent = 'Errore: ' + String(e);
+      statusEl.textContent = 'Error: ' + String(e);
       dndDragData.el.style.opacity = '';
       dndDragData = null;
     });
@@ -1916,7 +1916,7 @@ function dndDrop(event) {
 async function dupSess(sessId) {
   var orig = allSess.find(function(s){ return s.id === sessId; });
   if (!orig) return;
-  var newName = 'Copia di ' + orig.name;
+  var newName = 'Copy of ' + orig.name;
 
   // 1. Insert new session
   var r1 = await sb.from('sessions').insert({
@@ -1924,7 +1924,7 @@ async function dupSess(sessId) {
     session_type: orig.session_type,
     created_by: ME.id
   }).select().single();
-  if (r1.error) { alert('Errore: ' + r1.error.message); return; }
+  if (r1.error) { alert('Error: ' + r1.error.message); return; }
   var newSessId = r1.data.id;
 
   // 2. Copy all session_exercises
@@ -1944,7 +1944,7 @@ async function dupSess(sessId) {
     if (r2.error) { alert('Esercizi non copiati: ' + r2.error.message); }
   }
 
-  showToast('Sessione duplicata: ' + newName);
+  showToast('Session duplicated: ' + newName);
   loadSess();
 }
 
@@ -1959,7 +1959,7 @@ async function dupCycle(cycleId, mesoId) {
   // Count existing cycles in meso
   var meso = allMeso.find(function(m){ return m.id === mesoId; });
   var cycNum = meso ? (meso.cycles||[]).length + 1 : 1;
-  var newName = 'Ciclo ' + cycNum + ' (copia di ' + orig.name + ')';
+  var newName = 'Cycle ' + cycNum + ' (copy of ' + orig.name + ')';
 
   // 1. Insert new cycle
   var r2 = await sb.from('cycles').insert({
@@ -1969,7 +1969,7 @@ async function dupCycle(cycleId, mesoId) {
     order_index:  cycNum,
     created_by:   ME.id
   }).select().single();
-  if (r2.error) { alert('Errore: ' + r2.error.message); return; }
+  if (r2.error) { alert('Error: ' + r2.error.message); return; }
   var newCycId = r2.data.id;
 
   // 2. Copy all 10 days (preserving session_id links)
@@ -1985,7 +1985,7 @@ async function dupCycle(cycleId, mesoId) {
     if (r3.error) { alert('Giorni non copiati: ' + r3.error.message); return; }
   }
 
-  showToast('Ciclo duplicato: ' + newName);
+  showToast('Cycle duplicated: ' + newName);
   loadMeso();
 }
 
@@ -2069,10 +2069,10 @@ function saveExMedia() {
   sb.from('exercises').update({ video_url: ytUrl }).eq('id', exId)
     .then(function(r) {
       if (r.error) {
-        msgEl.textContent = 'Errore: ' + r.error.message;
+        msgEl.textContent = 'Error: ' + r.error.message;
         msgEl.style.background = 'rgba(232,17,42,.12)'; msgEl.style.color = 'var(--red)';
       } else {
-        msgEl.textContent = '✓ Salvato!';
+        msgEl.textContent = '✓ Saved!';
         msgEl.style.background = 'rgba(16,185,129,.12)'; msgEl.style.color = 'var(--grn)';
         var ex = allEx.find(function(e){ return e.id === exId; });
         if (ex) ex.video_url = ytUrl;
@@ -2091,7 +2091,7 @@ function openOverridePanel(ath) {
   overrideTargetAth = ath;
   document.getElementById('override-ctx').textContent = 'Atleta: ' + (ath.full_name||ath.email) + ' — Ciclo corrente';
   document.getElementById('override-note').value = '';
-  document.getElementById('override-base-sess').textContent = 'Caricamento...';
+  document.getElementById('override-base-sess').textContent = 'Loading...';
   document.getElementById('override-msg').style.display = 'none';
 
   // Load sessions for select
@@ -2168,13 +2168,13 @@ function selectOverrideDay(cycleDayId, dayNum) {
 
   // Show day info + load existing override
   var dayData = overrideCycleDays.find(function(d){ return d.id === cycleDayId; });
-  var baseName = dayData && dayData.sessions ? dayData.sessions.name : 'Nessuna';
+  var baseName = dayData && dayData.sessions ? dayData.sessions.name : 'None';
 
   var sel = document.getElementById('override-sess-sel');
   sel.value = '';
   document.getElementById('override-note').value = '';
   document.getElementById('override-ctx').textContent =
-    'Atleta: '+(overrideTargetAth.full_name||overrideTargetAth.email)+' · Giorno '+dayNum+' · Base: '+baseName;
+    'Atleta: '+(overrideTargetAth.full_name||overrideTargetAth.email)+' · Day '+dayNum+' · Base: '+baseName;
 
   sb.from('athlete_day_overrides')
     .select('*, sessions(id,name)')
@@ -2208,10 +2208,10 @@ function saveOverride() {
 
   sb.from('athlete_day_overrides').upsert(data, {onConflict:'athlete_id,cycle_day_id'})
     .then(function(r){
-      if(r.error){ showOverrideMsg('Errore: '+r.error.message, false); return; }
-      showOverrideMsg('Salvato!', true);
+      if(r.error){ showOverrideMsg('Error: '+r.error.message, false); return; }
+      showOverrideMsg('Saved!', true);
       renderOverrideDayList(overrideTargetAth);
-    }).catch(function(e){ showOverrideMsg('Errore: '+String(e), false); });
+    }).catch(function(e){ showOverrideMsg('Error: '+String(e), false); });
 }
 
 function clearOverride() {
@@ -2248,7 +2248,7 @@ function openRenameAthlete(athId, currentName) {
   if (!newName) return;
   sb.from('profiles').update({full_name: newName}).eq('id', athId)
     .then(function(r) {
-      if (r.error) { alert('Errore: ' + r.error.message); return; }
+      if (r.error) { alert('Error: ' + r.error.message); return; }
       loadAthletes();
     });
 }
@@ -2281,7 +2281,7 @@ function adminCreateAthlete() {
     document.getElementById('na-pass').value='';
     loadAthletes();
   })
-  .catch(function(e){ btn.disabled=false; btn.textContent='Crea account'; showFmsg('na-msg','Errore: '+String(e),'err'); });
+  .catch(function(e){ btn.disabled=false; btn.textContent='Crea account'; showFmsg('na-msg','Error: '+String(e),'err'); });
 }
 
 // ── AI COACH ─────────────────────────────────────────────────
@@ -2361,8 +2361,8 @@ function aiGenerate() {
   var mesoAthId  = document.getElementById('ai-meso-athlete').value;
   if(!carenti){ aiSetStatus('Inserisci i distretti carenti.','err'); return; }
 
-  var btn=document.getElementById('ai-gen-btn'); btn.disabled=true; btn.textContent='Passo 1/2...';
-  aiSetStatus('Passo 1/2 — Genero sessioni ed esercizi...','loading');
+  var btn=document.getElementById('ai-gen-btn'); btn.disabled=true; btn.textContent='Step 1/2...';
+  aiSetStatus('Step 1/2 — Generating sessions & exercises...','loading');
   document.getElementById('ai-preview').style.display='none';
   aiSessionsPlan=null; aiGeneratedPlan=null;
 
@@ -2400,20 +2400,20 @@ function aiGenerate() {
 
     aiCallWorker(sys1, usr1, 4000, function(plan1){
       aiSessionsPlan = plan1;
-      aiSetStatus('Passo 2/2 — Genero struttura cicli...','loading');
-      btn.textContent='Passo 2/2...';
+      aiSetStatus('Passo 2/2 — Genero struttura cycles...','loading');
+      btn.textContent='Step 2/2...';
 
       var sessNames=(plan1.sessions||[]).map(function(s){ return '"'+s.name+'"'; }).join(', ');
 
       // STEP 2 PROMPT: mesocycle + cycles + days
       var sys2=[
-        'Coach bodybuilding. Genera struttura mesociclo 4 cicli x 10 giorni.',
+        'Coach bodybuilding. Genera struttura mesociclo 4 cycles x 10 giorni.',
         'SESSIONI (usa SOLO questi nomi esatti): '+sessNames,
         'RISPONDI SOLO JSON VALIDO, zero markdown, zero testo extra, zero description lunghe:',
         '{"mesocycle":{"name":"max 5 parole","objective":"max 5 parole"},"cycles":[{"cycle_number":1,"name":"max 3 parole","cycle_type":"blast|deload|taper|test","days":[{"day_number":1,"session_name":"nome esatto dalla lista"}]}]}',
         'REGOLE STRINGENTI:',
         '- name e objective: MASSIMO 5 parole ciascuno. NO description.',
-        '- 4 cicli, 10 giorni ognuno, tutti i giorni devono avere session_name.',
+        '- 4 cycles, 10 giorni ognuno, tutti i giorni devono avere session_name.',
         '- Ciclo 4: deload.',
         '- Carenti 2-3x per ciclo, sviluppati 1x per ciclo.',
         '- session_name IDENTICO alla lista sopra.',
@@ -2471,10 +2471,10 @@ function resetAiBtn(){
 function aiShowPreview(plan) {
   var html='';
   html+='<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:13px 14px;margin-bottom:10px">';
-  html+='<div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:4px">MESOCICLO</div>';
+  html+='<div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:4px">MESOCYCLE</div>';
   html+='<div style="font-weight:700;font-size:.95rem">'+escHtml(plan.mesocycle.name)+'</div>';
   if(plan.mesocycle._athlete_label) html+='<div style="font-size:.65rem;margin-top:3px"><span style="background:var(--pdim);color:var(--pur);padding:2px 7px;border-radius:6px">👤 '+escHtml(plan.mesocycle._athlete_label)+'</span></div>';
-  html+='<div style="font-size:.72rem;color:var(--mu2);margin-top:4px">'+(plan.mesocycle.objective||'')+' · '+(plan.cycles||[]).length+' cicli × 10 giorni</div>';
+  html+='<div style="font-size:.72rem;color:var(--mu2);margin-top:4px">'+(plan.mesocycle.objective||'')+' · '+(plan.cycles||[]).length+' cycles × 10 giorni</div>';
   if(plan.mesocycle.description) html+='<div style="font-size:.75rem;color:var(--mu2);margin-top:6px;line-height:1.5">'+escHtml(plan.mesocycle.description)+'</div>';
   html+='</div>';
 
@@ -2527,7 +2527,7 @@ function aiShowPreview(plan) {
 
 function aiUpload() {
   if(!aiGeneratedPlan) return;
-  var btn=document.getElementById('ai-upload-btn'); btn.disabled=true; btn.textContent='Caricamento...';
+  var btn=document.getElementById('ai-upload-btn'); btn.disabled=true; btn.textContent='Loading...';
   aiSetUploadStatus('Fase 1/3 — Creazione sessioni...','loading');
   var plan=aiGeneratedPlan;
   var sessionMap={};
@@ -2546,7 +2546,7 @@ function aiUpload() {
         if(!exs.length){ si++; nextSession(); return; }
         var exRows=exs.map(function(e,idx){ return {session_id:sr.data.id,exercise_id:e.exercise_id,sort_order:e.sort_order||idx,sets:String(e.sets||'3'),reps:String(e.reps||'8-12'),rest_sec:e.rest_sec||120,notes:e.notes||null}; });
         sb.from('session_exercises').insert(exRows).then(function(){ si++; nextSession(); }).catch(function(e){ throw new Error(e.message); });
-      }).catch(function(e){ btn.disabled=false; btn.textContent='Carica'; aiSetUploadStatus('Errore: '+e.message,'err'); });
+      }).catch(function(e){ btn.disabled=false; btn.textContent='Load'; aiSetUploadStatus('Error: '+e.message,'err'); });
   }
 
   function uploadMesocycle(){
@@ -2569,11 +2569,11 @@ function aiUpload() {
               var days=(cyc.days||[]).filter(function(d){ return d.session_name&&sessionMap[d.session_name]; });
               if(!days.length){ ci++; nextCycle(); return; }
               var rows=days.map(function(d){ return {cycle_id:cycId,day_number:d.day_number,session_id:sessionMap[d.session_name]}; });
-              sb.from('cycle_days').insert(rows).then(function(){ ci++; nextCycle(); }).catch(function(e){ btn.disabled=false; btn.textContent='Carica'; aiSetUploadStatus('Errore giorni: '+e.message,'err'); });
-            }).catch(function(e){ btn.disabled=false; btn.textContent='Carica'; aiSetUploadStatus('Errore ciclo: '+e.message,'err'); });
+              sb.from('cycle_days').insert(rows).then(function(){ ci++; nextCycle(); }).catch(function(e){ btn.disabled=false; btn.textContent='Load'; aiSetUploadStatus('Errore giorni: '+e.message,'err'); });
+            }).catch(function(e){ btn.disabled=false; btn.textContent='Load'; aiSetUploadStatus('Errore ciclo: '+e.message,'err'); });
         }
         nextCycle();
-      }).catch(function(e){ btn.disabled=false; btn.textContent='Carica'; aiSetUploadStatus('Errore mesociclo: '+e.message,'err'); });
+      }).catch(function(e){ btn.disabled=false; btn.textContent='Load'; aiSetUploadStatus('Errore mesociclo: '+e.message,'err'); });
   }
 
   nextSession();
@@ -2673,8 +2673,8 @@ function loadOverrides() {
 
 function renderCycle() {
   var currentDay = myProfile.current_day || 1;
-  document.getElementById('ath-cycle-badge').textContent = 'Ciclo '+currentCycle.cycle_number;
-  document.getElementById('ath-cycle-title').textContent = currentCycle.name + ' · Giorno '+currentDay+'/10';
+  document.getElementById('ath-cycle-badge').textContent = 'Cycle '+currentCycle.cycle_number;
+  document.getElementById('ath-cycle-title').textContent = currentCycle.name + ' · Day '+currentDay+'/10';
 
   var grid=document.getElementById('cycle-grid'); grid.innerHTML='';
   var dayMap={};
@@ -2759,7 +2759,7 @@ function renderDaySession(dayNum) {
   sHead.innerHTML='<div class="sess-icon">'+ic+'</div>' +
     '<div class="sess-info">' +
       '<div class="sess-name">'+escHtml(sess.name)+(isOverridden?' <span style="font-size:.6rem;background:var(--pdim);color:var(--pur);padding:2px 6px;border-radius:6px;vertical-align:middle">MODIF.</span>':'')+'</div>' +
-      '<div class="sess-meta">Giorno '+dayNum+' · '+doneCount+'/'+sexs.length+' esercizi</div>' +
+      '<div class="sess-meta">Giorno '+dayNum+' · '+doneCount+'/'+sexs.length+' exercises</div>' +
     '</div>' +
     (doneCount===sexs.length&&sexs.length>0?'<div class="sess-done-pill">&#10003; Completata</div>':'');
 
@@ -2778,7 +2778,7 @@ function renderDaySession(dayNum) {
     var cd=document.createElement('div');
     cd.style.cssText='padding:14px;border-top:1px solid var(--bdr);font-size:.85rem;color:var(--mu2);line-height:1.7';
     cd.innerHTML='<strong style="color:var(--txt)">Sessione Cardio</strong><br>'+escHtml(sess.name)+
-      '<br><br><button class="btn-done" onclick="markCardioDone('+dayData.id+')" style="max-width:220px">Segna come fatto</button>';
+      '<br><br><button class="btn-done" onclick="markCardioDone('+dayData.id+')" style="max-width:220px">Mark as done</button>';
     card.appendChild(cd);
   } else {
     sexs.forEach(function(se){ card.appendChild(buildExItem(se, dayData)); });
@@ -2822,7 +2822,7 @@ function buildExItem(se, dayData) {
 
   if(pr){
     var prEl=document.createElement('div'); prEl.className='pr-banner';
-    var pt='&#127942; Precedente: ';
+    var pt='&#127942; Previous: ';
     if(pr.kg) pt+=pr.kg+'kg &times; '+(pr.reps||'?')+' reps';
     if(pr.kg2) pt+=', '+pr.kg2+'kg &times; '+(pr.reps2||'?');
     if(pr.kg3) pt+=', '+pr.kg3+'kg &times; '+(pr.reps3||'?');
@@ -2843,11 +2843,11 @@ function buildExItem(se, dayData) {
   }
   body.appendChild(sGrid);
 
-  var btnSave=document.createElement('button'); btnSave.className='btn-save'; btnSave.id='sbtn-'+dayData.id+'-'+se.id; btnSave.textContent='Salva logbook';
+  var btnSave=document.createElement('button'); btnSave.className='btn-save'; btnSave.id='sbtn-'+dayData.id+'-'+se.id; btnSave.textContent='Save logbook';
   btnSave.onclick=(function(seid,ddid,ddobj){ return function(){ saveLog(seid,ddid,ddobj); }; })(se.id,dayData.id,dayData);
 
   var btnDone=document.createElement('button'); btnDone.className='btn-done'+(isDone?' marked':''); btnDone.id='dbtn-'+dayData.id+'-'+se.id;
-  btnDone.innerHTML=isDone?'&#10003; Completato':'Segna come fatto';
+  btnDone.innerHTML=isDone?'&#10003; Completato':'Mark as done';
   btnDone.onclick=(function(seid,ddid,ddobj){ return function(){ toggleDone(seid,ddid,ddobj); }; })(se.id,dayData.id,dayData);
 
   // Inline timer recupero
@@ -2860,7 +2860,7 @@ function buildExItem(se, dayData) {
     timerWrap.innerHTML =
       '<div id="inline-timer-trigger-'+timerId+'" style="display:flex;align-items:center;gap:8px">' +
         '<button id="inline-timer-trigbtn-'+timerId+'" style="flex:1;padding:9px;border-radius:9px;background:none;border:1px solid rgba(232,17,42,.25);color:var(--red);font-size:.75rem;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;-webkit-tap-highlight-color:transparent;touch-action:manipulation">'+
-          '<span>⏱</span><span>Recupero '+restFmt+'</span>'+
+          '<span>⏱</span><span>Rest '+restFmt+'</span>'+
         '</button>'+
       '</div>'+
       // Inline countdown (hidden by default)
@@ -2912,10 +2912,10 @@ function saveLog(seId, cycleDayId, dayData) {
     ?sb.from('logbook').update(data).eq('id',existing.id).select().single()
     :sb.from('logbook').insert(data).select().single();
   promise.then(function(r){
-    if(r.error){ if(btn){ btn.textContent='Errore!'; btn.disabled=false; } return; }
+    if(r.error){ if(btn){ btn.textContent='Error!'; btn.disabled=false; } return; }
     if(r.data) logbookCache[cacheKey]=r.data;
-    if(btn){ btn.innerHTML='&#10003; Salvato'; setTimeout(function(){ if(btn){ btn.textContent='Salva logbook'; btn.disabled=false; } },2000); }
-  }).catch(function(){ if(btn){ btn.textContent='Errore'; btn.disabled=false; } });
+    if(btn){ btn.innerHTML='&#10003; Salvato'; setTimeout(function(){ if(btn){ btn.textContent='Save logbook'; btn.disabled=false; } },2000); }
+  }).catch(function(){ if(btn){ btn.textContent='Error'; btn.disabled=false; } });
 }
 
 function toggleDone(seId, cycleDayId, dayData) {
@@ -2936,7 +2936,7 @@ function toggleDone(seId, cycleDayId, dayData) {
     var dot=document.getElementById('dot-'+cycleDayId+'-'+seId);
     if(item) item.classList.toggle('done',newDone);
     if(chk) chk.innerHTML=newDone?'&#10003;':'';
-    if(btn){ btn.className='btn-done'+(newDone?' marked':''); btn.innerHTML=newDone?'&#10003; Completato':'Segna come fatto'; }
+    if(btn){ btn.className='btn-done'+(newDone?' marked':''); btn.innerHTML=newDone?'&#10003; Completato':'Mark as done'; }
     if(dot) dot.className='prog-dot'+(newDone?' done':'');
     if(newDone) {
       var currentDay=myProfile.current_day||1;
@@ -2950,7 +2950,7 @@ function toggleDone(seId, cycleDayId, dayData) {
 
 function markCardioDone(cycleDayId) {
   var btn=event.target;
-  btn.disabled=true; btn.textContent='Salvato!';
+  btn.disabled=true; btn.textContent='Saved!';
   btn.className='btn-done marked';
 }
 
@@ -2962,7 +2962,7 @@ function isSessionDone(dayData) {
 }
 
 // ── TIMER UNIFICATO ──────────────────────────────────────────
-// Usato sia dal tab Timer che inline negli esercizi
+// Usato sia dal tab Timer che inline negli exercises
 var timerInterval = null;
 var timerSecsLeft = 120;
 var timerTotal    = 120;
@@ -3135,7 +3135,7 @@ function loadPRChart() {
     .select('session_exercise_id, session_exercises(exercise_id, exercises(id,name))')
     .eq('athlete_id', ME.id).eq('done', true)
     .then(function(r){
-      var seen = {}; var opts = ['<option value="">— Scegli esercizio —</option>'];
+      var seen = {}; var opts = ['<option value="">— Select exercise —</option>'];
       var prevVal = sel.value;
       (r.data||[]).forEach(function(l){
         var ex = l.session_exercises && l.session_exercises.exercises;
@@ -3159,7 +3159,7 @@ function loadPRChart() {
 
       // If an exercise is selected, load its chart
       if (sel.value) _loadChartForEx(sel.value, canvas);
-      else canvas.innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2);font-size:.8rem">Seleziona un esercizio per vedere i progressi</div>';
+      else canvas.innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2);font-size:.8rem">Seleziona un exerciseso per vedere i progressi</div>';
     }).catch(function(e){
       canvas.innerHTML = '<div style="color:var(--red);font-size:.75rem;padding:10px">Errore caricamento: '+String(e)+'</div>';
     });
@@ -3168,8 +3168,8 @@ function loadPRChart() {
 function _loadChartForEx(exId, canvas) {
   if (!exId) return;
   var canvas = canvas || document.getElementById('pr-chart-canvas');
-  canvas.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mu2);font-size:.75rem">Caricamento...</div>';
-  canvas.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mu2);font-size:.75rem">Caricamento...</div>';
+  canvas.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mu2);font-size:.75rem">Loading...</div>';
+  canvas.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mu2);font-size:.75rem">Loading...</div>';
 
   sb.from('logbook')
     .select('logged_date, set1_kg, set1_reps, set2_kg, set2_reps, set3_kg, set3_reps, session_exercises!inner(exercise_id)')
@@ -3180,7 +3180,7 @@ function _loadChartForEx(exId, canvas) {
     .then(function(r){
       var rows = r.data || [];
       if (!rows.length) {
-        canvas.innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2);font-size:.8rem">Nessun dato registrato per questo esercizio</div>';
+        canvas.innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2);font-size:.8rem">Nessun dato registrato per questo exerciseso</div>';
         return;
       }
       // Get best kg per session date
@@ -3326,14 +3326,14 @@ function showWorkoutSummary(dayData) {
   var prHtml = '';
   if (newPRs.length) {
     prHtml = '<div style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:12px 14px">' +
-      '<div style="font-size:.65rem;font-weight:700;letter-spacing:.1em;color:var(--pur);margin-bottom:8px">🏅 NUOVI PERSONAL RECORD</div>' +
+      '<div style="font-size:.65rem;font-weight:700;letter-spacing:.1em;color:var(--pur);margin-bottom:8px">🏅 NEW PERSONAL RECORDS</div>' +
       newPRs.map(function(n){ return '<div style="font-size:.82rem;color:var(--txt);padding:3px 0">&#10003; ' + escHtml(n) + '</div>'; }).join('') +
     '</div>';
   }
   document.getElementById('summary-prs').innerHTML = prHtml;
 
   // Exercise breakdown
-  var exHtml = '<div style="font-size:.65rem;font-weight:700;letter-spacing:.1em;color:var(--mu2);margin-bottom:8px;text-transform:uppercase">Dettaglio esercizi</div>';
+  var exHtml = '<div style="font-size:.65rem;font-weight:700;letter-spacing:.1em;color:var(--mu2);margin-bottom:8px;text-transform:uppercase">Dettaglio exercises</div>';
   exRows.forEach(function(ex) {
     exHtml += '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px">' +
       '<div style="flex:1">' +
@@ -3418,11 +3418,11 @@ function saveAssessment() {
   sb.from('assessments').insert(data).select().single()
     .then(function(r){
       if (r.error) {
-        msgEl.textContent = 'Errore: ' + r.error.message;
+        msgEl.textContent = 'Error: ' + r.error.message;
         msgEl.style.background = 'rgba(232,17,42,.12)'; msgEl.style.color = 'var(--red)';
       } else {
         currentAssessmentId = r.data.id;
-        msgEl.textContent = '✓ Assessment salvato! Il coach lo vedrà nella tua scheda.';
+        msgEl.textContent = '✓ Assessment saved! Your coach will see it in your profile.';
         msgEl.style.background = 'rgba(16,185,129,.12)'; msgEl.style.color = 'var(--grn)';
         loadAssessmentHistory();
       }
@@ -3445,8 +3445,8 @@ function loadAssessmentHistory() {
         var isLatest = i === 0;
         return '<div style="background:var(--s2);border:1px solid var(--bdr)'+(isLatest?';border-color:rgba(245,158,11,.3)':'')+';border-radius:10px;padding:10px 12px;margin-bottom:8px">' +
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
-            '<span style="font-size:.72rem;font-weight:700;color:'+(isLatest?'var(--orn)':'var(--txt)')+'">'+d+(isLatest?' · Ultimo':'')+'</span>' +
-            '<button onclick="loadAssessmentById('+a.id+')" style="background:none;border:none;color:var(--mu2);font-size:.65rem;cursor:pointer;font-family:inherit">Carica</button>' +
+            '<span style="font-size:.72rem;font-weight:700;color:'+(isLatest?'var(--orn)':'var(--txt)')+'">'+d+(isLatest?' · Latest':'')+'</span>' +
+            '<button onclick="loadAssessmentById('+a.id+')" style="background:none;border:none;color:var(--mu2);font-size:.65rem;cursor:pointer;font-family:inherit">Load</button>' +
           '</div>' +
           (a.peso_kg ? '<span style="font-size:.7rem;color:var(--mu2);margin-right:8px">⚖ '+a.peso_kg+'kg</span>' : '') +
           (a.bf_pct  ? '<span style="font-size:.7rem;color:var(--mu2);margin-right:8px">BF '+a.bf_pct+'%</span>' : '') +
@@ -3479,15 +3479,15 @@ function loadAthAssessment(athId) {
 
       var d = new Date(a.created_at).toLocaleDateString('it-IT');
       var rows = [];
-      if (a.peso_kg)       rows.push(['⚖ Peso',         a.peso_kg+'kg']);
-      if (a.altezza_cm)    rows.push(['↕ Altezza',       a.altezza_cm+'cm']);
+      if (a.peso_kg)       rows.push(['⚖ Weight',         a.peso_kg+'kg']);
+      if (a.altezza_cm)    rows.push(['↕ Height',       a.altezza_cm+'cm']);
       if (a.bf_pct)        rows.push(['🎯 BF%',          a.bf_pct+'%']);
-      if (a.giorni_settimana) rows.push(['📅 Giorni/sett', a.giorni_settimana]);
-      if (a.luogo)         rows.push(['📍 Dove',          a.luogo]);
-      if (a.livello)       rows.push(['🏆 Livello',       a.livello]);
-      if (a.ore_sonno)     rows.push(['😴 Sonno',         a.ore_sonno+'h']);
+      if (a.giorni_settimana) rows.push(['📅 Days/week', a.giorni_settimana]);
+      if (a.luogo)         rows.push(['📍 Where',          a.luogo]);
+      if (a.livello)       rows.push(['🏆 Level',       a.livello]);
+      if (a.ore_sonno)     rows.push(['😴 Sleep',         a.ore_sonno+'h']);
       if (a.livello_stress)rows.push(['😰 Stress',        a.livello_stress+'/5']);
-      if (a.lavoro_tipo)   rows.push(['💼 Lavoro',        a.lavoro_tipo]);
+      if (a.lavoro_tipo)   rows.push(['💼 Work',        a.lavoro_tipo]);
 
       var html = '<div style="font-size:.6rem;color:var(--orn);margin-bottom:6px">Ultimo: '+d+'</div>';
       html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px">' +
@@ -3515,7 +3515,7 @@ function saveCoachNote(athId) {
   sb.from('assessments').update({note_coach: noteEl.value})
     .eq('id', parseInt(assEl.dataset.assId))
     .then(function(r){
-      showToast('Nota coach salvata');
+      showToast('Coach note saved');
     }).catch(function(){});
 }
 
@@ -3525,7 +3525,7 @@ function useAssessmentInAI(athId) {
     .order('created_at', {ascending: false}).limit(1)
     .then(function(r){
       var a = r.data && r.data[0];
-      if (!a) { alert('Nessun assessment disponibile per questo atleta.'); return; }
+      if (!a) { alert('No assessment available for this athlete.'); return; }
 
       // Switch to AI tab
       asv('ai');
@@ -3538,20 +3538,20 @@ function useAssessmentInAI(athId) {
       if (a.obiettivo) {
         var noteEl = document.getElementById('ai-note');
         var parts = [];
-        if (a.obiettivo) parts.push('Obiettivo: '+a.obiettivo);
-        if (a.infortuni) parts.push('Infortuni: '+a.infortuni);
-        if (a.limitazioni) parts.push('Limitazioni: '+a.limitazioni);
-        if (a.giorni_settimana) parts.push('Disponibilità: '+a.giorni_settimana+' giorni/sett');
-        if (a.lavoro_tipo) parts.push('Lavoro: '+a.lavoro_tipo);
+        if (a.obiettivo) parts.push('Goal: '+a.obiettivo);
+        if (a.infortuni) parts.push('Injuries: '+a.infortuni);
+        if (a.limitazioni) parts.push('Limitations: '+a.limitazioni);
+        if (a.giorni_settimana) parts.push('Availability: '+a.giorni_settimana+' days/week');
+        if (a.lavoro_tipo) parts.push('Work: '+a.lavoro_tipo);
         if (a.livello_stress) parts.push('Stress: '+a.livello_stress+'/5');
-        if (a.ore_sonno) parts.push('Sonno: '+a.ore_sonno+'h');
+        if (a.ore_sonno) parts.push('Sleep: '+a.ore_sonno+'h');
         if (noteEl) noteEl.value = parts.join('. ');
       }
       // Select athlete
       var athSel = document.getElementById('ai-meso-athlete');
       if (athSel) athSel.value = athId;
 
-      showToast('Assessment caricato in AI Coach ✓');
+      showToast('Assessment loaded into AI Coach ✓');
     }).catch(function(){});
 }
 
