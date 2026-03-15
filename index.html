@@ -550,6 +550,130 @@ select.inp{cursor:pointer}
     </div>
   </div>
 
+  <!-- ATHLETE: ASSESSMENT -->
+  <div class="view" id="vv-assessment" style="display:none">
+    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-orn">Assessment</span></div>
+    <div style="flex:1;overflow-y:auto;padding:14px 14px 80px">
+
+      <div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--orn);margin-bottom:4px">IL MIO PROFILO</div>
+      <div style="font-size:.72rem;color:var(--mu2);margin-bottom:16px">Compila per aiutare il coach a personalizzare il tuo programma.</div>
+
+      <!-- MORFOLOGICI -->
+      <div class="iform" style="margin-bottom:12px">
+        <div class="iform-title">📐 MISURE CORPOREE</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="field"><label>Peso (kg)</label><input class="inp" id="ass-peso" type="number" placeholder="75.0" step="0.1" inputmode="decimal"></div>
+          <div class="field"><label>Altezza (cm)</label><input class="inp" id="ass-alt" type="number" placeholder="178" inputmode="numeric"></div>
+          <div class="field"><label>BF% stimato</label><input class="inp" id="ass-bf" type="number" placeholder="18" step="0.1" inputmode="decimal"></div>
+          <div class="field"><label>Anni allenamento</label><input class="inp" id="ass-anni" type="number" placeholder="3" step="0.5" inputmode="decimal"></div>
+          <div class="field"><label>Circ. vita (cm)</label><input class="inp" id="ass-vita" type="number" placeholder="82" inputmode="numeric"></div>
+          <div class="field"><label>Circ. fianchi (cm)</label><input class="inp" id="ass-fianchi" type="number" placeholder="96" inputmode="numeric"></div>
+          <div class="field"><label>Circ. coscia (cm)</label><input class="inp" id="ass-coscia" type="number" placeholder="56" inputmode="numeric"></div>
+          <div class="field"><label>Circ. braccio (cm)</label><input class="inp" id="ass-braccio" type="number" placeholder="34" inputmode="numeric"></div>
+          <div class="field"><label>Circ. petto (cm)</label><input class="inp" id="ass-petto" type="number" placeholder="100" inputmode="numeric"></div>
+        </div>
+      </div>
+
+      <!-- ALLENAMENTO -->
+      <div class="iform" style="margin-bottom:12px">
+        <div class="iform-title">🏋️ ALLENAMENTO</div>
+        <div class="field"><label>Giorni a settimana disponibili</label>
+          <select class="inp" id="ass-giorni">
+            <option value="">—</option>
+            <option value="2">2 giorni</option><option value="3">3 giorni</option>
+            <option value="4">4 giorni</option><option value="5">5 giorni</option>
+            <option value="6">6 giorni</option><option value="7">7 giorni</option>
+          </select></div>
+        <div class="field"><label>Dove ti alleni?</label>
+          <select class="inp" id="ass-luogo">
+            <option value="">—</option>
+            <option value="palestra">Palestra attrezzata</option>
+            <option value="casa">Casa (attrezzi base)</option>
+            <option value="entrambi">Entrambi</option>
+          </select></div>
+        <div class="field"><label>Preferenza</label>
+          <select class="inp" id="ass-pref">
+            <option value="">—</option>
+            <option value="pesi">Pesi / forza</option>
+            <option value="cardio">Cardio / resistenza</option>
+            <option value="misto">Misto equilibrato</option>
+            <option value="corpo_libero">Corpo libero / funzionale</option>
+          </select></div>
+        <div class="field"><label>Livello</label>
+          <select class="inp" id="ass-livello">
+            <option value="">—</option>
+            <option value="principiante">Principiante (0-2 anni)</option>
+            <option value="intermedio">Intermedio (2-4 anni)</option>
+            <option value="avanzato">Avanzato (4+ anni)</option>
+          </select></div>
+        <div class="field"><label>Obiettivo principale</label>
+          <textarea class="inp" id="ass-obiettivo" rows="2" placeholder="es. Aumentare massa muscolare, perdere grasso, migliorare resistenza..."></textarea></div>
+      </div>
+
+      <!-- STILE DI VITA -->
+      <div class="iform" style="margin-bottom:12px">
+        <div class="iform-title">🌙 STILE DI VITA</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="field"><label>Ore di sonno/notte</label>
+            <select class="inp" id="ass-sonno">
+              <option value="">—</option>
+              <option value="5">~5 ore</option><option value="6">~6 ore</option>
+              <option value="7">~7 ore</option><option value="8">~8 ore</option>
+              <option value="9">9+ ore</option>
+            </select></div>
+          <div class="field"><label>Livello stress (1-5)</label>
+            <select class="inp" id="ass-stress">
+              <option value="">—</option>
+              <option value="1">1 — Molto basso</option><option value="2">2 — Basso</option>
+              <option value="3">3 — Medio</option><option value="4">4 — Alto</option>
+              <option value="5">5 — Molto alto</option>
+            </select></div>
+          <div class="field"><label>Tipo lavoro</label>
+            <select class="inp" id="ass-lavoro">
+              <option value="">—</option>
+              <option value="sedentario">Sedentario (ufficio)</option>
+              <option value="attivo">Attivo (in piedi)</option>
+              <option value="molto_attivo">Molto attivo (fisico)</option>
+            </select></div>
+          <div class="field"><label>Ore lavoro/giorno</label>
+            <select class="inp" id="ass-ore-lav">
+              <option value="">—</option>
+              <option value="4">4 ore</option><option value="6">6 ore</option>
+              <option value="8">8 ore</option><option value="10">10 ore</option>
+              <option value="12">12+ ore</option>
+            </select></div>
+        </div>
+      </div>
+
+      <!-- INFORTUNI & LIMITAZIONI -->
+      <div class="iform" style="margin-bottom:12px">
+        <div class="iform-title">⚠️ INFORTUNI & LIMITAZIONI</div>
+        <div class="field"><label>Infortuni passati o recenti</label>
+          <textarea class="inp" id="ass-infortuni" rows="2" placeholder="es. Ernia L4-L5, rottura menisco sinistra (2022)..."></textarea></div>
+        <div class="field"><label>Limitazioni fisiche attuali</label>
+          <textarea class="inp" id="ass-limitazioni" rows="2" placeholder="es. Dolore spalla destra sotto carico, ginocchio fastidioso negli squat..."></textarea></div>
+        <div class="field"><label>Farmaci o integratori</label>
+          <textarea class="inp" id="ass-farmaci" rows="1" placeholder="es. Creatina, vitamina D, metformina..."></textarea></div>
+      </div>
+
+      <!-- NOTE AGGIUNTIVE -->
+      <div class="iform" style="margin-bottom:16px">
+        <div class="iform-title">📝 NOTE LIBERE</div>
+        <div class="field">
+          <textarea class="inp" id="ass-note" rows="3" placeholder="Qualsiasi altra informazione utile per il coach..."></textarea></div>
+      </div>
+
+      <button class="btn-red" style="width:100%;padding:14px;font-size:.9rem" onclick="saveAssessment()">💾 Salva Assessment</button>
+      <div id="ass-msg" style="display:none;margin-top:10px;padding:10px;border-radius:10px;font-size:.78rem;text-align:center"></div>
+
+      <!-- STORICO -->
+      <div style="margin-top:20px">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">STORICO ASSESSMENT</div>
+        <div id="ass-history"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="view" id="vv-coach">
     <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">Coach</span></div>
     <div style="display:flex;flex-direction:column;flex:1;padding:12px;gap:0;overflow:hidden">
@@ -566,6 +690,7 @@ select.inp{cursor:pointer}
     <button class="bni on" id="vbn-cycle" onclick="vsv('cycle')"><span class="bni-ic">&#128197;</span><span class="bni-lb">Ciclo</span></button>
     <button class="bni"    id="vbn-timer" onclick="vsv('timer')"><span class="bni-ic">&#9201;</span><span class="bni-lb">Timer</span></button>
     <button class="bni"    id="vbn-coach" onclick="vsv('coach')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Coach</span></button>
+    <button class="bni"    id="vbn-assessment" onclick="vsv('assessment');loadAssessmentForm()"><span class="bni-ic">&#128203;</span><span class="bni-lb">Profilo</span></button>
     <button class="bni"    id="vbn-stats" onclick="vsv('stats')"><span class="bni-ic">&#128200;</span><span class="bni-lb">Stats</span></button>
   </nav>
 
@@ -985,12 +1110,36 @@ function buildAthCard(a) {
   msgRow.appendChild(mi); msgRow.appendChild(ms);
   msgSec.appendChild(msgTitle); msgSec.appendChild(msgArea); msgSec.appendChild(msgRow);
 
-  body.appendChild(stats); body.appendChild(progSec); body.appendChild(msgSec);
+  // Assessment section
+  var assSec = document.createElement('div');
+  assSec.style.cssText = 'padding:12px 14px;border-top:1px solid var(--bdr)';
+  var assTitle = document.createElement('div');
+  assTitle.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px';
+  assTitle.innerHTML = '<div class="sec-label" style="margin:0">📋 Info Atleta</div>' +
+    '<button id="ass-ai-btn-'+a.id+'" style="background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:7px;padding:3px 8px;font-size:.65rem;cursor:pointer;font-family:inherit">→ AI Coach</button>';
+  var assBody = document.createElement('div');
+  assBody.id = 'ass-coach-'+a.id;
+  assBody.innerHTML = '<div style="font-size:.72rem;color:var(--mu2)">Nessun assessment</div>';
+  var assNoteRow = document.createElement('div');
+  assNoteRow.style.cssText = 'margin-top:8px';
+  assNoteRow.innerHTML = '<textarea class="inp" id="ass-coachnote-'+a.id+'" rows="2" placeholder="Note coach (private)..." style="font-size:.75rem"></textarea>' +
+    '<button id="ass-note-btn-'+a.id+'" style="width:100%;margin-top:4px;padding:7px;border-radius:8px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu2);font-size:.72rem;cursor:pointer;font-family:inherit">Salva nota coach</button>';
+  assSec.appendChild(assTitle); assSec.appendChild(assBody); assSec.appendChild(assNoteRow);
+  // Wire AI Coach button
+  (function(aid){
+    var aiBtn   = assSec.querySelector('#ass-ai-btn-'+aid);
+    var noteBtn = assSec.querySelector('#ass-note-btn-'+aid);
+    if (aiBtn)   aiBtn.addEventListener('click',   function(){ useAssessmentInAI(aid); });
+    if (noteBtn) noteBtn.addEventListener('click',  function(){ saveCoachNote(aid); });
+  })(a.id);
+
+  body.appendChild(stats); body.appendChild(progSec); body.appendChild(assSec); body.appendChild(msgSec);
   card.appendChild(head); card.appendChild(body);
 
   loadAthStats(a);
   loadAthProgInfo(a);
   loadAthMessages(a.id);
+  loadAthAssessment(a.id);
   return card;
 }
 
@@ -3204,6 +3353,206 @@ function showWorkoutSummary(dayData) {
 function closeSummary() {
   document.getElementById('summary-overlay').style.display = 'none';
   document.body.style.overflow = '';
+}
+
+// ── ASSESSMENT ───────────────────────────────────────────────
+var currentAssessmentId = null;
+
+function loadAssessmentForm() {
+  // Load latest assessment for current athlete
+  sb.from('assessments').select('*').eq('athlete_id', ME.id)
+    .order('created_at', {ascending: false}).limit(1)
+    .then(function(r){
+      var ass = r.data && r.data[0];
+      currentAssessmentId = ass ? ass.id : null;
+      if (ass) _fillAssForm(ass);
+      loadAssessmentHistory();
+    }).catch(function(){});
+}
+
+function _fillAssForm(a) {
+  var fields = {
+    'ass-peso': a.peso_kg, 'ass-alt': a.altezza_cm, 'ass-bf': a.bf_pct,
+    'ass-anni': a.anni_allenamento, 'ass-vita': a.circ_vita_cm,
+    'ass-fianchi': a.circ_fianchi_cm, 'ass-coscia': a.circ_coscia_cm,
+    'ass-braccio': a.circ_braccio_cm, 'ass-petto': a.circ_petto_cm,
+    'ass-giorni': a.giorni_settimana, 'ass-luogo': a.luogo,
+    'ass-pref': a.preferenza, 'ass-livello': a.livello,
+    'ass-obiettivo': a.obiettivo, 'ass-sonno': a.ore_sonno,
+    'ass-stress': a.livello_stress, 'ass-lavoro': a.lavoro_tipo,
+    'ass-ore-lav': a.ore_lavoro, 'ass-infortuni': a.infortuni,
+    'ass-limitazioni': a.limitazioni, 'ass-farmaci': a.farmaci,
+    'ass-note': a.note_atleta
+  };
+  Object.keys(fields).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el && fields[id] != null) el.value = fields[id];
+  });
+}
+
+function _readAssForm() {
+  function v(id){ var el=document.getElementById(id); return el&&el.value?el.value:null; }
+  function n(id){ var val=v(id); return val?parseFloat(val):null; }
+  function ni(id){ var val=v(id); return val?parseInt(val):null; }
+  return {
+    athlete_id: ME.id, created_by: 'athlete', compilato_da: ME.id,
+    peso_kg: n('ass-peso'), altezza_cm: ni('ass-alt'), bf_pct: n('ass-bf'),
+    anni_allenamento: n('ass-anni'),
+    circ_vita_cm: ni('ass-vita'), circ_fianchi_cm: ni('ass-fianchi'),
+    circ_coscia_cm: ni('ass-coscia'), circ_braccio_cm: ni('ass-braccio'),
+    circ_petto_cm: ni('ass-petto'),
+    giorni_settimana: ni('ass-giorni'), luogo: v('ass-luogo'),
+    preferenza: v('ass-pref'), livello: v('ass-livello'),
+    obiettivo: v('ass-obiettivo'),
+    ore_sonno: n('ass-sonno'), livello_stress: ni('ass-stress'),
+    lavoro_tipo: v('ass-lavoro'), ore_lavoro: ni('ass-ore-lav'),
+    infortuni: v('ass-infortuni'), limitazioni: v('ass-limitazioni'),
+    farmaci: v('ass-farmaci'), note_atleta: v('ass-note')
+  };
+}
+
+function saveAssessment() {
+  var data = _readAssForm();
+  var msgEl = document.getElementById('ass-msg');
+  // Always insert new record (storico)
+  sb.from('assessments').insert(data).select().single()
+    .then(function(r){
+      if (r.error) {
+        msgEl.textContent = 'Errore: ' + r.error.message;
+        msgEl.style.background = 'rgba(232,17,42,.12)'; msgEl.style.color = 'var(--red)';
+      } else {
+        currentAssessmentId = r.data.id;
+        msgEl.textContent = '✓ Assessment salvato! Il coach lo vedrà nella tua scheda.';
+        msgEl.style.background = 'rgba(16,185,129,.12)'; msgEl.style.color = 'var(--grn)';
+        loadAssessmentHistory();
+      }
+      msgEl.style.display = 'block';
+      setTimeout(function(){ msgEl.style.display='none'; }, 4000);
+    }).catch(function(e){
+      msgEl.textContent = String(e); msgEl.style.display = 'block';
+    });
+}
+
+function loadAssessmentHistory() {
+  var el = document.getElementById('ass-history');
+  if (!el) return;
+  sb.from('assessments').select('id,created_at,peso_kg,bf_pct,obiettivo,note_coach')
+    .eq('athlete_id', ME.id).order('created_at', {ascending: false}).limit(10)
+    .then(function(r){
+      if (!r.data || !r.data.length) { el.innerHTML = '<div style="font-size:.72rem;color:var(--mu2)">Nessun assessment precedente.</div>'; return; }
+      el.innerHTML = r.data.map(function(a, i){
+        var d = new Date(a.created_at).toLocaleDateString('it-IT');
+        var isLatest = i === 0;
+        return '<div style="background:var(--s2);border:1px solid var(--bdr)'+(isLatest?';border-color:rgba(245,158,11,.3)':'')+';border-radius:10px;padding:10px 12px;margin-bottom:8px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+            '<span style="font-size:.72rem;font-weight:700;color:'+(isLatest?'var(--orn)':'var(--txt)')+'">'+d+(isLatest?' · Ultimo':'')+'</span>' +
+            '<button onclick="loadAssessmentById('+a.id+')" style="background:none;border:none;color:var(--mu2);font-size:.65rem;cursor:pointer;font-family:inherit">Carica</button>' +
+          '</div>' +
+          (a.peso_kg ? '<span style="font-size:.7rem;color:var(--mu2);margin-right:8px">⚖ '+a.peso_kg+'kg</span>' : '') +
+          (a.bf_pct  ? '<span style="font-size:.7rem;color:var(--mu2);margin-right:8px">BF '+a.bf_pct+'%</span>' : '') +
+          (a.obiettivo ? '<div style="font-size:.7rem;color:var(--mu2);margin-top:4px;font-style:italic">'+escHtml(a.obiettivo.substring(0,80))+'</div>' : '') +
+          (a.note_coach ? '<div style="font-size:.7rem;color:var(--pur);margin-top:4px">📝 Coach: '+escHtml(a.note_coach.substring(0,80))+'</div>' : '') +
+        '</div>';
+      }).join('');
+    }).catch(function(){});
+}
+
+function loadAssessmentById(id) {
+  sb.from('assessments').select('*').eq('id', id).single()
+    .then(function(r){ if(r.data) _fillAssForm(r.data); })
+    .catch(function(){});
+}
+
+// ── COACH: carica assessment atleta ──────────────────────────
+function loadAthAssessment(athId) {
+  var el = document.getElementById('ass-coach-'+athId);
+  if (!el) return;
+  sb.from('assessments').select('*').eq('athlete_id', athId)
+    .order('created_at', {ascending: false}).limit(1)
+    .then(function(r){
+      var a = r.data && r.data[0];
+      if (!a) { el.innerHTML = '<div style="font-size:.72rem;color:var(--mu2)">Nessun assessment compilato.</div>'; return; }
+
+      // Restore coach note field
+      var noteEl = document.getElementById('ass-coachnote-'+athId);
+      if (noteEl && a.note_coach) noteEl.value = a.note_coach;
+
+      var d = new Date(a.created_at).toLocaleDateString('it-IT');
+      var rows = [];
+      if (a.peso_kg)       rows.push(['⚖ Peso',         a.peso_kg+'kg']);
+      if (a.altezza_cm)    rows.push(['↕ Altezza',       a.altezza_cm+'cm']);
+      if (a.bf_pct)        rows.push(['🎯 BF%',          a.bf_pct+'%']);
+      if (a.giorni_settimana) rows.push(['📅 Giorni/sett', a.giorni_settimana]);
+      if (a.luogo)         rows.push(['📍 Dove',          a.luogo]);
+      if (a.livello)       rows.push(['🏆 Livello',       a.livello]);
+      if (a.ore_sonno)     rows.push(['😴 Sonno',         a.ore_sonno+'h']);
+      if (a.livello_stress)rows.push(['😰 Stress',        a.livello_stress+'/5']);
+      if (a.lavoro_tipo)   rows.push(['💼 Lavoro',        a.lavoro_tipo]);
+
+      var html = '<div style="font-size:.6rem;color:var(--orn);margin-bottom:6px">Ultimo: '+d+'</div>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px">' +
+        rows.map(function(r){
+          return '<div style="background:var(--s3);border-radius:7px;padding:5px 8px">' +
+            '<div style="font-size:.58rem;color:var(--mu2)">'+r[0]+'</div>' +
+            '<div style="font-size:.75rem;font-weight:600">'+escHtml(String(r[1]))+'</div>' +
+          '</div>';
+        }).join('') + '</div>';
+
+      if (a.obiettivo)    html += '<div style="font-size:.72rem;margin-bottom:4px"><span style="color:var(--mu2)">🎯 Obiettivo:</span> '+escHtml(a.obiettivo)+'</div>';
+      if (a.infortuni)    html += '<div style="font-size:.72rem;margin-bottom:4px"><span style="color:var(--orn)">⚠️ Infortuni:</span> '+escHtml(a.infortuni)+'</div>';
+      if (a.limitazioni)  html += '<div style="font-size:.72rem;margin-bottom:4px"><span style="color:var(--orn)">🚫 Limitazioni:</span> '+escHtml(a.limitazioni)+'</div>';
+      if (a.note_atleta)  html += '<div style="font-size:.72rem;margin-bottom:4px"><span style="color:var(--mu2)">📝 Note atleta:</span> '+escHtml(a.note_atleta)+'</div>';
+
+      el.innerHTML = html;
+      el.dataset.assId = a.id;
+    }).catch(function(){});
+}
+
+function saveCoachNote(athId) {
+  var noteEl = document.getElementById('ass-coachnote-'+athId);
+  var assEl  = document.getElementById('ass-coach-'+athId);
+  if (!noteEl || !assEl || !assEl.dataset.assId) return;
+  sb.from('assessments').update({note_coach: noteEl.value})
+    .eq('id', parseInt(assEl.dataset.assId))
+    .then(function(r){
+      showToast('Nota coach salvata');
+    }).catch(function(){});
+}
+
+function useAssessmentInAI(athId) {
+  // Load latest assessment and pre-fill AI Coach form
+  sb.from('assessments').select('*').eq('athlete_id', athId)
+    .order('created_at', {ascending: false}).limit(1)
+    .then(function(r){
+      var a = r.data && r.data[0];
+      if (!a) { alert('Nessun assessment disponibile per questo atleta.'); return; }
+
+      // Switch to AI tab
+      asv('ai');
+
+      // Pre-fill fields
+      if (a.livello) {
+        var lvEl = document.getElementById('ai-livello');
+        if (lvEl) lvEl.value = a.livello;
+      }
+      if (a.obiettivo) {
+        var noteEl = document.getElementById('ai-note');
+        var parts = [];
+        if (a.obiettivo) parts.push('Obiettivo: '+a.obiettivo);
+        if (a.infortuni) parts.push('Infortuni: '+a.infortuni);
+        if (a.limitazioni) parts.push('Limitazioni: '+a.limitazioni);
+        if (a.giorni_settimana) parts.push('Disponibilità: '+a.giorni_settimana+' giorni/sett');
+        if (a.lavoro_tipo) parts.push('Lavoro: '+a.lavoro_tipo);
+        if (a.livello_stress) parts.push('Stress: '+a.livello_stress+'/5');
+        if (a.ore_sonno) parts.push('Sonno: '+a.ore_sonno+'h');
+        if (noteEl) noteEl.value = parts.join('. ');
+      }
+      // Select athlete
+      var athSel = document.getElementById('ai-meso-athlete');
+      if (athSel) athSel.value = athId;
+
+      showToast('Assessment caricato in AI Coach ✓');
+    }).catch(function(){});
 }
 
 // ── ATHLETE MESSAGES ─────────────────────────────────────────
