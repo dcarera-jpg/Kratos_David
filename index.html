@@ -235,7 +235,15 @@ select.inp{cursor:pointer}
       <button class="btn-out" onclick="doLogout()">Esci</button>
     </div>
     <div class="scroll">
-      <div class="sec-label">I tuoi atleti</div>
+      <!-- DASHBOARD COMPLIANCE -->
+      <div id="dashboard-wrap" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="sec-label" style="margin:0">Dashboard</div>
+          <button onclick="loadDashboard()" style="background:none;border:none;color:var(--mu2);font-size:.7rem;cursor:pointer;font-family:inherit">↻ Aggiorna</button>
+        </div>
+        <div id="dashboard-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+      </div>
+      <div class="sec-label">Dettaglio atleti</div>
       <div id="ath-list"></div>
     </div>
   </div>
@@ -558,7 +566,7 @@ select.inp{cursor:pointer}
     <button class="bni on" id="vbn-cycle" onclick="vsv('cycle')"><span class="bni-ic">&#128197;</span><span class="bni-lb">Ciclo</span></button>
     <button class="bni"    id="vbn-timer" onclick="vsv('timer')"><span class="bni-ic">&#9201;</span><span class="bni-lb">Timer</span></button>
     <button class="bni"    id="vbn-coach" onclick="vsv('coach')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Coach</span></button>
-    <button class="bni"    id="vbn-stats" onclick="vsv('stats');loadPRChart()"><span class="bni-ic">&#128200;</span><span class="bni-lb">Stats</span></button>
+    <button class="bni"    id="vbn-stats" onclick="vsv('stats')"><span class="bni-ic">&#128200;</span><span class="bni-lb">Stats</span></button>
   </nav>
 
 </div><!-- end #app -->
@@ -824,6 +832,88 @@ function renderAthletes() {
     c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--mu2)">Nessun atleta. Aggiungine uno.</div>'; return;
   }
   athletes.forEach(function(a){ c.appendChild(buildAthCard(a)); });
+  loadDashboard();
+}
+
+function loadDashboard() {
+  var grid = document.getElementById('dashboard-grid');
+  if (!grid || !athletes.length) return;
+  grid.innerHTML = athletes.map(function(a){
+    return '<div id="dash-'+a.id+'" style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:10px 12px;cursor:pointer">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+        '<div style="width:8px;height:8px;border-radius:50%;background:var(--mu2);flex-shrink:0" id="dash-dot-'+a.id+'"></div>' +
+        '<div style="font-weight:700;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escHtml(a.full_name||a.email||'?')+'</div>' +
+      '</div>' +
+      '<div style="font-size:.68rem;color:var(--mu2)" id="dash-day-'+a.id+'">Giorno '+(a.current_day||'—')+'/10</div>' +
+      '<div style="margin-top:6px;height:3px;background:var(--s4);border-radius:2px"><div id="dash-bar-'+a.id+'" style="height:100%;border-radius:2px;background:var(--mu2);width:0%"></div></div>' +
+      '<div style="display:flex;justify-content:space-between;margin-top:4px">' +
+        '<span style="font-size:.6rem;color:var(--mu2)" id="dash-comp-'+a.id+'">—%</span>' +
+        '<span style="font-size:.6rem;color:var(--mu2)" id="dash-last-'+a.id+'">—</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  // Load stats for each athlete
+  athletes.forEach(function(a){ loadDashStats(a); });
+  // Wire click via JS
+  athletes.forEach(function(a){
+    var card = document.getElementById('dash-'+a.id);
+    if (card) card.addEventListener('click', (function(id){
+      return function(){
+        var ac = document.getElementById('ac-'+id);
+        if (ac) { ac.scrollIntoView({behavior:'smooth'}); ac.classList.add('open'); }
+      };
+    })(a.id));
+  });
+}
+
+function loadDashStats(a) {
+  var ALERT_DAYS = 4; // days without training = alert
+  // 1. Last workout date
+  sb.from('logbook').select('logged_date').eq('athlete_id', a.id).eq('done', true)
+    .order('logged_date', {ascending: false}).limit(1)
+    .then(function(r){
+      var lastEl = document.getElementById('dash-last-'+a.id);
+      var dotEl  = document.getElementById('dash-dot-'+a.id);
+      if (!lastEl) return;
+      if (!r.data || !r.data.length) {
+        lastEl.textContent = 'Mai';
+        if (dotEl) dotEl.style.background = 'var(--mu2)';
+        return;
+      }
+      var lastDate = new Date(r.data[0].logged_date);
+      var daysDiff = Math.floor((new Date() - lastDate) / 86400000);
+      lastEl.textContent = daysDiff === 0 ? 'Oggi' : daysDiff === 1 ? 'Ieri' : daysDiff+'gg fa';
+      // Traffic light
+      var color = daysDiff <= 1 ? 'var(--grn)' : daysDiff <= ALERT_DAYS ? 'var(--orn)' : 'var(--red)';
+      if (dotEl) dotEl.style.background = color;
+    }).catch(function(){});
+
+  // 2. Compliance for current cycle
+  if (!a.current_cycle_id) {
+    var compEl = document.getElementById('dash-comp-'+a.id);
+    if (compEl) compEl.textContent = 'No prog.';
+    return;
+  }
+  sb.from('logbook').select('id', {count:'exact', head:true})
+    .eq('athlete_id', a.id).eq('cycle_id', a.current_cycle_id).eq('done', true)
+    .then(function(done){
+      sb.from('cycle_days').select('sessions(session_exercises(id))')
+        .eq('cycle_id', a.current_cycle_id)
+        .then(function(r2){
+          var total = 0;
+          (r2.data||[]).forEach(function(d){ if(d.sessions) total += (d.sessions.session_exercises||[]).length; });
+          var doneCount = done.count || 0;
+          var dayFraction = Math.min((a.current_day||1) / 10, 1);
+          var expected = Math.round(total * dayFraction);
+          var pct = expected > 0 ? Math.min(Math.round(doneCount / expected * 100), 100) : 0;
+          var compEl = document.getElementById('dash-comp-'+a.id);
+          var barEl  = document.getElementById('dash-bar-'+a.id);
+          var dayEl  = document.getElementById('dash-day-'+a.id);
+          if (compEl) { compEl.textContent = pct+'%'; compEl.style.color = pct>=80?'var(--grn)':pct>=50?'var(--orn)':'var(--red)'; }
+          if (barEl)  { barEl.style.width = pct+'%'; barEl.style.background = pct>=80?'var(--grn)':pct>=50?'var(--orn)':'var(--red)'; }
+          if (dayEl)  { dayEl.textContent = 'G'+(a.current_day||1)+'/10 · '+doneCount+'/'+total+' es.'; }
+        }).catch(function(){});
+    }).catch(function(){});
 }
 
 function buildAthCard(a) {
@@ -2370,6 +2460,8 @@ function vsv(name) {
   if(v){ v.style.display='flex'; v.classList.add('on'); }
   if(b) b.classList.add('on');
   if(name==='coach') athLoadMessages();
+  if(name==='timer') _updateAllDisplays(); // sync timer display on tab open
+  if(name==='stats') loadPRChart();
 }
 
 function renderNoProg(reason) {
@@ -2755,8 +2847,13 @@ function _timerTick() {
 
 function _timerSetBtnState(txt, col) {
   // Tab button
-  var btn = document.getElementById('timerBtn');
-  if (btn) { btn.textContent = txt; btn.style.background = col; }
+  var btn  = document.getElementById('timerBtn');
+  var disp = document.getElementById('timerDisp');
+  if (btn)  { btn.textContent = txt; btn.style.background = col; }
+  if (disp) {
+    if (txt === 'STOP') disp.classList.add('running');
+    else disp.classList.remove('running');
+  }
   // Inline button
   if (timerActiveExId) {
     var ib = document.getElementById('inline-timer-btn-'+timerActiveExId);
