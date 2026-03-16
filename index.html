@@ -183,6 +183,8 @@ select.inp{cursor:pointer}
 .timer-presets{display:flex;gap:6px;justify-content:center;margin:10px 0 12px}
 .pre-btn{padding:6px 12px;border-radius:8px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu2);font-size:.75rem;cursor:pointer;font-family:inherit}
 .pre-btn.on{background:var(--rdim);border-color:rgba(232,17,42,.3);color:var(--red)}
+.filter-chip{padding:6px 12px;border-radius:100px;border:1px solid var(--bdr);background:transparent;color:var(--mu2);font-family:inherit;font-size:.75rem;cursor:pointer;transition:all .2s}
+.filter-chip.on{background:var(--rdim);border-color:rgba(232,17,42,.3);color:var(--red)}
 .timer-btns{display:flex;gap:8px}
 .t-start{flex:2;padding:10px;border-radius:9px;background:var(--red);border:none;color:#fff;font-weight:700;cursor:pointer;font-family:inherit}
 .t-reset{flex:1;padding:10px;border-radius:9px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu2);cursor:pointer;font-family:inherit}
@@ -529,13 +531,132 @@ select.inp{cursor:pointer}
     <div class="scroll"><div id="amsg-list"></div></div>
   </div>
 
+  <!-- ADMIN: COACH PROFILE -->
+  <div class="view" id="av-profile">
+    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-orn">My Profile</span></div>
+    <div class="scroll" style="padding:14px 14px 80px;display:flex;flex-direction:column;gap:12px">
+
+      <!-- Public profile toggle -->
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px">
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:.88rem">Public Profile</div>
+          <div style="font-size:.72rem;color:var(--mu2);margin-top:2px">Visible on the Kratos marketplace</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+          <input type="checkbox" id="prof-public" style="opacity:0;width:0;height:0" onchange="togglePublicProfile(this.checked)">
+          <span id="prof-public-track" style="position:absolute;inset:0;background:var(--s4);border-radius:12px;transition:.3s;border:1px solid var(--bdr)"></span>
+          <span id="prof-public-thumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:var(--mu2);border-radius:50%;transition:.3s"></span>
+        </label>
+      </div>
+
+      <!-- Marketplace preview link -->
+      <div id="prof-marketplace-link" style="display:none;background:var(--rdim);border:1px solid rgba(232,17,42,.2);border-radius:10px;padding:10px 14px;font-size:.75rem;color:var(--red)">
+        &#127758; Your profile is live on the marketplace
+        <a id="prof-market-url" href="#" target="_blank" style="color:var(--red);margin-left:4px;text-decoration:underline">View →</a>
+      </div>
+
+      <!-- Avatar + name -->
+      <div class="iform">
+        <div class="iform-title">&#128248; PHOTO & NAME</div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+          <div id="prof-avatar-preview" onclick="document.getElementById('prof-avatar-file').click()" style="width:72px;height:72px;border-radius:14px;background:var(--s3);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:1.8rem;color:var(--red);flex-shrink:0;overflow:hidden;cursor:pointer" title="Tap to upload"></div>
+          <div style="flex:1">
+            <input type="file" id="prof-avatar-file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadAvatar(this)">
+            <button onclick="document.getElementById('prof-avatar-file').click()" style="width:100%;padding:9px;border-radius:9px;background:var(--s3);border:1px dashed rgba(255,255,255,.2);color:var(--mu);font-size:.78rem;cursor:pointer;font-family:inherit;margin-bottom:6px">&#128247; Upload Photo</button>
+            <div style="font-size:.62rem;color:var(--mu2);text-align:center;margin-bottom:5px">— or paste a URL —</div>
+            <input class="inp" id="prof-avatar" placeholder="https://..." oninput="previewAvatar(this.value)" style="font-size:.78rem">
+            <div id="prof-upload-status" style="font-size:.68rem;margin-top:4px;display:none"></div>
+          </div>
+        </div>
+        <div class="field"><label>Display Name</label><input class="inp" id="prof-name" placeholder="Your full name"></div>
+      </div>
+
+      <!-- Bio & Specializations -->
+      <div class="iform">
+        <div class="iform-title">&#128203; BIO & SPECIALIZATIONS</div>
+        <div class="field"><label>Bio <span style="color:var(--mu2);font-weight:400">(shown on marketplace)</span></label>
+          <textarea class="inp" id="prof-bio" rows="4" placeholder="Tell athletes about your coaching style, experience, and what makes you different..."></textarea></div>
+        <div class="field"><label>Certifications</label>
+          <input class="inp" id="prof-certs" placeholder="e.g. NASM-CPT, CSCS, CrossFit L2..."></div>
+        <div class="field"><label>Specializations <span style="color:var(--mu2);font-weight:400">(select all that apply)</span></label>
+          <div id="prof-specs-grid" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px"></div>
+        </div>
+      </div>
+
+      <!-- Location & Pricing -->
+      <div class="iform">
+        <div class="iform-title">&#128205; LOCATION & PRICING</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="field"><label>City</label><input class="inp" id="prof-city" placeholder="New York"></div>
+          <div class="field"><label>State</label>
+            <select class="inp" id="prof-state">
+              <option value="">— State —</option>
+              <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option>
+              <option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option>
+              <option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option>
+              <option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option>
+              <option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option>
+              <option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option>
+              <option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option>
+              <option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option>
+              <option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option>
+              <option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
+            </select></div>
+          <div class="field"><label>Years Experience</label><input class="inp" id="prof-exp" type="number" min="0" max="50" placeholder="5" inputmode="numeric"></div>
+          <div class="field"><label>Monthly Price ($)</label><input class="inp" id="prof-price" type="number" min="0" placeholder="199" inputmode="numeric"></div>
+        </div>
+        <div class="field"><label>Training Style</label>
+          <select class="inp" id="prof-style">
+            <option value="">— Select —</option>
+            <option value="online">Online only</option>
+            <option value="in-person">In-person only</option>
+            <option value="hybrid">Hybrid (online + in-person)</option>
+          </select></div>
+      </div>
+
+      <!-- Social Links -->
+      <div class="iform">
+        <div class="iform-title">&#127760; SOCIAL & LINKS</div>
+        <div class="field">
+          <label>&#128247; Instagram</label>
+          <input class="inp" id="prof-instagram" placeholder="https://instagram.com/yourhandle">
+        </div>
+        <div class="field">
+          <label>&#127926; TikTok</label>
+          <input class="inp" id="prof-tiktok" placeholder="https://tiktok.com/@yourhandle">
+        </div>
+        <div class="field">
+          <label>&#9654; YouTube</label>
+          <input class="inp" id="prof-youtube" placeholder="https://youtube.com/@yourchannel">
+        </div>
+        <div class="field">
+          <label>&#127758; Website</label>
+          <input class="inp" id="prof-website" placeholder="https://yourwebsite.com">
+        </div>
+      </div>
+
+      <button class="btn-red" style="width:100%;padding:14px;font-size:.9rem" onclick="saveCoachProfile()">&#128190; Save Profile</button>
+      <div id="prof-msg" style="display:none;padding:10px;border-radius:10px;font-size:.78rem;text-align:center"></div>
+
+      <!-- Join code display -->
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--mu2);margin-bottom:6px">YOUR JOIN CODE</div>
+        <div id="prof-joincode" style="font-family:Bebas Neue,sans-serif;font-size:2rem;letter-spacing:.25em;color:var(--orn)">——————</div>
+        <div style="font-size:.68rem;color:var(--mu2);margin-top:4px">Share this code with athletes to connect</div>
+        <button onclick="copyJoinCode()" style="margin-top:10px;background:var(--rdim);border:1px solid rgba(232,17,42,.2);color:var(--red);border-radius:8px;padding:7px 18px;font-size:.75rem;cursor:pointer;font-family:inherit">Copy Code</button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ADMIN NAV -->
   <nav class="bnav" id="admin-nav">
     <button class="bni on" id="abn-athletes" onclick="asv('athletes')"><span class="bni-ic">&#128101;</span><span class="bni-lb">Athletes</span></button>
-    <button class="bni"    id="abn-new"      onclick="asv('new')"><span class="bni-ic">&#10133;</span><span class="bni-lb">Nuovo</span></button>
-    <button class="bni"    id="abn-prog"     onclick="asv('prog')"><span class="bni-ic">&#128203;</span><span class="bni-lb">Programmi</span></button>
+    <button class="bni"    id="abn-new"      onclick="asv('new')"><span class="bni-ic">&#10133;</span><span class="bni-lb">New</span></button>
+    <button class="bni"    id="abn-prog"     onclick="asv('prog')"><span class="bni-ic">&#128203;</span><span class="bni-lb">Programs</span></button>
     <button class="bni"    id="abn-ai"       onclick="asv('ai')"><span class="bni-ic">&#129504;</span><span class="bni-lb">AI</span></button>
     <button class="bni"    id="abn-msgs"     onclick="asv('msgs')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Messages</span></button>
+    <button class="bni"    id="abn-profile"  onclick="asv('profile');loadCoachProfileForm()"><span class="bni-ic">&#127775;</span><span class="bni-lb">Profile</span></button>
   </nav>
 
   <!-- ════════════════════════════════════════════════════ ATHLETE VIEWS -->
@@ -3622,6 +3743,220 @@ function closeSummary() {
   document.body.style.overflow = '';
 }
 
+// ── COACH PROFILE ────────────────────────────────────────────
+var SPECIALIZATIONS = [
+  'Strength & Power','Weight Loss','Muscle Building','Endurance',
+  'Sports Performance','Mobility','HIIT','Bodyweight','Female-Focused','Nutrition'
+];
+var selectedSpecs = [];
+var coachProfileData = null;
+
+function loadCoachProfileForm() {
+  // Build specs grid
+  var grid = document.getElementById('prof-specs-grid');
+  if (grid && !grid.children.length) {
+    grid.innerHTML = SPECIALIZATIONS.map(function(s){
+      return '<button class="filter-chip" data-spec="'+escHtml(s)+'" style="font-size:.72rem;padding:6px 12px">'+escHtml(s)+'</button>';
+    }).join('');
+    grid.addEventListener('click', function(e){
+      var btn = e.target.closest('[data-spec]');
+      if (!btn) return;
+      var spec = btn.dataset.spec;
+      var idx = selectedSpecs.indexOf(spec);
+      if (idx >= 0) { selectedSpecs.splice(idx,1); btn.classList.remove('on'); }
+      else { selectedSpecs.push(spec); btn.classList.add('on'); }
+    });
+  }
+
+  // Load existing profile
+  sb.from('coach_profiles').select('*').eq('id', ME.id).single()
+    .then(function(r){
+      coachProfileData = r.data;
+      if (!r.data) return;
+      var d = r.data;
+      // Fill fields
+      if (d.bio)             { var el=document.getElementById('prof-bio');      if(el) el.value=d.bio; }
+      if (d.certifications)  { var el=document.getElementById('prof-certs');    if(el) el.value=d.certifications; }
+      if (d.location_city)   { var el=document.getElementById('prof-city');     if(el) el.value=d.location_city; }
+      if (d.location_state)  { var el=document.getElementById('prof-state');    if(el) el.value=d.location_state; }
+      if (d.years_exp)       { var el=document.getElementById('prof-exp');      if(el) el.value=d.years_exp; }
+      if (d.price_per_month) { var el=document.getElementById('prof-price');    if(el) el.value=d.price_per_month; }
+      if (d.avatar_url)      { var el=document.getElementById('prof-avatar');   if(el) el.value=d.avatar_url; previewAvatar(d.avatar_url); }
+
+      // Public toggle
+      var tog = document.getElementById('prof-public');
+      if (tog) { tog.checked = !!d.is_public; updateToggleUI(!!d.is_public); }
+
+      // Marketplace link
+      updateMarketplaceLink(!!d.is_public);
+
+      // Specializations
+      if (d.specializations && Array.isArray(d.specializations)) {
+        selectedSpecs = d.specializations.slice();
+        document.querySelectorAll('#prof-specs-grid [data-spec]').forEach(function(btn){
+          btn.classList.toggle('on', selectedSpecs.includes(btn.dataset.spec));
+        });
+      }
+    // Social links
+      if (d.instagram_url) { var el=document.getElementById('prof-instagram'); if(el) el.value=d.instagram_url; }
+      if (d.tiktok_url)    { var el=document.getElementById('prof-tiktok');    if(el) el.value=d.tiktok_url; }
+      if (d.youtube_url)   { var el=document.getElementById('prof-youtube');   if(el) el.value=d.youtube_url; }
+      if (d.website_url)   { var el=document.getElementById('prof-website');   if(el) el.value=d.website_url; }
+    }).catch(function(){});
+
+  // Fill name
+  var nameEl = document.getElementById('prof-name');
+  if (nameEl && myProfile) nameEl.value = myProfile.full_name || '';
+
+  // Fill join code
+  var jcEl = document.getElementById('prof-joincode');
+  if (jcEl && myProfile && myProfile.join_code) jcEl.textContent = myProfile.join_code;
+}
+
+function previewAvatar(url) {
+  var el = document.getElementById('prof-avatar-preview');
+  if (!el) return;
+  if (url && url.startsWith('http')) {
+    var img = document.createElement('img');
+    img.src = url; img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:14px';
+    img.onerror = function(){ this.style.display='none'; };
+    el.innerHTML = ''; el.appendChild(img);
+  } else {
+    var name = (myProfile && myProfile.full_name) || 'C';
+    el.textContent = name.charAt(0).toUpperCase();
+  }
+}
+
+async function uploadAvatar(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var statusEl = document.getElementById('prof-upload-status');
+  var avatarInp = document.getElementById('prof-avatar');
+
+  // Show loading
+  statusEl.textContent = 'Uploading...';
+  statusEl.style.color = 'var(--mu2)';
+  statusEl.style.display = 'block';
+
+  // File size check (5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    statusEl.textContent = 'File too large (max 5MB)';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+
+  // Upload to Supabase Storage
+  var ext = file.name.split('.').pop().toLowerCase();
+  var path = ME.id + '/avatar.' + ext;
+
+  var r = await sb.storage.from('avatars').upload(path, file, {
+    cacheControl: '3600',
+    upsert: true,
+    contentType: file.type
+  });
+
+  if (r.error) {
+    statusEl.textContent = 'Upload error: ' + r.error.message;
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+
+  // Get public URL
+  var urlData = sb.storage.from('avatars').getPublicUrl(path);
+  var publicUrl = urlData.data.publicUrl;
+
+  // Update field and preview
+  if (avatarInp) avatarInp.value = publicUrl;
+  previewAvatar(publicUrl);
+
+  statusEl.textContent = '✓ Photo uploaded successfully';
+  statusEl.style.color = 'var(--grn)';
+  setTimeout(function(){ statusEl.style.display='none'; }, 3000);
+}
+
+function updateToggleUI(on) {
+  var track = document.getElementById('prof-public-track');
+  var thumb = document.getElementById('prof-public-thumb');
+  if (track) track.style.background = on ? 'var(--red)' : 'var(--s4)';
+  if (thumb) { thumb.style.left = on ? '22px' : '3px'; thumb.style.background = on ? '#fff' : 'var(--mu2)'; }
+}
+
+function togglePublicProfile(checked) {
+  updateToggleUI(checked);
+  updateMarketplaceLink(checked);
+  // Save immediately
+  sb.from('coach_profiles').upsert({id: ME.id, is_public: checked})
+    .then(function(){ showToast(checked ? 'Profile is now public' : 'Profile hidden from marketplace'); })
+    .catch(function(){});
+}
+
+function updateMarketplaceLink(isPublic) {
+  var el = document.getElementById('prof-marketplace-link');
+  var url = document.getElementById('prof-market-url');
+  if (!el) return;
+  el.style.display = isPublic ? 'block' : 'none';
+  if (url) url.href = 'https://dcarera-jpg.github.io/kratos-marketplace/';
+}
+
+function saveCoachProfile() {
+  var msgEl = document.getElementById('prof-msg');
+  var name  = document.getElementById('prof-name').value.trim();
+  var bio   = document.getElementById('prof-bio').value.trim();
+  var certs = document.getElementById('prof-certs').value.trim();
+  var city  = document.getElementById('prof-city').value.trim();
+  var state = document.getElementById('prof-state').value;
+  var exp   = document.getElementById('prof-exp').value;
+  var price = document.getElementById('prof-price').value;
+  var avatar= document.getElementById('prof-avatar').value.trim();
+  var isPublic = document.getElementById('prof-public').checked;
+
+  var instagram = (document.getElementById('prof-instagram')||{}).value||'';
+  var tiktok    = (document.getElementById('prof-tiktok')||{}).value||'';
+  var youtube   = (document.getElementById('prof-youtube')||{}).value||'';
+  var website   = (document.getElementById('prof-website')||{}).value||'';
+
+  var profileData = {
+    id:               ME.id,
+    bio:              bio || null,
+    certifications:   certs || null,
+    specializations:  selectedSpecs.length ? selectedSpecs : null,
+    location_city:    city || null,
+    location_state:   state || null,
+    years_exp:        exp ? parseInt(exp) : null,
+    price_per_month:  price ? parseFloat(price) : null,
+    avatar_url:       avatar || null,
+    is_public:        isPublic,
+    instagram_url:    instagram || null,
+    tiktok_url:       tiktok    || null,
+    youtube_url:      youtube   || null,
+    website_url:      website   || null
+  };
+
+  // Also update full_name in profiles
+  var updates = [];
+  if (name && name !== myProfile.full_name) {
+    updates.push(sb.from('profiles').update({full_name: name}).eq('id', ME.id));
+  }
+  updates.push(sb.from('coach_profiles').upsert(profileData));
+
+  Promise.all(updates)
+    .then(function(){
+      if (name) myProfile.full_name = name;
+      msgEl.textContent = '✓ Profile saved! Changes are live on the marketplace.';
+      msgEl.style.background = 'rgba(16,185,129,.12)'; msgEl.style.color = 'var(--grn)';
+      msgEl.style.display = 'block';
+      setTimeout(function(){ msgEl.style.display='none'; }, 4000);
+      // Update join code display
+      loadCoachBanner();
+    })
+    .catch(function(e){
+      msgEl.textContent = 'Error: ' + String(e);
+      msgEl.style.background = 'rgba(232,17,42,.12)'; msgEl.style.color = 'var(--red)';
+      msgEl.style.display = 'block';
+    });
+}
+
+// Also update asv to load profile form
 // ── ASSESSMENT ───────────────────────────────────────────────
 var currentAssessmentId = null;
 
