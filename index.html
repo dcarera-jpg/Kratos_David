@@ -638,6 +638,15 @@ select.inp{cursor:pointer}
       <button class="btn-red" style="width:100%;padding:14px;font-size:.9rem" onclick="saveCoachProfile()">&#128190; Save Profile</button>
       <div id="prof-msg" style="display:none;padding:10px;border-radius:10px;font-size:.78rem;text-align:center"></div>
 
+      <!-- Reviews received -->
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2)">REVIEWS RECEIVED</div>
+          <div id="prof-rating-summary" style="font-size:.8rem;color:var(--gold);font-weight:700"></div>
+        </div>
+        <div id="prof-reviews-list"><div style="font-size:.75rem;color:var(--mu2)">No reviews yet.</div></div>
+      </div>
+
       <!-- Join code display -->
       <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center">
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--mu2);margin-bottom:6px">YOUR JOIN CODE</div>
@@ -841,11 +850,21 @@ select.inp{cursor:pointer}
 
   <div class="view" id="vv-coach">
     <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">Coach</span></div>
-    <div style="display:flex;flex-direction:column;flex:1;padding:12px;gap:0;overflow:hidden">
-      <div class="ath-msg-area" id="ath-msg-area"></div>
-      <div class="msg-row" style="flex-shrink:0">
-        <input class="msg-inp" id="ath-msg-inp" placeholder="Message your coach...">
-        <button class="msg-send" onclick="athSendMsg()">Send</button>
+    <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <!-- Messages -->
+      <div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:0">
+        <div class="ath-msg-area" id="ath-msg-area"></div>
+        <div class="msg-row" style="flex-shrink:0;padding-top:8px">
+          <input class="msg-inp" id="ath-msg-inp" placeholder="Message your coach...">
+          <button class="msg-send" onclick="athSendMsg()">Send</button>
+        </div>
+      </div>
+      <!-- Review section -->
+      <div style="flex-shrink:0;padding:12px 12px 20px;border-top:1px solid var(--bdr);background:var(--s1)">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">RATE YOUR COACH</div>
+        <div id="ath-review-area">
+          <div style="font-size:.75rem;color:var(--mu2)">Loading...</div>
+        </div>
       </div>
     </div>
   </div>
@@ -1260,6 +1279,7 @@ function asv(name) {
   if (name === 'msgs') renderAdminMsgs();
   if (name === 'prog' && allEx.length === 0) loadEx();
   if (name === 'ai') aiPopulateAthleteSelector();
+  if (name === 'profile') loadCoachReviews();
 }
 
 function toggleEl(id) {
@@ -2999,6 +3019,7 @@ function vsv(name) {
   if(name==='coach') athLoadMessages();
   if(name==='timer') _updateAllDisplays(); // sync timer display on tab open
   if(name==='stats') loadPRChart();
+  if(name==='coach') loadAthleteReview();
 }
 
 function renderNoProg(reason) {
@@ -3833,45 +3854,57 @@ async function uploadAvatar(input) {
   var statusEl = document.getElementById('prof-upload-status');
   var avatarInp = document.getElementById('prof-avatar');
 
-  // Show loading
-  statusEl.textContent = 'Uploading...';
-  statusEl.style.color = 'var(--mu2)';
   statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--mu2)';
+  statusEl.textContent = 'Uploading ' + file.name + ' (' + Math.round(file.size/1024) + 'KB)...';
 
-  // File size check (5MB)
   if (file.size > 5 * 1024 * 1024) {
     statusEl.textContent = 'File too large (max 5MB)';
     statusEl.style.color = 'var(--red)';
     return;
   }
 
-  // Upload to Supabase Storage
-  var ext = file.name.split('.').pop().toLowerCase();
-  var path = ME.id + '/avatar.' + ext;
-
-  var r = await sb.storage.from('avatars').upload(path, file, {
-    cacheControl: '3600',
-    upsert: true,
-    contentType: file.type
-  });
-
-  if (r.error) {
-    statusEl.textContent = 'Upload error: ' + r.error.message;
+  // Check auth
+  var session = await sb.auth.getSession();
+  if (!session.data.session) {
+    statusEl.textContent = 'Error: not authenticated';
     statusEl.style.color = 'var(--red)';
     return;
   }
 
-  // Get public URL
-  var urlData = sb.storage.from('avatars').getPublicUrl(path);
-  var publicUrl = urlData.data.publicUrl;
+  var ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+  var path = ME.id + '-avatar.' + ext; // flat path, no subfolder
 
-  // Update field and preview
-  if (avatarInp) avatarInp.value = publicUrl;
-  previewAvatar(publicUrl);
+  try {
+    // Remove existing first (ignore error if not exists)
+    await sb.storage.from('avatars').remove([path]);
 
-  statusEl.textContent = '✓ Photo uploaded successfully';
-  statusEl.style.color = 'var(--grn)';
-  setTimeout(function(){ statusEl.style.display='none'; }, 3000);
+    var r = await sb.storage.from('avatars').upload(path, file, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: file.type
+    });
+
+    if (r.error) {
+      statusEl.textContent = 'Upload error: ' + r.error.message;
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    var urlData = sb.storage.from('avatars').getPublicUrl(path);
+    var publicUrl = urlData.data.publicUrl;
+
+    if (avatarInp) avatarInp.value = publicUrl;
+    previewAvatar(publicUrl);
+
+    statusEl.textContent = '✓ Uploaded! Save profile to apply.';
+    statusEl.style.color = 'var(--grn)';
+    setTimeout(function(){ statusEl.style.display='none'; }, 4000);
+
+  } catch(e) {
+    statusEl.textContent = 'Exception: ' + e.message;
+    statusEl.style.color = 'var(--red)';
+  }
 }
 
 function updateToggleUI(on) {
@@ -4154,6 +4187,159 @@ function useAssessmentInAI(athId) {
       if (athSel) athSel.value = athId;
 
       showToast('Assessment loaded into AI Coach ✓');
+    }).catch(function(){});
+}
+
+// ── REVIEWS ──────────────────────────────────────────────────
+var myReview = null;
+var selectedRating = 0;
+
+function loadAthleteReview() {
+  var area = document.getElementById('ath-review-area');
+  if (!area || !myProfile || !myProfile.coach_id) return;
+
+  sb.from('reviews').select('*')
+    .eq('athlete_id', ME.id)
+    .eq('coach_id', myProfile.coach_id)
+    .single()
+    .then(function(r){
+      myReview = r.data || null;
+      renderAthleteReviewForm();
+    }).catch(function(){
+      myReview = null;
+      renderAthleteReviewForm();
+    });
+}
+
+function renderAthleteReviewForm() {
+  var area = document.getElementById('ath-review-area');
+  if (!area) return;
+
+  selectedRating = myReview ? myReview.rating : 0;
+
+  var stars = [1,2,3,4,5].map(function(n){
+    var filled = n <= selectedRating;
+    return '<span id="ath-star-'+n+'" onclick="selectRating('+n+')" style="font-size:1.6rem;cursor:pointer;transition:transform .1s;display:inline-block" title="'+n+' star'+(n>1?'s':'')+'">'+
+      (filled ? '★' : '☆') + '</span>';
+  }).join('');
+
+  area.innerHTML =
+    '<div style="display:flex;gap:4px;margin-bottom:10px;align-items:center">' +
+      stars +
+      '<span style="font-size:.72rem;color:var(--mu2);margin-left:8px" id="ath-rating-label">' +
+        (selectedRating ? ratingLabel(selectedRating) : 'Tap to rate') +
+      '</span>' +
+    '</div>' +
+    '<input class="inp" id="ath-review-title" placeholder="Review title (optional)" style="margin-bottom:7px;font-size:.8rem" value="'+escHtml(myReview&&myReview.title||'')+'">' +
+    '<textarea class="inp" id="ath-review-body" rows="2" placeholder="Tell others about your experience with this coach..." style="font-size:.8rem;margin-bottom:8px">'+escHtml(myReview&&myReview.body||'')+'</textarea>' +
+    '<div style="display:flex;gap:8px">' +
+      '<button onclick="submitReview()" style="flex:1;padding:9px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer">' +
+        (myReview ? 'Update Review' : 'Submit Review') +
+      '</button>' +
+      (myReview ? '<button onclick="deleteReview()" style="padding:9px 14px;border-radius:9px;background:none;border:1px solid var(--bdr);color:var(--mu2);font-family:inherit;font-size:.8rem;cursor:pointer">Delete</button>' : '') +
+    '</div>' +
+    '<div id="ath-review-msg" style="display:none;margin-top:6px;font-size:.72rem;padding:6px 10px;border-radius:8px"></div>';
+}
+
+function ratingLabel(n) {
+  return ['','Terrible','Poor','Okay','Great','Excellent!'][n] || '';
+}
+
+function selectRating(n) {
+  selectedRating = n;
+  [1,2,3,4,5].forEach(function(i){
+    var el = document.getElementById('ath-star-'+i);
+    if (el) el.textContent = i <= n ? '★' : '☆';
+  });
+  var lbl = document.getElementById('ath-rating-label');
+  if (lbl) lbl.textContent = ratingLabel(n);
+}
+
+function submitReview() {
+  var title = (document.getElementById('ath-review-title')||{}).value||'';
+  var body  = (document.getElementById('ath-review-body')||{}).value||'';
+  var msgEl = document.getElementById('ath-review-msg');
+
+  if (!selectedRating) {
+    msgEl.textContent = 'Please select a star rating first.';
+    msgEl.style.background = 'rgba(232,17,42,.1)'; msgEl.style.color = 'var(--red)';
+    msgEl.style.display = 'block'; return;
+  }
+
+  var data = {
+    athlete_id: ME.id,
+    coach_id:   myProfile.coach_id,
+    rating:     selectedRating,
+    title:      title.trim() || null,
+    body:       body.trim()  || null,
+    updated_at: new Date().toISOString()
+  };
+
+  var q = myReview
+    ? sb.from('reviews').update(data).eq('id', myReview.id).select().single()
+    : sb.from('reviews').insert(data).select().single();
+
+  q.then(function(r){
+    if (r.error) {
+      msgEl.textContent = 'Error: ' + r.error.message;
+      msgEl.style.background = 'rgba(232,17,42,.1)'; msgEl.style.color = 'var(--red)';
+    } else {
+      myReview = r.data;
+      msgEl.textContent = '✓ Review ' + (myReview ? 'updated' : 'submitted') + '! Thank you.';
+      msgEl.style.background = 'rgba(16,185,129,.1)'; msgEl.style.color = 'var(--grn)';
+      renderAthleteReviewForm();
+    }
+    msgEl.style.display = 'block';
+    setTimeout(function(){ msgEl.style.display='none'; }, 3000);
+  }).catch(function(e){
+    msgEl.textContent = String(e); msgEl.style.display = 'block';
+  });
+}
+
+function deleteReview() {
+  if (!myReview || !confirm('Delete your review?')) return;
+  sb.from('reviews').delete().eq('id', myReview.id)
+    .then(function(){
+      myReview = null; selectedRating = 0;
+      renderAthleteReviewForm();
+      showToast('Review deleted');
+    }).catch(function(){});
+}
+
+// ── COACH: load reviews received ─────────────────────────────
+function loadCoachReviews() {
+  var listEl = document.getElementById('prof-reviews-list');
+  var sumEl  = document.getElementById('prof-rating-summary');
+  if (!listEl) return;
+
+  sb.from('reviews')
+    .select('*, profiles!athlete_id(full_name, email)')
+    .eq('coach_id', ME.id)
+    .order('created_at', {ascending: false})
+    .then(function(r){
+      var reviews = r.data || [];
+      if (!reviews.length) {
+        listEl.innerHTML = '<div style="font-size:.75rem;color:var(--mu2)">No reviews yet. Keep training your athletes!</div>';
+        return;
+      }
+
+      var avg = reviews.reduce(function(s,r){ return s+r.rating; },0) / reviews.length;
+      if (sumEl) sumEl.innerHTML = '★ '+avg.toFixed(1)+' <span style="color:var(--mu2);font-weight:400">('+reviews.length+' review'+(reviews.length>1?'s':'')+')</span>';
+
+      listEl.innerHTML = reviews.map(function(rev){
+        var name = rev.profiles ? (rev.profiles.full_name || rev.profiles.email || 'Athlete') : 'Athlete';
+        var stars = '★'.repeat(rev.rating) + '☆'.repeat(5-rev.rating);
+        var date  = new Date(rev.created_at).toLocaleDateString('en-US',{month:'short',year:'numeric'});
+        return '<div style="padding:10px 0;border-bottom:1px solid var(--bdr)">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">' +
+            '<div style="font-size:.8rem;font-weight:600">'+escHtml(name)+'</div>' +
+            '<div style="font-size:.7rem;color:var(--mu2)">'+date+'</div>' +
+          '</div>' +
+          '<div style="color:var(--gold);font-size:.9rem;margin-bottom:4px">'+stars+'</div>' +
+          (rev.title ? '<div style="font-size:.8rem;font-weight:600;margin-bottom:2px">'+escHtml(rev.title)+'</div>' : '') +
+          (rev.body  ? '<div style="font-size:.78rem;color:var(--mu);line-height:1.5">'+escHtml(rev.body)+'</div>' : '') +
+        '</div>';
+      }).join('');
     }).catch(function(){});
 }
 
