@@ -647,6 +647,34 @@ select.inp{cursor:pointer}
         <div id="prof-reviews-list"><div style="font-size:.75rem;color:var(--mu2)">No reviews yet.</div></div>
       </div>
 
+      <!-- Stripe Connect -->
+      <div id="stripe-connect-section" style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div>
+            <div style="font-weight:600;font-size:.88rem">Payments</div>
+            <div style="font-size:.72rem;color:var(--mu2);margin-top:2px">Accept athlete payments via Stripe</div>
+          </div>
+          <div id="stripe-status-badge" style="font-size:.65rem;padding:3px 10px;border-radius:100px;background:var(--s3);color:var(--mu2);border:1px solid var(--bdr)">Not connected</div>
+        </div>
+        <div id="stripe-plan-selector" style="display:none;margin-bottom:12px">
+          <div style="font-size:.68rem;color:var(--mu2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Your plan</div>
+          <div style="display:flex;gap:8px">
+            <button id="plan-a-btn" onclick="setKratosPlan('A')" style="flex:1;padding:10px;border-radius:9px;background:var(--rdim);border:1px solid rgba(232,17,42,.3);color:var(--red);font-family:inherit;font-size:.78rem;cursor:pointer">
+              <div style="font-weight:700">Plan A</div>
+              <div style="font-size:.68rem;opacity:.8;margin-top:2px">Free + 8% commission</div>
+            </button>
+            <button id="plan-b-btn" onclick="setKratosPlan('B')" style="flex:1;padding:10px;border-radius:9px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu);font-family:inherit;font-size:.78rem;cursor:pointer">
+              <div style="font-weight:700">Plan B</div>
+              <div style="font-size:.68rem;opacity:.8;margin-top:2px">$49/mo + 3% commission</div>
+            </button>
+          </div>
+        </div>
+        <button id="stripe-connect-btn" onclick="startStripeConnect()" style="width:100%;padding:11px;border-radius:9px;background:var(--s3);border:1px solid var(--bdr);color:var(--white);font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">
+          Connect Stripe Account
+        </button>
+        <div id="stripe-connect-msg" style="display:none;margin-top:8px;font-size:.72rem;padding:6px 10px;border-radius:8px"></div>
+      </div>
+
       <!-- Join code display -->
       <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center">
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--mu2);margin-bottom:6px">YOUR JOIN CODE</div>
@@ -1080,6 +1108,7 @@ select.inp{cursor:pointer}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
 <script>
 // ════════════════════════════════════════════════════════════════
 // KRATOS v5 — SINGLE FILE APP
@@ -1267,6 +1296,7 @@ function startAdmin() {
   loadEx();
   loadCoachBanner();
   loadPendingRequests();
+  checkStripeReturn();
 }
 
 function loadCoachBanner() {
@@ -3020,6 +3050,7 @@ function startAthlete() {
   document.getElementById('admin-nav').style.display='none';
   vsv('cycle');
   if (!myProfile.coach_id) { renderNoCoach(); return; }
+  checkPaymentReturn();
   if(!myProfile.current_cycle_id){ renderNoProg(); return; }
   loadCycle();
   athLoadMessages();
@@ -3094,12 +3125,14 @@ function vsv(name) {
 function renderNoProg(reason) {
   document.getElementById('cycle-grid').innerHTML='';
   var msg = reason ? '<div style="font-size:.7rem;color:var(--orn);margin-top:8px;word-break:break-all">Debug: '+escHtml(reason)+'</div>' : '';
+  var subHtml = myProfile && myProfile.coach_id ? '<div id="ath-sub-status" style="margin-top:16px;width:100%"></div>' : '';
   document.getElementById('day-session-area').innerHTML=
     '<div class="no-prog"><div style="font-size:2rem;margin-bottom:10px">&#128203;</div>' +
-    '<div style="font-weight:700;font-size:1rem;margin-bottom:6px">Nessun programma</div>' +
-    '<div style="font-size:.8rem;color:var(--mu2)">Il tuo coach ti assegnera presto un programma.</div>' + msg + '</div>';
+    '<div style="font-weight:700;font-size:1rem;margin-bottom:6px">No Program</div>' +
+    '<div style="font-size:.8rem;color:var(--mu2)">Your coach will assign you a program soon.</div>' + msg + subHtml + '</div>';
   document.getElementById('ath-cycle-badge').textContent='—';
-  document.getElementById('ath-cycle-title').textContent='In attesa';
+  document.getElementById('ath-cycle-title').textContent='Waiting';
+  if (myProfile && myProfile.coach_id) setTimeout(loadAthleteSubscription, 400);
 }
 
 function loadCycle() {
@@ -3833,6 +3866,209 @@ function closeSummary() {
   document.body.style.overflow = '';
 }
 
+// ── STRIPE ───────────────────────────────────────────────────
+var WORKER_URL = 'https://kratos-ai.dcarera.workers.dev';
+var STRIPE_PK  = 'pk_test_51TBXLmCILlzdLTCXmUvoplj49VxyQXaeqbW4F7tDHz6TKCIZsdYlnzJaGMYIzTdujZ9WTyDpqTOxTbEwRhYbQV1o00Chx0uYOg';
+var stripeObj  = null; // initialized on first use
+
+// ── COACH: Stripe Connect onboarding ─────────────────────────
+function loadStripeConnectStatus() {
+  var section = document.getElementById('stripe-connect-section');
+  if (!section) return;
+
+  sb.from('coach_profiles').select('stripe_account_id,stripe_account_status,kratos_plan')
+    .eq('id', ME.id).single()
+    .then(function(r){
+      var d = r.data;
+      if (!d) return;
+
+      var badge   = document.getElementById('stripe-status-badge');
+      var btn     = document.getElementById('stripe-connect-btn');
+      var planSel = document.getElementById('stripe-plan-selector');
+
+      if (d.stripe_account_status === 'active') {
+        badge.textContent = '✓ Connected';
+        badge.style.background = 'rgba(16,185,129,.12)';
+        badge.style.color = 'var(--grn)';
+        badge.style.borderColor = 'rgba(16,185,129,.2)';
+        btn.textContent = 'Manage Stripe Account';
+        btn.style.background = 'var(--gdim)';
+        btn.style.borderColor = 'rgba(16,185,129,.2)';
+        btn.style.color = 'var(--grn)';
+        planSel.style.display = 'block';
+        // Highlight current plan
+        setKratosPlanUI(d.kratos_plan || 'A');
+      } else if (d.stripe_account_id) {
+        badge.textContent = 'Pending verification';
+        badge.style.background = 'rgba(245,158,11,.12)';
+        badge.style.color = 'var(--orn)';
+        badge.style.borderColor = 'rgba(245,158,11,.2)';
+        btn.textContent = 'Continue Stripe Setup';
+      }
+    }).catch(function(){});
+}
+
+async function startStripeConnect() {
+  var btn = document.getElementById('stripe-connect-btn');
+  var msg = document.getElementById('stripe-connect-msg');
+  btn.disabled = true; btn.textContent = 'Connecting...';
+
+  try {
+    var r = await fetch(WORKER_URL + '/stripe/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        coach_id:    ME.id,
+        email:       myProfile.email,
+        return_url:  window.location.href + '?stripe=connected',
+        refresh_url: window.location.href + '?stripe=refresh'
+      })
+    });
+    var data = await r.json();
+    if (data.error) throw new Error(data.error);
+    // Redirect to Stripe onboarding
+    window.location.href = data.url;
+  } catch(e) {
+    msg.textContent = 'Error: ' + e.message;
+    msg.style.background = 'rgba(232,17,42,.1)'; msg.style.color = 'var(--red)';
+    msg.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Connect Stripe Account';
+  }
+}
+
+function setKratosPlan(plan) {
+  setKratosPlanUI(plan);
+  sb.from('coach_profiles').update({ kratos_plan: plan }).eq('id', ME.id)
+    .then(function(){ showToast('Plan updated to Plan ' + plan); })
+    .catch(function(){});
+}
+
+function setKratosPlanUI(plan) {
+  var btnA = document.getElementById('plan-a-btn');
+  var btnB = document.getElementById('plan-b-btn');
+  if (!btnA || !btnB) return;
+  if (plan === 'A') {
+    btnA.style.background = 'var(--rdim)'; btnA.style.borderColor = 'rgba(232,17,42,.3)'; btnA.style.color = 'var(--red)';
+    btnB.style.background = 'var(--s3)';   btnB.style.borderColor = 'var(--bdr)';          btnB.style.color = 'var(--mu)';
+  } else {
+    btnB.style.background = 'var(--rdim)'; btnB.style.borderColor = 'rgba(232,17,42,.3)'; btnB.style.color = 'var(--red)';
+    btnA.style.background = 'var(--s3)';   btnA.style.borderColor = 'var(--bdr)';          btnA.style.color = 'var(--mu)';
+  }
+}
+
+// Check if returning from Stripe
+function checkStripeReturn() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('stripe') === 'connected') {
+    // Verify account status with Stripe
+    sb.from('coach_profiles').select('stripe_account_id').eq('id', ME.id).single()
+      .then(async function(r){
+        if (!r.data?.stripe_account_id) return;
+        var res = await fetch(WORKER_URL + '/stripe/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account_id: r.data.stripe_account_id, coach_id: ME.id })
+        });
+        var data = await res.json();
+        if (data.charges_enabled) {
+          showToast('✓ Stripe account connected and active!');
+          loadStripeConnectStatus();
+        } else {
+          showToast('Stripe setup incomplete — please complete verification');
+        }
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+      }).catch(function(){});
+  }
+}
+
+// ── ATHLETE: subscription flow ────────────────────────────────
+var athleteSubscription = null;
+
+async function loadAthleteSubscription() {
+  var el = document.getElementById('ath-sub-status');
+  if (!el || !myProfile.coach_id) return;
+
+  // Check existing subscription
+  var r = await sb.from('subscriptions')
+    .select('*')
+    .eq('athlete_id', ME.id)
+    .eq('coach_id', myProfile.coach_id)
+    .single();
+
+  athleteSubscription = r.data;
+
+  if (r.data && r.data.status === 'active') {
+    el.innerHTML =
+      '<div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="color:var(--grn);font-weight:700;font-size:.88rem;margin-bottom:3px">✓ Subscription Active</div>' +
+        '<div style="font-size:.72rem;color:var(--mu2)">$'+Math.round((r.data.amount_cents||0)/100)+'/month · Renews automatically</div>' +
+      '</div>';
+  } else {
+    // Check if coach has Stripe connected
+    var coachR = await sb.from('coach_profiles')
+      .select('stripe_account_status,price_per_month')
+      .eq('id', myProfile.coach_id).single();
+    var coachProf = coachR.data;
+
+    if (!coachProf || coachProf.stripe_account_status !== 'active') {
+      el.innerHTML = '<div style="font-size:.72rem;color:var(--mu2);text-align:center;padding:8px">Payment not yet set up by your coach.</div>';
+      return;
+    }
+
+    var price = coachProf.price_per_month || 149;
+    el.innerHTML =
+      '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:14px;text-align:center">' +
+        '<div style="font-weight:700;font-size:.9rem;margin-bottom:4px">Subscribe to your coach</div>' +
+        '<div style="font-size:.75rem;color:var(--mu2);margin-bottom:12px">$'+price+'/month · Cancel anytime</div>' +
+        '<button id="subscribe-btn" onclick="startAthleteSubscription('+price+')" style="width:100%;padding:12px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer">Subscribe Now</button>' +
+        '<div id="sub-msg" style="display:none;margin-top:8px;font-size:.72rem;padding:6px;border-radius:8px"></div>' +
+      '</div>';
+  }
+}
+
+async function startAthleteSubscription(pricePerMonth) {
+  var btn = document.getElementById('subscribe-btn');
+  var msg = document.getElementById('sub-msg');
+  if (btn) { btn.disabled = true; btn.textContent = 'Redirecting...'; }
+
+  try {
+    var r = await fetch(WORKER_URL + '/stripe/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        athlete_id:  ME.id,
+        coach_id:    myProfile.coach_id,
+        amount_cents: pricePerMonth * 100,
+        success_url: window.location.href + '?payment=success',
+        cancel_url:  window.location.href + '?payment=cancel'
+      })
+    });
+    var data = await r.json();
+    if (data.error) throw new Error(data.error);
+    window.location.href = data.checkout_url;
+  } catch(e) {
+    if (msg) {
+      msg.textContent = 'Error: ' + e.message;
+      msg.style.background = 'rgba(232,17,42,.1)'; msg.style.color = 'var(--red)';
+      msg.style.display = 'block';
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Subscribe Now'; }
+  }
+}
+
+function checkPaymentReturn() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('payment') === 'success') {
+    showToast('✓ Subscription active! Your coach will assign a program soon.');
+    window.history.replaceState({}, '', window.location.pathname);
+    setTimeout(loadAthleteSubscription, 1000);
+  } else if (params.get('payment') === 'cancel') {
+    showToast('Subscription cancelled.');
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+}
+
 // ── COACH PROFILE ────────────────────────────────────────────
 var SPECIALIZATIONS = [
   'Strength & Power','Weight Loss','Muscle Building','Endurance',
@@ -3901,6 +4137,8 @@ function loadCoachProfileForm() {
   // Fill join code
   var jcEl = document.getElementById('prof-joincode');
   if (jcEl && myProfile && myProfile.join_code) jcEl.textContent = myProfile.join_code;
+  // Load Stripe status
+  loadStripeConnectStatus();
 }
 
 function previewAvatar(url) {
