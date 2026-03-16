@@ -775,6 +775,14 @@ select.inp{cursor:pointer}
       <button class="btn-out" onclick="doLogout()">Logout</button>
     </div>
     <div class="scroll">
+      <div id="ath-payment-banner" style="display:none;margin:10px 14px 0;background:var(--rdim);border:1px solid rgba(232,17,42,.2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div>
+          <div style="font-size:.8rem;font-weight:600;color:var(--red)">Subscription required</div>
+          <div id="ath-payment-banner-text" style="font-size:.7rem;color:var(--mu2);margin-top:2px">Subscribe to access your full program</div>
+        </div>
+        <button id="ath-payment-banner-btn" style="flex-shrink:0;padding:7px 14px;border-radius:8px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer">Subscribe</button>
+      </div>
+      <div id="ath-sub-status" style="display:none;margin:10px 14px 0"></div>
       <div class="cycle-header">
         <div class="cycle-title" id="ath-cycle-title">Cycle</div>
       </div>
@@ -3054,6 +3062,7 @@ function startAthlete() {
   if(!myProfile.current_cycle_id){ renderNoProg(); return; }
   loadCycle();
   athLoadMessages();
+  setTimeout(loadAthleteSubscription, 600);
 }
 
 function renderNoCoach() {
@@ -4042,38 +4051,58 @@ async function openStripeExpressDashboard() {
 var athleteSubscription = null;
 
 async function loadAthleteSubscription() {
-  var el = document.getElementById('ath-sub-status');
-  if (!el || !myProfile.coach_id) return;
+  if (!myProfile || !myProfile.coach_id) return;
 
   // Check existing subscription
   var r = await sb.from('subscriptions')
     .select('*')
     .eq('athlete_id', ME.id)
     .eq('coach_id', myProfile.coach_id)
-    .single();
+    .maybeSingle();
 
   athleteSubscription = r.data;
 
+  var banner  = document.getElementById('ath-payment-banner');
+  var statusEl = document.getElementById('ath-sub-status');
+
   if (r.data && r.data.status === 'active') {
-    el.innerHTML =
-      '<div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px;text-align:center">' +
-        '<div style="color:var(--grn);font-weight:700;font-size:.88rem;margin-bottom:3px">✓ Subscription Active</div>' +
-        '<div style="font-size:.72rem;color:var(--mu2)">$'+Math.round((r.data.amount_cents||0)/100)+'/month · Renews automatically</div>' +
-      '</div>';
-  } else {
-    // Check if coach has Stripe connected
-    var coachR = await sb.from('coach_profiles')
-      .select('stripe_account_status,price_per_month')
-      .eq('id', myProfile.coach_id).single();
-    var coachProf = coachR.data;
-
-    if (!coachProf || coachProf.stripe_account_status !== 'active') {
-      el.innerHTML = '<div style="font-size:.72rem;color:var(--mu2);text-align:center;padding:8px">Payment not yet set up by your coach.</div>';
-      return;
+    // Hide banner, show green status
+    if (banner) banner.style.display = 'none';
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.innerHTML =
+        '<div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:8px">' +
+          '<div style="color:var(--grn);font-size:.85rem">✓</div>' +
+          '<div><div style="color:var(--grn);font-weight:600;font-size:.8rem">Subscription active</div>' +
+          '<div style="font-size:.68rem;color:var(--mu2)">$'+Math.round((r.data.amount_cents||0)/100)+'/mo · Renews automatically</div></div>' +
+        '</div>';
     }
+    return;
+  }
 
-    var price = coachProf.price_per_month || 149;
-    el.innerHTML =
+  // Check if coach has Stripe connected
+  var coachR = await sb.from('coach_profiles')
+    .select('stripe_account_status,price_per_month,kratos_plan')
+    .eq('id', myProfile.coach_id).maybeSingle();
+  var coachProf = coachR.data;
+
+  var validStatus = ['active','approved'];
+  if (!coachProf || !validStatus.includes(coachProf.stripe_account_status)) return;
+
+  var price = coachProf.price_per_month || 149;
+
+  // Show banner
+  if (banner) {
+    banner.style.display = 'flex';
+    var bannerText = document.getElementById('ath-payment-banner-text');
+    var bannerBtn  = document.getElementById('ath-payment-banner-btn');
+    if (bannerText) bannerText.textContent = '$' + price + '/month · Cancel anytime';
+    if (bannerBtn)  bannerBtn.onclick = function(){ startAthleteSubscription(price); };
+  }
+
+  // Also populate ath-sub-status if it exists (no-program screen)
+  if (statusEl && statusEl.style.display !== 'none') {
+    statusEl.innerHTML =
       '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:14px;text-align:center">' +
         '<div style="font-weight:700;font-size:.9rem;margin-bottom:4px">Subscribe to your coach</div>' +
         '<div style="font-size:.75rem;color:var(--mu2);margin-bottom:12px">$'+price+'/month · Cancel anytime</div>' +
