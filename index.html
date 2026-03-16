@@ -3886,8 +3886,8 @@ function loadStripeConnectStatus() {
       var btn     = document.getElementById('stripe-connect-btn');
       var planSel = document.getElementById('stripe-plan-selector');
 
-      if (d.stripe_account_status === 'active' || d.stripe_account_status === 'pending_review') {
-        var isActive = d.stripe_account_status === 'active';
+      if (d.stripe_account_status === 'active' || d.stripe_account_status === 'approved' || d.stripe_account_status === 'pending_review') {
+        var isActive = d.stripe_account_status === 'active' || d.stripe_account_status === 'approved';
         badge.textContent = isActive ? '✓ Connected' : '⏳ Pending review';
         badge.style.background = isActive ? 'rgba(16,185,129,.12)' : 'rgba(245,158,11,.12)';
         badge.style.color = isActive ? 'var(--grn)' : 'var(--orn)';
@@ -3896,8 +3896,12 @@ function loadStripeConnectStatus() {
         btn.style.background = isActive ? 'var(--gdim)' : 'var(--s3)';
         btn.style.borderColor = isActive ? 'rgba(16,185,129,.2)' : 'var(--bdr)';
         btn.style.color = isActive ? 'var(--grn)' : 'var(--mu)';
-        btn.onclick = isActive ? null : function(){ recheckStripeStatus(); };
-        if (isActive) planSel.style.display = 'block';
+        if (isActive) {
+          btn.onclick = null;
+          planSel.style.display = 'block';
+        } else {
+          btn.onclick = function(){ recheckStripeStatus(); };
+        }
         setKratosPlanUI(d.kratos_plan || 'A');
       } else if (d.stripe_account_id) {
         badge.textContent = 'Pending verification';
@@ -3997,9 +4001,16 @@ async function checkStripeReturn() {
 }
 
 async function recheckStripeStatus() {
-  var r = await sb.from('coach_profiles').select('stripe_account_id').eq('id', ME.id).single();
-  var accountId = r.data && r.data.stripe_account_id;
-  if (!accountId) return;
+  // First check DB status directly
+  var dbR = await sb.from('coach_profiles').select('stripe_account_id,stripe_account_status').eq('id', ME.id).single();
+  if (dbR.data && (dbR.data.stripe_account_status === 'active' || dbR.data.stripe_account_status === 'approved')) {
+    showToast('✓ Already active!');
+    loadCoachProfileForm();
+    return;
+  }
+  var accountId = dbR.data && dbR.data.stripe_account_id;
+  if (!accountId) { showToast('No Stripe account found'); return; }
+  // Check with Stripe
   var res = await fetch(WORKER_URL + '/stripe/status', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
