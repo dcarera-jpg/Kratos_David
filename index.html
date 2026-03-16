@@ -658,6 +658,74 @@ select.inp{cursor:pointer}
     </div>
   </div>
 
+  <!-- ADMIN: ANALYTICS -->
+  <div class="view" id="av-analytics">
+    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-grn">Analytics</span></div>
+    <div class="scroll" style="padding:14px;display:flex;flex-direction:column;gap:14px">
+
+      <!-- Top stats row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center">
+          <div id="an-total-athletes" style="font-family:Bebas Neue,sans-serif;font-size:2.4rem;letter-spacing:.05em;color:var(--white)">—</div>
+          <div style="font-size:.6rem;color:var(--mu2);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Total Athletes</div>
+        </div>
+        <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center">
+          <div id="an-active-athletes" style="font-family:Bebas Neue,sans-serif;font-size:2.4rem;letter-spacing:.05em;color:var(--grn)">—</div>
+          <div style="font-size:.6rem;color:var(--mu2);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Active (7d)</div>
+        </div>
+        <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center">
+          <div id="an-avg-compliance" style="font-family:Bebas Neue,sans-serif;font-size:2.4rem;letter-spacing:.05em;color:var(--orn)">—</div>
+          <div style="font-size:.6rem;color:var(--mu2);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Avg Compliance</div>
+        </div>
+        <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center">
+          <div id="an-avg-rating" style="font-family:Bebas Neue,sans-serif;font-size:2.4rem;letter-spacing:.05em;color:var(--gold)">—</div>
+          <div style="font-size:.6rem;color:var(--mu2);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Avg Rating</div>
+        </div>
+      </div>
+
+      <!-- Revenue estimate -->
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:16px">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:12px">REVENUE ESTIMATE</div>
+        <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:12px">
+          <div>
+            <div id="an-mrr" style="font-family:Bebas Neue,sans-serif;font-size:2.8rem;letter-spacing:.05em;color:var(--grn);line-height:1">$—</div>
+            <div style="font-size:.68rem;color:var(--mu2);margin-top:2px">Monthly (MRR)</div>
+          </div>
+          <div style="padding-bottom:4px">
+            <div id="an-arr" style="font-family:Bebas Neue,sans-serif;font-size:1.4rem;letter-spacing:.05em;color:var(--mu)">$—</div>
+            <div style="font-size:.62rem;color:var(--mu2)">Annual (ARR)</div>
+          </div>
+        </div>
+        <div style="font-size:.72rem;color:var(--mu2)" id="an-revenue-note">Set your monthly price in Profile to see estimates.</div>
+      </div>
+
+      <!-- Activity chart (last 14 days) -->
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:16px">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:12px">WORKOUT ACTIVITY — LAST 14 DAYS</div>
+        <div id="an-activity-chart"></div>
+      </div>
+
+      <!-- Athlete breakdown -->
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:16px">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:12px">ATHLETE BREAKDOWN</div>
+        <div id="an-athlete-breakdown"></div>
+      </div>
+
+      <!-- Retention -->
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2)">RETENTION</div>
+          <div id="an-retention-pct" style="font-family:Bebas Neue,sans-serif;font-size:1.2rem;color:var(--grn)"></div>
+        </div>
+        <div id="an-retention-bar" style="height:6px;background:var(--s4);border-radius:3px;overflow:hidden">
+          <div id="an-retention-fill" style="height:100%;background:var(--grn);width:0%;transition:width .6s ease;border-radius:3px"></div>
+        </div>
+        <div style="font-size:.68rem;color:var(--mu2);margin-top:6px">Athletes active in the last 14 days</div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ADMIN NAV -->
   <nav class="bnav" id="admin-nav">
     <button class="bni on" id="abn-athletes" onclick="asv('athletes')"><span class="bni-ic">&#128101;</span><span class="bni-lb">Athletes</span></button>
@@ -665,6 +733,7 @@ select.inp{cursor:pointer}
     <button class="bni"    id="abn-prog"     onclick="asv('prog')"><span class="bni-ic">&#128203;</span><span class="bni-lb">Programs</span></button>
     <button class="bni"    id="abn-ai"       onclick="asv('ai')"><span class="bni-ic">&#129504;</span><span class="bni-lb">AI</span></button>
     <button class="bni"    id="abn-msgs"     onclick="asv('msgs')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Messages</span></button>
+    <button class="bni"    id="abn-analytics" onclick="asv('analytics');loadAnalytics()"><span class="bni-ic">&#128200;</span><span class="bni-lb">Stats</span></button>
     <button class="bni"    id="abn-profile"  onclick="asv('profile');loadCoachProfileForm()"><span class="bni-ic">&#127775;</span><span class="bni-lb">Profile</span></button>
   </nav>
 
@@ -4188,6 +4257,154 @@ function useAssessmentInAI(athId) {
 
       showToast('Assessment loaded into AI Coach ✓');
     }).catch(function(){});
+}
+
+// ── ANALYTICS ────────────────────────────────────────────────
+async function loadAnalytics() {
+  if (!athletes.length) await new Promise(function(res){ setTimeout(res,500); });
+
+  var athIds = athletes.map(function(a){ return a.id; });
+  if (!athIds.length) {
+    document.getElementById('an-total-athletes').textContent = '0';
+    document.getElementById('an-active-athletes').textContent = '0';
+    document.getElementById('an-avg-compliance').textContent = 'N/A';
+    return;
+  }
+
+  // Total athletes
+  document.getElementById('an-total-athletes').textContent = athIds.length;
+
+  // Active athletes (logged workout in last 7 days)
+  var since7 = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+  var activeR = await sb.from('logbook')
+    .select('athlete_id')
+    .in('athlete_id', athIds)
+    .eq('done', true)
+    .gte('logged_date', since7);
+  var activeIds = new Set((activeR.data||[]).map(function(r){ return r.athlete_id; }));
+  document.getElementById('an-active-athletes').textContent = activeIds.size;
+
+  // Retention %
+  var retPct = athIds.length ? Math.round(activeIds.size / athIds.length * 100) : 0;
+  var retEl = document.getElementById('an-retention-pct');
+  var retFill = document.getElementById('an-retention-fill');
+  if (retEl) retEl.textContent = retPct + '%';
+  if (retFill) retFill.style.width = retPct + '%';
+
+  // Average compliance across athletes with active cycles
+  var complianceScores = [];
+  var activeAthletes = athletes.filter(function(a){ return a.current_cycle_id; });
+  for (var i=0; i<activeAthletes.length; i++) {
+    var a = activeAthletes[i];
+    var doneR = await sb.from('logbook').select('id',{count:'exact',head:true})
+      .eq('athlete_id',a.id).eq('cycle_id',a.current_cycle_id).eq('done',true);
+    var totalR = await sb.from('cycle_days').select('sessions(session_exercises(id))')
+      .eq('cycle_id',a.current_cycle_id);
+    var total=0;
+    (totalR.data||[]).forEach(function(d){ if(d.sessions) total+=(d.sessions.session_exercises||[]).length; });
+    var dayFrac = Math.min((a.current_day||1)/10, 1);
+    var expected = Math.round(total * dayFrac);
+    if (expected>0) complianceScores.push(Math.min(Math.round((doneR.count||0)/expected*100),100));
+  }
+  var avgComp = complianceScores.length
+    ? Math.round(complianceScores.reduce(function(s,v){return s+v;},0)/complianceScores.length)
+    : 0;
+  var compEl = document.getElementById('an-avg-compliance');
+  if (compEl) {
+    compEl.textContent = avgComp + '%';
+    compEl.style.color = avgComp>=80?'var(--grn)':avgComp>=50?'var(--orn)':'var(--red)';
+  }
+
+  // Rating
+  var ratingR = await sb.from('coach_profiles').select('rating,review_count').eq('id',ME.id).single();
+  var ratingEl = document.getElementById('an-avg-rating');
+  if (ratingEl && ratingR.data) {
+    ratingEl.textContent = ratingR.data.rating ? parseFloat(ratingR.data.rating).toFixed(1)+'★' : '—';
+  }
+
+  // Revenue estimate
+  var profR = await sb.from('coach_profiles').select('price_per_month').eq('id',ME.id).single();
+  var price = profR.data && profR.data.price_per_month ? parseFloat(profR.data.price_per_month) : 0;
+  var mrrEl = document.getElementById('an-mrr');
+  var arrEl = document.getElementById('an-arr');
+  var noteEl = document.getElementById('an-revenue-note');
+  if (price > 0) {
+    var mrr = price * athIds.length;
+    if (mrrEl) mrrEl.textContent = '$' + mrr.toLocaleString();
+    if (arrEl) arrEl.textContent = '$' + (mrr*12).toLocaleString();
+    if (noteEl) noteEl.textContent = athIds.length + ' athletes × $' + price + '/mo (estimate — not actual payments)';
+  } else {
+    if (mrrEl) mrrEl.textContent = '$0';
+    if (noteEl) noteEl.textContent = 'Set your monthly price in Profile to see revenue estimates.';
+  }
+
+  // Activity chart — last 14 days
+  await loadActivityChart(athIds);
+
+  // Athlete breakdown table
+  renderAthleteBreakdown(athletes, activeIds, complianceScores, activeAthletes);
+}
+
+async function loadActivityChart(athIds) {
+  var chartEl = document.getElementById('an-activity-chart');
+  if (!chartEl) return;
+
+  var since14 = new Date(Date.now() - 14*24*60*60*1000).toISOString().split('T')[0];
+  var r = await sb.from('logbook')
+    .select('logged_date')
+    .in('athlete_id', athIds)
+    .eq('done', true)
+    .gte('logged_date', since14);
+
+  // Count workouts per day
+  var counts = {};
+  (r.data||[]).forEach(function(row){ counts[row.logged_date] = (counts[row.logged_date]||0)+1; });
+
+  // Build 14 days
+  var days = [];
+  for (var i=13; i>=0; i--) {
+    var d = new Date(Date.now() - i*24*60*60*1000);
+    var key = d.toISOString().split('T')[0];
+    var label = d.toLocaleDateString('en-US',{weekday:'short'}).charAt(0);
+    days.push({key:key, label:label, count:counts[key]||0});
+  }
+
+  var maxCount = Math.max.apply(null, days.map(function(d){ return d.count; })) || 1;
+
+  // SVG bar chart
+  var W=300, H=80, barW=16, gap=6;
+  var bars = days.map(function(d,i){
+    var h = Math.max(4, Math.round(d.count/maxCount*(H-24)));
+    var x = i*(barW+gap);
+    var y = H-24-h;
+    var color = d.count>0 ? 'var(--red)' : 'var(--s4)';
+    var isToday = d.key === new Date().toISOString().split('T')[0];
+    return '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="3" fill="'+(isToday?'var(--orn)':color)+'"/>'
+      +'<text x="'+(x+barW/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="8" fill="'+(isToday?'var(--orn)':'#555')+'">'+d.label+'</text>'
+      +(d.count>0?'<text x="'+(x+barW/2)+'" y="'+(y-4)+'" text-anchor="middle" font-size="8" fill="var(--mu2)">'+d.count+'</text>':'');
+  }).join('');
+
+  var totalW = days.length*(barW+gap)-gap;
+  chartEl.innerHTML = '<svg viewBox="0 0 '+totalW+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">'+bars+'</svg>'
+    +'<div style="font-size:.65rem;color:var(--mu2);margin-top:6px;text-align:right">&#9634; = today</div>';
+}
+
+function renderAthleteBreakdown(athletes, activeIds, complianceScores, activeAthletes) {
+  var el = document.getElementById('an-athlete-breakdown');
+  if (!el || !athletes.length) return;
+
+  el.innerHTML = athletes.map(function(a, i){
+    var isActive = activeIds.has(a.id);
+    var compIdx = activeAthletes.findIndex(function(x){ return x.id===a.id; });
+    var comp = compIdx>=0 ? complianceScores[compIdx] : null;
+    var dot = isActive ? 'var(--grn)' : 'var(--mu2)';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bdr)">'
+      +'<div style="width:8px;height:8px;border-radius:50%;background:'+dot+';flex-shrink:0"></div>'
+      +'<div style="flex:1;font-size:.82rem;font-weight:500">'+escHtml(a.full_name||a.email||'Athlete')+'</div>'
+      +'<div style="font-size:.72rem;color:var(--mu2)">D'+(a.current_day||'—')+'/10</div>'
+      +(comp!==null?'<div style="font-size:.72rem;font-weight:600;color:'+(comp>=80?'var(--grn)':comp>=50?'var(--orn)':'var(--red)')+'">'+comp+'%</div>':'<div style="font-size:.72rem;color:var(--mu2)">—</div>')
+      +'</div>';
+  }).join('');
 }
 
 // ── REVIEWS ──────────────────────────────────────────────────
