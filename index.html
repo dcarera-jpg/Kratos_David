@@ -3886,17 +3886,18 @@ function loadStripeConnectStatus() {
       var btn     = document.getElementById('stripe-connect-btn');
       var planSel = document.getElementById('stripe-plan-selector');
 
-      if (d.stripe_account_status === 'active') {
-        badge.textContent = '✓ Connected';
-        badge.style.background = 'rgba(16,185,129,.12)';
-        badge.style.color = 'var(--grn)';
-        badge.style.borderColor = 'rgba(16,185,129,.2)';
-        btn.textContent = 'Manage Stripe Account';
-        btn.style.background = 'var(--gdim)';
-        btn.style.borderColor = 'rgba(16,185,129,.2)';
-        btn.style.color = 'var(--grn)';
-        planSel.style.display = 'block';
-        // Highlight current plan
+      if (d.stripe_account_status === 'active' || d.stripe_account_status === 'pending_review') {
+        var isActive = d.stripe_account_status === 'active';
+        badge.textContent = isActive ? '✓ Connected' : '⏳ Pending review';
+        badge.style.background = isActive ? 'rgba(16,185,129,.12)' : 'rgba(245,158,11,.12)';
+        badge.style.color = isActive ? 'var(--grn)' : 'var(--orn)';
+        badge.style.borderColor = isActive ? 'rgba(16,185,129,.2)' : 'rgba(245,158,11,.2)';
+        btn.textContent = isActive ? 'Manage Stripe Account' : 'Check Status';
+        btn.style.background = isActive ? 'var(--gdim)' : 'var(--s3)';
+        btn.style.borderColor = isActive ? 'rgba(16,185,129,.2)' : 'var(--bdr)';
+        btn.style.color = isActive ? 'var(--grn)' : 'var(--mu)';
+        btn.onclick = isActive ? null : function(){ recheckStripeStatus(); };
+        if (isActive) planSel.style.display = 'block';
         setKratosPlanUI(d.kratos_plan || 'A');
       } else if (d.stripe_account_id) {
         badge.textContent = 'Pending verification';
@@ -3957,29 +3958,56 @@ function setKratosPlanUI(plan) {
 }
 
 // Check if returning from Stripe
-function checkStripeReturn() {
+async function checkStripeReturn() {
   var params = new URLSearchParams(window.location.search);
-  if (params.get('stripe') === 'connected') {
-    // Verify account status with Stripe
-    sb.from('coach_profiles').select('stripe_account_id').eq('id', ME.id).single()
-      .then(async function(r){
-        if (!r.data?.stripe_account_id) return;
-        var res = await fetch(WORKER_URL + '/stripe/status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ account_id: r.data.stripe_account_id, coach_id: ME.id })
-        });
-        var data = await res.json();
-        if (data.charges_enabled) {
-          showToast('✓ Stripe account connected and active!');
-          loadStripeConnectStatus();
-        } else {
-          showToast('Stripe setup incomplete — please complete verification');
-        }
-        // Clean URL
-        window.history.replaceState({}, '', window.location.pathname);
-      }).catch(function(){});
+  var stripeParam = params.get('stripe');
+  if (stripeParam !== 'connected' && stripeParam !== 'refresh') return;
+
+  window.history.replaceState({}, '', window.location.pathname);
+  showToast('Verifying Stripe connection...');
+
+  await new Promise(function(res){ setTimeout(res, 1500); });
+
+  try {
+    var r = await sb.from('coach_profiles').select('stripe_account_id').eq('id', ME.id).single();
+    var accountId = r.data && r.data.stripe_account_id;
+    if (!accountId) { showToast('No Stripe account found — try connecting again'); return; }
+
+    var res = await fetch(WORKER_URL + '/stripe/status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ account_id: accountId, coach_id: ME.id })
+    });
+    var data = await res.json();
+    if (data.error) { showToast('Stripe error: ' + data.error); return; }
+
+    if (data.charges_enabled) {
+      showToast('✓ Stripe connected! You can now accept payments.');
+    } else if (data.details_submitted) {
+      showToast('Account submitted — pending Stripe review');
+    } else {
+      showToast('Setup incomplete — please finish Stripe onboarding');
+    }
+    // Navigate to profile to show updated status
+    asv('profile');
+    loadCoachProfileForm();
+  } catch(e) {
+    showToast('Error: ' + e.message);
   }
+}
+
+async function recheckStripeStatus() {
+  var r = await sb.from('coach_profiles').select('stripe_account_id').eq('id', ME.id).single();
+  var accountId = r.data && r.data.stripe_account_id;
+  if (!accountId) return;
+  var res = await fetch(WORKER_URL + '/stripe/status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ account_id: accountId, coach_id: ME.id })
+  });
+  var data = await res.json();
+  showToast(data.charges_enabled ? '✓ Active!' : 'Still pending — check Stripe dashboard');
+  loadCoachProfileForm();
 }
 
 // ── ATHLETE: subscription flow ────────────────────────────────
