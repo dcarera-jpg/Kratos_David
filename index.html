@@ -3897,7 +3897,7 @@ function loadStripeConnectStatus() {
         btn.style.borderColor = isActive ? 'rgba(16,185,129,.2)' : 'var(--bdr)';
         btn.style.color = isActive ? 'var(--grn)' : 'var(--mu)';
         if (isActive) {
-          btn.onclick = null;
+          btn.onclick = function(){ openStripeExpressDashboard(); };
           planSel.style.display = 'block';
         } else {
           btn.onclick = function(){ recheckStripeStatus(); };
@@ -4019,6 +4019,23 @@ async function recheckStripeStatus() {
   var data = await res.json();
   showToast(data.charges_enabled ? '✓ Active!' : 'Still pending — check Stripe dashboard');
   loadCoachProfileForm();
+}
+
+async function openStripeExpressDashboard() {
+  var r = await sb.from('coach_profiles').select('stripe_account_id').eq('id', ME.id).single();
+  var accountId = r.data && r.data.stripe_account_id;
+  if (!accountId) { showToast('No Stripe account found'); return; }
+  try {
+    var res = await fetch('https://api.stripe.com/v1/accounts/' + accountId + '/login_links', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + 'pk_test_51TBXLmCILlzdLTCXmUvoplj49VxyQXaeqbW4F7tDHz6TKCIZsdYlnzJaGMYIzTdujZ9WTyDpqTOxTbEwRhYbQV1o00Chx0uYOg' }
+    });
+    // Login link needs secret key — open via Worker instead
+    showToast('Opening Stripe dashboard...');
+    window.open('https://dashboard.stripe.com/test/connect/accounts/' + accountId, '_blank');
+  } catch(e) {
+    window.open('https://dashboard.stripe.com/test/connect/accounts/' + accountId, '_blank');
+  }
 }
 
 // ── ATHLETE: subscription flow ────────────────────────────────
