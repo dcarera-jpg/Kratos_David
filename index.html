@@ -1069,6 +1069,17 @@ select.inp{cursor:pointer}
   </div>
 </div>
 
+<!-- DAY PICKER POPUP -->
+<div id="day-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:16px;width:100%;max-width:340px;overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between">
+      <div id="day-picker-title" style="font-weight:600;font-size:.9rem">Add to which day?</div>
+      <button onclick="closeDayPicker()" style="background:none;border:none;color:var(--mu);font-size:1.1rem;cursor:pointer">&#10005;</button>
+    </div>
+    <div style="padding:12px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px" id="day-picker-grid"></div>
+  </div>
+</div>
+
 <!-- EXERCISE PICKER POPUP (for muscle group drops) -->
 <div id="ex-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:20px">
   <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:16px;width:100%;max-width:380px;overflow:hidden">
@@ -4728,8 +4739,9 @@ async function openProgEditor(athleteId, mesoId, athleteName) {
     };
   });
 
+  allProgEditorExercises = []; // reset cache so it reloads
   renderProgEditorMuscles();
-  await renderProgEditorExercises();
+  await renderProgEditorExercises('');
   renderProgEditorGrid();
   document.getElementById('prog-editor-status').textContent = 'Drag muscle groups or exercises onto days';
 }
@@ -4740,35 +4752,87 @@ function closeProgEditor() {
 
 function renderProgEditorMuscles() {
   var el = document.getElementById('prog-editor-muscles');
-  el.innerHTML = Object.keys(MUSCLE_COLORS).map(function(mg){
+  // Show muscle group filter for exercises panel
+  el.innerHTML = '<div style="font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:6px;padding:0 2px">Tap to add to day</div>'
+    + Object.keys(MUSCLE_COLORS).map(function(mg){
     var color = MUSCLE_COLORS[mg];
-    return '<div class="pe-drag-item" draggable="true"'
-      +' data-type="muscle" data-muscle="'+escHtml(mg)+'"'
-      +' ondragstart="peDragStart(event)"'
-      +' style="padding:7px 8px;border-radius:8px;margin-bottom:5px;cursor:grab;'
+    return '<div class="pe-muscle-chip" data-muscle="'+escHtml(mg)+'"'
+      +' style="padding:7px 8px;border-radius:8px;margin-bottom:5px;cursor:pointer;'
       +'background:'+color+'22;border:1px solid '+color+'44;font-size:.72rem;font-weight:600;color:'+color
       +'">'+escHtml(mg)+'</div>';
   }).join('');
+  // Wire clicks
+  el.querySelectorAll('.pe-muscle-chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var mg = this.dataset.muscle;
+      // Also filter the exercise list
+      filterProgEditorExercises(mg);
+      // Ask which day
+      showDayPicker(mg, 'muscle');
+    });
+  });
 }
 
-async function renderProgEditorExercises() {
-  var el = document.getElementById('prog-editor-exercises');
-  el.innerHTML = '<div style="font-size:.7rem;color:var(--mu2);padding:4px">Loading...</div>';
+var allProgEditorExercises = [];
 
-  var r = await sb.from('exercises').select('id,name,tag,muscle_group')
-    .or('is_global.eq.true,coach_id.eq.'+ME.id)
-    .order('name').limit(200);
+async function renderProgEditorExercises(filterMg) {
+  var leftPanel = document.getElementById('prog-editor-exercises');
+  leftPanel.innerHTML = '<div style="font-size:.7rem;color:var(--mu2);padding:4px">Loading...</div>';
 
-  var exs = r.data || [];
-  el.innerHTML = exs.map(function(ex){
+  if (!allProgEditorExercises.length) {
+    var r = await sb.from('exercises').select('id,name,tag,muscle_group')
+      .or('is_global.eq.true,coach_id.eq.'+ME.id)
+      .order('name').limit(300);
+    allProgEditorExercises = r.data || [];
+  }
+
+  // Build filter chips
+  var filterHtml = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'
+    +'<div class="pe-filter-chip'+(filterMg?'':' active')+'" data-mg="" style="padding:3px 7px;border-radius:100px;font-size:.6rem;cursor:pointer;background:'+(filterMg?'var(--s4)':'var(--red)')+';color:'+(filterMg?'var(--mu)':'#fff')+';border:none">All</div>'
+    + Object.keys(MUSCLE_COLORS).map(function(mg){
+      var active = filterMg===mg;
+      var color = MUSCLE_COLORS[mg];
+      return '<div class="pe-filter-chip'+(active?' active':'')+'" data-mg="'+escHtml(mg)+'"'
+        +' style="padding:3px 7px;border-radius:100px;font-size:.6rem;cursor:pointer;'
+        +'background:'+(active?color:color+'22')+';color:'+(active?'#fff':color)+';border:1px solid '+color+'44">'
+        +escHtml(mg)+'</div>';
+    }).join('')
+    +'</div>';
+
+  var filtered = filterMg
+    ? allProgEditorExercises.filter(function(ex){ return ex.muscle_group===filterMg||ex.tag===filterMg; })
+    : allProgEditorExercises;
+
+  var exHtml = filtered.map(function(ex){
     var color = MUSCLE_COLORS[ex.muscle_group] || '#888';
-    return '<div class="pe-drag-item" draggable="true"'
-      +' data-type="exercise" data-ex-id="'+ex.id+'" data-ex-name="'+escHtml(ex.name)+'"'
-      +' ondragstart="peDragStart(event)"'
-      +' style="padding:6px 8px;border-radius:7px;margin-bottom:4px;cursor:grab;'
+    return '<div class="pe-ex-item" data-ex-id="'+ex.id+'" data-ex-name="'+escHtml(ex.name)+'" data-mg="'+escHtml(ex.muscle_group||'')+'"'
+      +' style="padding:6px 8px;border-radius:7px;margin-bottom:4px;cursor:pointer;'
       +'background:var(--s3);border-left:3px solid '+color+';font-size:.68rem;color:var(--mu)">'
       +escHtml(ex.name)+'</div>';
-  }).join('');
+  }).join('') || '<div style="font-size:.65rem;color:var(--mu2);padding:6px">No exercises</div>';
+
+  leftPanel.innerHTML = filterHtml + exHtml;
+
+  // Wire filter chips
+  leftPanel.querySelectorAll('.pe-filter-chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      renderProgEditorExercises(this.dataset.mg || '');
+    });
+  });
+
+  // Wire exercise clicks
+  leftPanel.querySelectorAll('.pe-ex-item').forEach(function(item){
+    item.addEventListener('click', function(){
+      var exId = this.dataset.exId;
+      var exName = this.dataset.exName;
+      var mg = this.dataset.mg;
+      showDayPicker(exId, 'exercise', exName, mg);
+    });
+  });
+}
+
+function filterProgEditorExercises(mg) {
+  renderProgEditorExercises(mg);
 }
 
 function renderProgEditorGrid() {
@@ -4825,6 +4889,46 @@ function renderProgEditorGrid() {
     html += '</div>';
   }
   grid.innerHTML = html;
+}
+
+// ── Day Picker (tap-to-add flow) ─────────────────────────────
+var dayPickerState = { type:null, id:null, name:null, mg:null };
+
+function showDayPicker(id, type, name, mg) {
+  dayPickerState = { type:type, id:id, name:name||id, mg:mg||'' };
+  var title = type==='muscle'
+    ? 'Add '+id+' exercises to day:'
+    : 'Add "'+( name||id)+'" to day:';
+  document.getElementById('day-picker-title').textContent = title;
+
+  var grid = document.getElementById('day-picker-grid');
+  grid.innerHTML = '';
+  for (var i=1; i<=10; i++) {
+    var d = progEditorState.dayData[i];
+    var hasSess = d && d.session_name;
+    var btn = document.createElement('button');
+    btn.style.cssText = 'padding:10px 4px;border-radius:9px;border:1px solid var(--bdr);'
+      +'background:var(--s2);color:var(--white);font-family:inherit;font-size:.75rem;cursor:pointer;'
+      +'display:flex;flex-direction:column;align-items:center;gap:3px';
+    btn.innerHTML = '<span style="font-weight:700">D'+i+'</span>'
+      +(hasSess?'<span style="font-size:.52rem;color:var(--mu2)">'+escHtml(d.session_name.substring(0,8))+'</span>':'');
+    btn.dataset.day = i;
+    btn.addEventListener('click', function(){
+      var dayNum = parseInt(this.dataset.day);
+      closeDayPicker();
+      if (dayPickerState.type === 'muscle') {
+        openExPicker(dayNum, dayPickerState.id);
+      } else {
+        addExerciseToDay(dayNum, dayPickerState.id, dayPickerState.name, dayPickerState.mg, 3, 10);
+      }
+    });
+    grid.appendChild(btn);
+  }
+  document.getElementById('day-picker-overlay').style.display = 'flex';
+}
+
+function closeDayPicker() {
+  document.getElementById('day-picker-overlay').style.display = 'none';
 }
 
 // ── Drag & Drop handlers ──────────────────────────────────────
