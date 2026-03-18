@@ -5608,12 +5608,18 @@ async function saveExtraExercise() {
   };
 
   // Use upsert to avoid 409 conflicts
-  var extraPayload = Object.assign({}, payload, {
+  var extraPayload = {
+    athlete_id: ME.id,
+    cycle_day_id: extraModalState.dayDataId,
     is_extra: true,
     extra_exercise_id: extraModalState.selectedExId,
     extra_exercise_name: name,
-    sets: sets
-  });
+    set1_reps: reps,
+    set1_kg: kg || null,
+    done: false,
+    logged_date: new Date().toISOString().split('T')[0]
+  };
+  if (currentCycle) extraPayload.cycle_id = currentCycle.id;
   var r = await sb.from('logbook').insert(extraPayload).select().single();
 
   if (r.error) {
