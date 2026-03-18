@@ -5400,8 +5400,9 @@ var extraModalState = { dayDataId:null, selectedExId:null, allExs:[] };
 async function openAlternativeModal(seId, dayDataId, exObj, seObj) {
   altModalState = { seId:seId, dayDataId:dayDataId, exObj:exObj, seObj:seObj };
   var mg = exObj.muscle_group || exObj.tag || '';
+  var mgNorm = normMG(mg);
   document.getElementById('alt-modal-title').textContent = 'Alternatives for: ' + (exObj.name||'');
-  document.getElementById('alt-modal-sub').textContent = mg ? 'Same muscle group: ' + mg : 'All exercises';
+  document.getElementById('alt-modal-sub').textContent = mgNorm ? 'Same group: ' + mgNorm : 'All exercises';
   document.getElementById('alt-modal-list').innerHTML = '<div style="padding:12px;color:var(--mu2);font-size:.75rem">Loading...</div>';
   document.getElementById('alt-modal-overlay').style.display = 'flex';
 
@@ -5412,12 +5413,10 @@ async function openAlternativeModal(seId, dayDataId, exObj, seObj) {
   var all = r.data || [];
   // Filter strictly by same muscle_group
   var exs = all.filter(function(e){
-    if (e.id === exObj.id) return false;
-    if (!mg) return true;
-    var emg = (e.muscle_group||'').toLowerCase();
-    var etag = (e.tag||'').toLowerCase();
-    var fmg = mg.toLowerCase();
-    return emg === fmg || etag === fmg || emg.includes(fmg) || fmg.includes(emg);
+    if (String(e.id) === String(exObj.id)) return false;
+    if (!mgNorm) return true;
+    var enorm = normMG(e.muscle_group||e.tag||'');
+    return enorm === mgNorm;
   });
 
   document.getElementById('alt-modal-list').innerHTML = exs.map(function(ex){
@@ -5441,19 +5440,38 @@ async function openAlternativeModal(seId, dayDataId, exObj, seObj) {
   });
 }
 
-function selectAlternative(exId, exName) {
-  // Save to logbook_overrides or just update the display
-  // We log the alternative as an override note in logbook
+async function selectAlternative(exId, exName) {
   var key = altModalState.dayDataId+'_'+altModalState.seId;
   if (!logbookCache[key]) logbookCache[key] = {};
   logbookCache[key].alt_exercise_id   = exId;
   logbookCache[key].alt_exercise_name = exName;
 
-  // Update the exercise name display
+  // Update name display with strikethrough
   var nameEl = document.querySelector('#exi-'+altModalState.dayDataId+'-'+altModalState.seId+' .ex-name');
   if (nameEl) {
-    nameEl.innerHTML = '<span style="text-decoration:line-through;opacity:.5">'+escHtml(altModalState.exObj.name||'')+'</span>'
+    nameEl.innerHTML = '<span style="text-decoration:line-through;opacity:.5;font-size:.8em">'+escHtml(altModalState.exObj.name||'')+'</span>'
       +' <span style="color:var(--orn)">→ '+escHtml(exName)+'</span>';
+  }
+
+  // Fetch new exercise data (video_url, gif_url)
+  var newExR = await sb.from('exercises').select('id,name,video_url,gif_url').eq('id', exId).single();
+  var newEx = newExR.data;
+  if (newEx) {
+    // Update or add video button
+    var hdr = document.querySelector('#exi-'+altModalState.dayDataId+'-'+altModalState.seId+' .ex-header');
+    if (hdr) {
+      var oldVid = hdr.querySelector('button');
+      if (oldVid && oldVid.textContent === '🎬') oldVid.remove();
+      if (newEx.video_url || newEx.gif_url) {
+        var vidBtn = document.createElement('button');
+        vidBtn.textContent = '🎬';
+        vidBtn.setAttribute('style','background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer;margin-left:4px;flex-shrink:0');
+        (function(eid){
+          vidBtn.addEventListener('click', function(e){ e.stopPropagation(); openVideoModal(eid); });
+        })(newEx.id);
+        hdr.appendChild(vidBtn);
+      }
+    }
   }
 
   // Save to DB
@@ -5464,9 +5482,9 @@ function selectAlternative(exId, exName) {
     alt_exercise_id: exId,
     alt_exercise_name: exName
   }, { onConflict: 'athlete_id,session_exercise_id,cycle_day_id' }).then(function(){
-    showToast('Alternative: '+exName);
+    showToast('✓ Alternative: '+exName);
   }).catch(function(){
-    showToast('Alternative selected: '+exName);
+    showToast('Alternative: '+exName);
   });
 
   closeAltModal();
@@ -5495,15 +5513,16 @@ async function openExtraModal(dayDataId, currentEx) {
 }
 
 function renderExtraList(exs) {
-  document.getElementById('extra-modal-list').innerHTML = exs.slice(0,50).map(function(ex){
-    var color = strColor(ex.muscle_group||ex.tag||'');
-    var sel = extraModalState.selectedExId === ex.id;
+  document.getElementById('extra-modal-list').innerHTML = exs.slice(0,80).map(function(ex){
+    var _mg = normMG(ex.muscle_group||ex.tag||'');
+    var color = MUSCLE_COLORS[_mg] || strColor(_mg);
+    var sel = String(extraModalState.selectedExId) === String(ex.id);
     return '<div data-ex-id="'+ex.id+'" data-ex-name="'+escHtml(ex.name)+'"'
       +' style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--bdr);cursor:pointer;'
       +(sel?'background:var(--rdim)':'')+'">'
       +'<div>'
       +'<div style="font-size:.82rem;font-weight:'+(sel?'700':'400')+';color:'+(sel?'var(--red)':'var(--white)')+'">'+escHtml(ex.name)+'</div>'
-      +'<div style="font-size:.65rem;color:'+color+';margin-top:1px">'+escHtml(mg_norm)+'</div>'
+      +'<div style="font-size:.65rem;color:'+color+';margin-top:1px">'+escHtml(_mg)+'</div>'
       +'</div>'
       +(sel?'<span style="color:var(--red);font-size:1rem">&#10003;</span>':'')
       +'</div>';
