@@ -3473,6 +3473,7 @@ function buildExItem(se, dayData) {
   var hdr=document.createElement('div'); hdr.className='ex-header';
   var hasMedia = ex.video_url || ex.gif_url;
   var altName = log.alt_exercise_name || null;
+  var altExId = log.alt_exercise_id || null;
   var displayName = altName
     ? '<span style="text-decoration:line-through;opacity:.4;font-size:.8em">'+escHtml(ex.name||'?')+'</span> <span style="color:var(--orn)">→ '+escHtml(altName)+'</span>'
     : escHtml(ex.name||'?');
@@ -3480,14 +3481,15 @@ function buildExItem(se, dayData) {
     '<div class="ex-info"><div class="ex-name">'+displayName+'</div>' +
     '<span class="ex-tag t-'+(ex.tag||'mec')+'">'+escHtml(ex.tag_label||'Mec')+'</span></div>' +
     '<div class="ex-sets-pill">'+se.sets+'&#215;'+(se.reps||'8-10')+'</div>';
-  if (hasMedia) {
+  var videoExId = altExId || ex.id;
+  if (hasMedia || altExId) {
     var vidBtn = document.createElement('button');
     vidBtn.textContent = '🎬';
     vidBtn.setAttribute('style', 'background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer;margin-left:4px;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation');
     (function(eid){ 
       vidBtn.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openVideoModal(eid); }, {passive:false});
       vidBtn.addEventListener('click', function(e){ e.stopPropagation(); openVideoModal(eid); });
-    })(ex.id);
+    })(videoExId);
     hdr.appendChild(vidBtn);
   }
   hdr.onclick=(function(ddid,seid){ return function(){ toggleEx(ddid,seid); }; })(dayData.id,se.id);
