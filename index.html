@@ -1127,7 +1127,7 @@ select.inp{cursor:pointer}
         <div class="field"><label style="font-size:.65rem">Reps</label><input class="inp" id="extra-reps" type="number" value="10" min="1" max="100" inputmode="numeric"></div>
         <div class="field"><label style="font-size:.65rem">Kg</label><input class="inp" id="extra-kg" type="number" value="" placeholder="—" inputmode="decimal"></div>
       </div>
-      <button onclick="saveExtraExercise()" style="width:100%;padding:11px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer">Add to Logbook</button>
+      <button id="extra-save-btn" onclick="saveExtraExercise()" style="width:100%;padding:11px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer">Add to Logbook</button>
     </div>
   </div>
 </div>
@@ -5412,12 +5412,20 @@ async function openAlternativeModal(seId, dayDataId, exObj, seObj) {
     .order('name').limit(300);
   var all = r.data || [];
   // Filter strictly by same muscle_group
+  // Try strict match first, then loose
   var exs = all.filter(function(e){
     if (String(e.id) === String(exObj.id)) return false;
-    if (!mgNorm) return true;
-    var enorm = normMG(e.muscle_group||e.tag||'');
-    return enorm === mgNorm;
+    if (!mg) return true;
+    var emg = (e.muscle_group||'').toLowerCase().trim();
+    var etag = (e.tag||'').toLowerCase().trim();
+    var fmg = mg.toLowerCase().trim();
+    var fmgNorm = mgNorm.toLowerCase().trim();
+    return emg===fmg || etag===fmg || normMG(emg)===mgNorm || normMG(etag)===mgNorm
+      || emg.includes(fmg) || fmg.includes(emg)
+      || emg===fmgNorm || etag===fmgNorm;
   });
+  // Update subtitle with count
+  document.getElementById('alt-modal-sub').textContent = (mgNorm||mg) + ' — ' + exs.length + ' exercises';
 
   document.getElementById('alt-modal-list').innerHTML = exs.map(function(ex){
     var color = strColor(ex.muscle_group||ex.tag||'');
@@ -5561,7 +5569,7 @@ async function saveExtraExercise() {
     showToast('Error: no day selected'); return;
   }
 
-  var btn = document.querySelector('#extra-modal-overlay button[onclick="saveExtraExercise()"]');
+  var btn = document.getElementById('extra-save-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
 
   var payload = {
@@ -5588,7 +5596,7 @@ async function saveExtraExercise() {
   }
 
   if (btn) { btn.disabled = false; btn.textContent = 'Add to Logbook'; }
-  closeExtraModal();
+  setTimeout(function(){ closeExtraModal(); }, 200);
   renderExtraInSession(extraModalState.dayDataId, name, sets, reps, kg);
 }
 
