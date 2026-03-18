@@ -4693,16 +4693,27 @@ var exPickerState = {
 };
 
 var MUSCLE_COLORS = {
-  'Chest':        '#e8111a',
-  'Back':         '#1a6ee8',
-  'Shoulders':    '#e8a011',
-  'Biceps':       '#11e86f',
-  'Triceps':      '#9b11e8',
-  'Legs':         '#e87511',
-  'Glutes':       '#e811b5',
-  'Core':         '#11e8d4',
-  'Cardio':       '#118ae8',
-  'Full Body':    '#888'
+  'Petto':              '#e8111a',
+  'Chest':              '#e8111a',
+  'Schiena':            '#1a6ee8',
+  'Back':               '#1a6ee8',
+  'Spalle':             '#e8a011',
+  'Shoulders':          '#e8a011',
+  'Braccia':            '#11e86f',
+  'Biceps':             '#11e86f',
+  'Triceps':            '#9b11e8',
+  'Gambe':              '#e87511',
+  'Gambe Squat':        '#e87511',
+  'Legs':               '#e87511',
+  'Glutei':             '#e811b5',
+  'Glutes':             '#e811b5',
+  'Core':               '#11e8d4',
+  'Cardio Circuit':     '#118ae8',
+  'Cardio HIIT':        '#0ea5e9',
+  'Cardio LISS':        '#38bdf8',
+  'Cardio':             '#118ae8',
+  'Altro':              '#888',
+  'Full Body':          '#888'
 };
 
 async function openProgEditor(athleteId, mesoId, athleteName) {
@@ -4739,11 +4750,13 @@ async function openProgEditor(athleteId, mesoId, athleteName) {
     };
   });
 
-  allProgEditorExercises = []; // reset cache so it reloads
-  renderProgEditorMuscles();
+  allProgEditorExercises = []; // reset cache
+  document.getElementById('prog-editor-muscles').innerHTML = '<div style="font-size:.7rem;color:var(--mu2);padding:4px">Loading...</div>';
+  // Load exercises first, then render muscles (muscles depend on exercise data)
   await renderProgEditorExercises('');
+  renderProgEditorMuscles(); // now has data
   renderProgEditorGrid();
-  document.getElementById('prog-editor-status').textContent = 'Drag muscle groups or exercises onto days';
+  document.getElementById('prog-editor-status').textContent = 'Tap a muscle group or exercise, then choose a day';
 }
 
 function closeProgEditor() {
@@ -4752,10 +4765,19 @@ function closeProgEditor() {
 
 function renderProgEditorMuscles() {
   var el = document.getElementById('prog-editor-muscles');
-  // Show muscle group filter for exercises panel
+  // Use actual muscle groups from loaded exercises
+  var groups = [];
+  allProgEditorExercises.forEach(function(ex){
+    var mg = ex.muscle_group || ex.tag || 'Altro';
+    if (mg && groups.indexOf(mg) === -1) groups.push(mg);
+  });
+  groups.sort();
+  // Fallback to MUSCLE_COLORS keys if exercises not loaded yet
+  if (!groups.length) groups = Object.keys(MUSCLE_COLORS);
+
   el.innerHTML = '<div style="font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:6px;padding:0 2px">Tap to add to day</div>'
-    + Object.keys(MUSCLE_COLORS).map(function(mg){
-    var color = MUSCLE_COLORS[mg];
+    + groups.map(function(mg){
+    var color = MUSCLE_COLORS[mg] || '#888';
     return '<div class="pe-muscle-chip" data-muscle="'+escHtml(mg)+'"'
       +' style="padding:7px 8px;border-radius:8px;margin-bottom:5px;cursor:pointer;'
       +'background:'+color+'22;border:1px solid '+color+'44;font-size:.72rem;font-weight:600;color:'+color
@@ -4786,12 +4808,19 @@ async function renderProgEditorExercises(filterMg) {
     allProgEditorExercises = r.data || [];
   }
 
-  // Build filter chips
+  // Build filter chips from actual data
+  var actualGroups = [];
+  allProgEditorExercises.forEach(function(ex){
+    var mg = ex.muscle_group || ex.tag || 'Altro';
+    if (mg && actualGroups.indexOf(mg) === -1) actualGroups.push(mg);
+  });
+  actualGroups.sort();
+
   var filterHtml = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'
     +'<div class="pe-filter-chip'+(filterMg?'':' active')+'" data-mg="" style="padding:3px 7px;border-radius:100px;font-size:.6rem;cursor:pointer;background:'+(filterMg?'var(--s4)':'var(--red)')+';color:'+(filterMg?'var(--mu)':'#fff')+';border:none">All</div>'
-    + Object.keys(MUSCLE_COLORS).map(function(mg){
+    + actualGroups.map(function(mg){
       var active = filterMg===mg;
-      var color = MUSCLE_COLORS[mg];
+      var color = MUSCLE_COLORS[mg] || '#888';
       return '<div class="pe-filter-chip'+(active?' active':'')+'" data-mg="'+escHtml(mg)+'"'
         +' style="padding:3px 7px;border-radius:100px;font-size:.6rem;cursor:pointer;'
         +'background:'+(active?color:color+'22')+';color:'+(active?'#fff':color)+';border:1px solid '+color+'44">'
@@ -4976,21 +5005,27 @@ async function openExPicker(dayNum, muscleGroup) {
   exPickerState.selected = {};
 
   document.getElementById('ex-picker-title').textContent = muscleGroup + ' — Select Exercises';
-  document.getElementById('ex-picker-list').innerHTML = '<div style="padding:8px;color:var(--mu2);font-size:.75rem">Loading...</div>';
   document.getElementById('ex-picker-overlay').style.display = 'flex';
 
-  var r = await sb.from('exercises').select('id,name,tag,muscle_group')
-    .or('is_global.eq.true,coach_id.eq.'+ME.id)
-    .eq('muscle_group', muscleGroup)
-    .order('name');
+  // Use already-loaded exercises, filter by muscle group
+  var f = muscleGroup.toLowerCase();
+  var exs = allProgEditorExercises.filter(function(ex){
+    var mg  = (ex.muscle_group||'').toLowerCase();
+    var tag = (ex.tag||'').toLowerCase();
+    return mg===f || tag===f || mg.includes(f) || tag.includes(f);
+  });
 
-  var exs = r.data || [];
+  // If nothing found locally, fetch from DB
   if (!exs.length) {
-    // Try tag match
-    var r2 = await sb.from('exercises').select('id,name,tag,muscle_group')
+    var r = await sb.from('exercises').select('id,name,tag,muscle_group')
       .or('is_global.eq.true,coach_id.eq.'+ME.id)
-      .ilike('tag', '%'+muscleGroup+'%').order('name');
-    exs = r2.data || [];
+      .order('name').limit(300);
+    var all = r.data || [];
+    exs = all.filter(function(ex){
+      var mg  = (ex.muscle_group||'').toLowerCase();
+      var tag = (ex.tag||'').toLowerCase();
+      return mg===f || tag===f || mg.includes(f) || tag.includes(f);
+    });
   }
 
   var listItems = exs.map(function(ex){
