@@ -5498,29 +5498,29 @@ async function selectAlternative(exId, exName) {
   }
 
   // Save to DB
-  var cacheEntry = logbookCache[altModalState.dayDataId+'_'+altModalState.seId];
-  if (cacheEntry && cacheEntry.id) {
-    sb.from('logbook').update({
-      alt_exercise_id: exId,
-      alt_exercise_name: exName
-    }).eq('id', cacheEntry.id).then(function(){
-      showToast('✓ Alternative saved: '+exName);
+  // Check if logbook entry exists, update or insert accordingly
+  sb.from('logbook')
+    .select('id')
+    .eq('athlete_id', ME.id)
+    .eq('session_exercise_id', altModalState.seId)
+    .eq('cycle_day_id', altModalState.dayDataId)
+    .maybeSingle()
+    .then(function(r) {
+      var updateData = { alt_exercise_id: exId, alt_exercise_name: exName };
+      if (r.data && r.data.id) {
+        sb.from('logbook').update(updateData).eq('id', r.data.id)
+          .then(function(){ showToast('✓ Alternative: '+exName); });
+      } else {
+        sb.from('logbook').insert(Object.assign(updateData, {
+          athlete_id: ME.id,
+          session_exercise_id: altModalState.seId,
+          cycle_day_id: altModalState.dayDataId,
+          cycle_id: currentCycle ? currentCycle.id : null,
+          logged_date: new Date().toISOString().split('T')[0],
+          done: false
+        })).then(function(){ showToast('✓ Alternative: '+exName); });
+      }
     });
-  } else {
-    sb.from('logbook').insert({
-      athlete_id: ME.id,
-      session_exercise_id: altModalState.seId,
-      cycle_day_id: altModalState.dayDataId,
-      cycle_id: currentCycle ? currentCycle.id : null,
-      logged_date: new Date().toISOString().split('T')[0],
-      alt_exercise_id: exId,
-      alt_exercise_name: exName,
-      done: false
-    }).then(function(r){
-      if (r.data) logbookCache[altModalState.dayDataId+'_'+altModalState.seId] = r.data;
-      showToast('✓ Alternative: '+exName);
-    }).catch(function(){ showToast('Alternative noted: '+exName); });
-  }
 
   closeAltModal();
 }
