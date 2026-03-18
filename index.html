@@ -1039,6 +1039,51 @@ select.inp{cursor:pointer}
   </div>
 </div>
 
+<!-- PROGRAM EDITOR MODAL -->
+<div id="prog-editor-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:400;overflow:hidden;display:none;flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--bdr);flex-shrink:0">
+    <div>
+      <div id="prog-editor-title" style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--white)">PROGRAM EDITOR</div>
+      <div id="prog-editor-subtitle" style="font-size:.68rem;color:var(--mu2);margin-top:1px"></div>
+    </div>
+    <button onclick="closeProgEditor()" style="background:none;border:none;color:var(--mu);font-size:1.2rem;cursor:pointer">&#10005;</button>
+  </div>
+  <div style="display:flex;flex:1;overflow:hidden;gap:0">
+    <!-- LEFT PANEL: muscle groups + exercises -->
+    <div style="width:140px;flex-shrink:0;border-right:1px solid var(--bdr);overflow-y:auto;padding:10px 8px">
+      <div style="font-size:.55rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px;padding:0 4px">Drag to add</div>
+      <div id="prog-editor-muscles"></div>
+      <div style="font-size:.55rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin:12px 0 8px;padding:0 4px">Exercises</div>
+      <div id="prog-editor-exercises"></div>
+    </div>
+    <!-- RIGHT PANEL: 10-day grid -->
+    <div style="flex:1;overflow-y:auto;padding:10px">
+      <div style="font-size:.55rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px">10-Day Program</div>
+      <div id="prog-editor-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px"></div>
+    </div>
+  </div>
+  <!-- Save bar -->
+  <div style="padding:10px 16px;border-top:1px solid var(--bdr);flex-shrink:0;display:flex;gap:8px;align-items:center">
+    <div id="prog-editor-status" style="flex:1;font-size:.72rem;color:var(--mu2)">Drag muscle groups or exercises onto days</div>
+    <button onclick="saveProgEditorChanges()" style="padding:9px 20px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer">Save Changes</button>
+  </div>
+</div>
+
+<!-- EXERCISE PICKER POPUP (for muscle group drops) -->
+<div id="ex-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:16px;width:100%;max-width:380px;overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between">
+      <div id="ex-picker-title" style="font-weight:700;font-size:.9rem">Select Exercises</div>
+      <button onclick="closeExPicker()" style="background:none;border:none;color:var(--mu);font-size:1.1rem;cursor:pointer">&#10005;</button>
+    </div>
+    <div id="ex-picker-list" style="max-height:300px;overflow-y:auto;padding:8px"></div>
+    <div style="padding:12px 16px;border-top:1px solid var(--bdr);display:flex;gap:8px">
+      <button onclick="closeExPicker()" style="flex:1;padding:10px;border-radius:9px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu);font-family:inherit;font-size:.82rem;cursor:pointer">Cancel</button>
+      <button onclick="confirmExPicker()" style="flex:1;padding:10px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer">Add Selected</button>
+    </div>
+  </div>
+</div>
+
 <!-- RIEPILOGO ALLENAMENTO MODAL -->
 <div id="summary-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:500;align-items:flex-start;justify-content:center;padding-top:20px;overflow-y:auto" onclick="closeSummary()">
   <div onclick="event.stopPropagation()" style="width:100%;max-width:480px;padding:0 14px 60px">
@@ -2175,6 +2220,9 @@ function renderVistaContent(ath, meso, cycles, overrideMap) {
   if (meso.objective) html += '<div style="font-size:.75rem;color:var(--mu2);margin-top:4px">' + escHtml(meso.objective) + '</div>';
   html += '</div>';
 
+  // Edit Program button — use data attributes to avoid quote escaping issues
+  html += '<button id="prog-edit-btn" data-ath-id="'+escHtml(ath.id)+'" data-meso-id="'+escHtml(meso.id)+'" data-ath-name="'+escHtml(ath.full_name||ath.email)+'" style="width:100%;padding:11px;border-radius:10px;background:var(--rdim);border:1px solid rgba(232,17,42,.25);color:var(--red);font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;margin-bottom:14px">&#9998; Edit Program (Drag &amp; Drop)</button>';
+
   cycles.forEach(function(cyc) {
     var isCurrent = cyc.id === currentCycleId;
     var tc = CT[cyc.cycle_type] || '#888';
@@ -2281,6 +2329,13 @@ function renderVistaContent(ath, meso, cycles, overrideMap) {
   });
 
   document.getElementById('vista-content').innerHTML = html;
+  // Wire program editor button
+  var progBtn = document.getElementById('prog-edit-btn');
+  if (progBtn) {
+    progBtn.addEventListener('click', function(){
+      openProgEditor(this.dataset.athId, this.dataset.mesoId, this.dataset.athName);
+    });
+  }
 }
 
 function closeVistaModal() {
@@ -3305,7 +3360,31 @@ function renderDaySession(dayNum) {
       '<br><br><button class="btn-done" onclick="markCardioDone('+dayData.id+')" style="max-width:220px">Mark as done</button>';
     card.appendChild(cd);
   } else {
-    sexs.forEach(function(se){ card.appendChild(buildExItem(se, dayData)); });
+    // Group exercises by muscle group with colored separators
+    var MGCOLORS = {'Chest':'#e8111a','Back':'#1a6ee8','Shoulders':'#e8a011','Biceps':'#11e86f',
+      'Triceps':'#9b11e8','Legs':'#e87511','Glutes':'#e811b5','Core':'#11e8d4','Cardio':'#118ae8'};
+    var groups = {};
+    var groupOrder = [];
+    sexs.forEach(function(se){
+      var mg = (se.exercises && se.exercises.tag) || 'Other';
+      if (!groups[mg]) { groups[mg] = []; groupOrder.push(mg); }
+      groups[mg].push(se);
+    });
+    if (groupOrder.length > 1) {
+      // Multi-group: show separators
+      groupOrder.forEach(function(mg){
+        var color = MGCOLORS[mg] || '#888';
+        var sep = document.createElement('div');
+        sep.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 14px 4px;margin-top:4px';
+        sep.innerHTML = '<div style="width:10px;height:10px;border-radius:50%;background:'+color+';flex-shrink:0"></div>'
+          +'<div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:'+color+'">'+escHtml(mg)+'</div>'
+          +'<div style="flex:1;height:1px;background:'+color+'33"></div>';
+        card.appendChild(sep);
+        groups[mg].forEach(function(se){ card.appendChild(buildExItem(se, dayData)); });
+      });
+    } else {
+      sexs.forEach(function(se){ card.appendChild(buildExItem(se, dayData)); });
+    }
   }
   area.appendChild(card);
 }
@@ -4584,6 +4663,360 @@ function useAssessmentInAI(athId) {
 
       showToast('Assessment loaded into AI Coach ✓');
     }).catch(function(){});
+}
+
+// ── PROGRAM EDITOR ───────────────────────────────────────────
+var progEditorState = {
+  athleteId: null,
+  mesoId: null,
+  cycleId: null,
+  dayData: {},       // day_number → {cycle_day_id, session_id, session_exercises:[]}
+  pendingChanges: {},// day_number → [{exercise_id, sets, reps, rest_sec, sort_order}]
+  dirty: false
+};
+
+var exPickerState = {
+  dayNum: null,
+  muscleGroup: null,
+  selected: {}
+};
+
+var MUSCLE_COLORS = {
+  'Chest':        '#e8111a',
+  'Back':         '#1a6ee8',
+  'Shoulders':    '#e8a011',
+  'Biceps':       '#11e86f',
+  'Triceps':      '#9b11e8',
+  'Legs':         '#e87511',
+  'Glutes':       '#e811b5',
+  'Core':         '#11e8d4',
+  'Cardio':       '#118ae8',
+  'Full Body':    '#888'
+};
+
+async function openProgEditor(athleteId, mesoId, athleteName) {
+  progEditorState.athleteId = athleteId;
+  progEditorState.mesoId    = mesoId;
+  progEditorState.pendingChanges = {};
+  progEditorState.dirty = false;
+
+  document.getElementById('prog-editor-title').textContent = 'PROGRAM EDITOR';
+  document.getElementById('prog-editor-subtitle').textContent = athleteName;
+  document.getElementById('prog-editor-overlay').style.display = 'flex';
+  document.getElementById('prog-editor-status').textContent = 'Loading...';
+
+  // Load current cycle of this meso
+  var cycR = await sb.from('cycles')
+    .select('id,name,cycle_type,cycle_number,cycle_days(id,day_number,sessions(id,name,session_type,session_exercises(id,sort_order,sets,reps,rest_sec,exercises(id,name,tag))))')
+    .eq('mesocycle_id', mesoId)
+    .order('cycle_number').limit(1).single();
+
+  var cyc = cycR.data;
+  if (!cyc) { document.getElementById('prog-editor-status').textContent = 'No cycle found'; return; }
+  progEditorState.cycleId = cyc.id;
+
+  // Build dayData
+  progEditorState.dayData = {};
+  (cyc.cycle_days||[]).forEach(function(d){
+    var ses = d.sessions;
+    progEditorState.dayData[d.day_number] = {
+      cycle_day_id: d.id,
+      session_id: ses ? ses.id : null,
+      session_name: ses ? ses.name : null,
+      session_type: ses ? ses.session_type : null,
+      exercises: ses ? (ses.session_exercises||[]).sort(function(a,b){ return a.sort_order-b.sort_order; }) : []
+    };
+  });
+
+  renderProgEditorMuscles();
+  await renderProgEditorExercises();
+  renderProgEditorGrid();
+  document.getElementById('prog-editor-status').textContent = 'Drag muscle groups or exercises onto days';
+}
+
+function closeProgEditor() {
+  document.getElementById('prog-editor-overlay').style.display = 'none';
+}
+
+function renderProgEditorMuscles() {
+  var el = document.getElementById('prog-editor-muscles');
+  el.innerHTML = Object.keys(MUSCLE_COLORS).map(function(mg){
+    var color = MUSCLE_COLORS[mg];
+    return '<div class="pe-drag-item" draggable="true"'
+      +' data-type="muscle" data-muscle="'+escHtml(mg)+'"'
+      +' ondragstart="peDragStart(event)"'
+      +' style="padding:7px 8px;border-radius:8px;margin-bottom:5px;cursor:grab;'
+      +'background:'+color+'22;border:1px solid '+color+'44;font-size:.72rem;font-weight:600;color:'+color
+      +'">'+escHtml(mg)+'</div>';
+  }).join('');
+}
+
+async function renderProgEditorExercises() {
+  var el = document.getElementById('prog-editor-exercises');
+  el.innerHTML = '<div style="font-size:.7rem;color:var(--mu2);padding:4px">Loading...</div>';
+
+  var r = await sb.from('exercises').select('id,name,tag,muscle_group')
+    .or('is_global.eq.true,coach_id.eq.'+ME.id)
+    .order('name').limit(200);
+
+  var exs = r.data || [];
+  el.innerHTML = exs.map(function(ex){
+    var color = MUSCLE_COLORS[ex.muscle_group] || '#888';
+    return '<div class="pe-drag-item" draggable="true"'
+      +' data-type="exercise" data-ex-id="'+ex.id+'" data-ex-name="'+escHtml(ex.name)+'"'
+      +' ondragstart="peDragStart(event)"'
+      +' style="padding:6px 8px;border-radius:7px;margin-bottom:4px;cursor:grab;'
+      +'background:var(--s3);border-left:3px solid '+color+';font-size:.68rem;color:var(--mu)">'
+      +escHtml(ex.name)+'</div>';
+  }).join('');
+}
+
+function renderProgEditorGrid() {
+  var grid = document.getElementById('prog-editor-grid');
+  var html = '';
+  for (var i=1; i<=10; i++) {
+    var d = progEditorState.dayData[i];
+    var pending = progEditorState.pendingChanges[i] || [];
+    var allExs = d ? d.exercises : [];
+    var hasPending = pending.length > 0;
+
+    // Group exercises by muscle group
+    var muscleGroups = {};
+    allExs.forEach(function(se){
+      var tag = (se.exercises && se.exercises.tag) || 'Other';
+      if (!muscleGroups[tag]) muscleGroups[tag] = [];
+      muscleGroups[tag].push(se);
+    });
+    pending.forEach(function(pe){
+      var tag = pe.muscle_group || 'Other';
+      if (!muscleGroups[tag]) muscleGroups[tag] = [];
+      muscleGroups[tag].push({exercises:{name:pe.ex_name}, sets:pe.sets, reps:pe.reps, _pending:true});
+    });
+
+    html += '<div class="pe-day-cell"'
+      +' data-day="'+i+'"'
+      +' ondragover="event.preventDefault();peDragOver(this,true)"'
+      +' ondragleave="peDragOver(this,false)"'
+      +' ondrop="peDrop(event,'+i+')"'
+      +' style="background:var(--s2);border:1px solid '+(hasPending?'rgba(232,17,42,.4)':'var(--bdr)')+';border-radius:10px;padding:8px;min-height:100px">';
+
+    html += '<div style="font-size:.62rem;font-weight:700;color:var(--mu2);margin-bottom:6px">Day '+i
+      +(d&&d.session_name?' · <span style="color:var(--red)">'+escHtml(d.session_name)+'</span>':'')+'</div>';
+
+    // Render by muscle group with colored badges
+    Object.keys(muscleGroups).forEach(function(mg){
+      var color = MUSCLE_COLORS[mg] || '#888';
+      html += '<div style="margin-bottom:5px">';
+      html += '<div style="font-size:.56rem;font-weight:700;color:'+color+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">'+escHtml(mg)+'</div>';
+      muscleGroups[mg].forEach(function(se){
+        var name = se.exercises ? se.exercises.name : '?';
+        html += '<div style="font-size:.62rem;color:'+( se._pending?'var(--orn)':'var(--mu)')+';padding:2px 4px;border-radius:4px;'+(se._pending?'background:rgba(232,150,0,.08)':'')+'">'
+          +'· '+escHtml(name);
+        if (se.sets&&se.reps) html += ' <span style="color:var(--mu2)">'+se.sets+'×'+se.reps+'</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+
+    if (!allExs.length && !pending.length) {
+      html += '<div style="font-size:.62rem;color:var(--mu2);text-align:center;padding:10px 0">Drop here</div>';
+    }
+
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+// ── Drag & Drop handlers ──────────────────────────────────────
+var peDragData = null;
+
+function peDragStart(e) {
+  peDragData = {
+    type: e.currentTarget.dataset.type,
+    muscle: e.currentTarget.dataset.muscle,
+    exId: e.currentTarget.dataset.exId,
+    exName: e.currentTarget.dataset.exName
+  };
+  e.currentTarget.style.opacity = '.5';
+  setTimeout(function(){ e.currentTarget.style.opacity='1'; }, 0);
+}
+
+function peDragOver(el, over) {
+  el.style.borderColor = over ? 'rgba(232,17,42,.6)' : 'var(--bdr)';
+  el.style.background  = over ? 'rgba(232,17,42,.06)' : 'var(--s2)';
+}
+
+function peDrop(e, dayNum) {
+  e.preventDefault();
+  var cell = document.querySelector('.pe-day-cell[data-day="'+dayNum+'"]');
+  if (cell) peDragOver(cell, false);
+  if (!peDragData) return;
+
+  if (peDragData.type === 'muscle') {
+    openExPicker(dayNum, peDragData.muscle);
+  } else if (peDragData.type === 'exercise') {
+    addExerciseToDay(dayNum, peDragData.exId, peDragData.exName, null, 3, 10);
+  }
+  peDragData = null;
+}
+
+// ── Exercise Picker (for muscle group drops) ──────────────────
+async function openExPicker(dayNum, muscleGroup) {
+  exPickerState.dayNum = dayNum;
+  exPickerState.muscleGroup = muscleGroup;
+  exPickerState.selected = {};
+
+  document.getElementById('ex-picker-title').textContent = muscleGroup + ' — Select Exercises';
+  document.getElementById('ex-picker-list').innerHTML = '<div style="padding:8px;color:var(--mu2);font-size:.75rem">Loading...</div>';
+  document.getElementById('ex-picker-overlay').style.display = 'flex';
+
+  var r = await sb.from('exercises').select('id,name,tag,muscle_group')
+    .or('is_global.eq.true,coach_id.eq.'+ME.id)
+    .eq('muscle_group', muscleGroup)
+    .order('name');
+
+  var exs = r.data || [];
+  if (!exs.length) {
+    // Try tag match
+    var r2 = await sb.from('exercises').select('id,name,tag,muscle_group')
+      .or('is_global.eq.true,coach_id.eq.'+ME.id)
+      .ilike('tag', '%'+muscleGroup+'%').order('name');
+    exs = r2.data || [];
+  }
+
+  var listItems = exs.map(function(ex){
+    return '<div data-ex-id="'+ex.id+'" data-ex-name="'+escHtml(ex.name)+'" id="exp-'+ex.id+'"'
+      +' style="padding:10px 12px;border-radius:8px;margin-bottom:4px;cursor:pointer;'
+      +'display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bdr)">'
+      +'<div id="exp-chk-'+ex.id+'" style="width:16px;height:16px;border-radius:4px;border:1px solid var(--bdr);flex-shrink:0"></div>'
+      +'<span style="font-size:.8rem">'+escHtml(ex.name)+'</span>'
+      +'</div>';
+  }).join('') || '<div style="padding:12px;color:var(--mu2);font-size:.75rem">No exercises found for this muscle group</div>';
+  document.getElementById('ex-picker-list').innerHTML = listItems;
+  document.querySelectorAll('#ex-picker-list [data-ex-id]').forEach(function(el){
+    el.addEventListener('click', function(){ toggleExPicker(this.dataset.exId, this.dataset.exName); });
+  });
+}
+
+function toggleExPicker(exId, exName) {
+  if (exPickerState.selected[exId]) {
+    delete exPickerState.selected[exId];
+    var chk = document.getElementById('exp-chk-'+exId);
+    if (chk) { chk.style.background=''; chk.style.borderColor='var(--bdr)'; }
+    var row = document.getElementById('exp-'+exId);
+    if (row) { row.style.borderColor='var(--bdr)'; row.style.background='var(--s2)'; }
+  } else {
+    exPickerState.selected[exId] = exName;
+    var chk = document.getElementById('exp-chk-'+exId);
+    if (chk) { chk.style.background='var(--red)'; chk.style.borderColor='var(--red)'; }
+    var row = document.getElementById('exp-'+exId);
+    if (row) { row.style.borderColor='rgba(232,17,42,.3)'; row.style.background='var(--rdim)'; }
+  }
+}
+
+function confirmExPicker() {
+  var dayNum = exPickerState.dayNum;
+  var mg = exPickerState.muscleGroup;
+  Object.keys(exPickerState.selected).forEach(function(exId){
+    addExerciseToDay(dayNum, exId, exPickerState.selected[exId], mg, 3, 10);
+  });
+  closeExPicker();
+  renderProgEditorGrid();
+  document.getElementById('prog-editor-status').textContent = Object.keys(exPickerState.selected).length+' exercises added to Day '+dayNum+' · Click Save to apply';
+  progEditorState.dirty = true;
+}
+
+function closeExPicker() {
+  document.getElementById('ex-picker-overlay').style.display = 'none';
+}
+
+function addExerciseToDay(dayNum, exId, exName, muscleGroup, sets, reps) {
+  if (!progEditorState.pendingChanges[dayNum]) progEditorState.pendingChanges[dayNum] = [];
+  progEditorState.pendingChanges[dayNum].push({
+    exercise_id: exId,
+    ex_name: exName,
+    muscle_group: muscleGroup,
+    sets: sets || 3,
+    reps: reps || 10,
+    rest_sec: 90,
+    sort_order: (progEditorState.pendingChanges[dayNum].length + 1) * 10
+  });
+  progEditorState.dirty = true;
+  renderProgEditorGrid();
+  document.getElementById('prog-editor-status').textContent = 'Day '+dayNum+' updated · Click Save to apply';
+}
+
+// ── Save changes to DB ────────────────────────────────────────
+async function saveProgEditorChanges() {
+  if (!progEditorState.dirty) { showToast('No changes to save'); return; }
+
+  var btn = document.querySelector('#prog-editor-overlay button[onclick="saveProgEditorChanges()"]');
+  if (btn) { btn.disabled=true; btn.textContent='Saving...'; }
+
+  var errors = [];
+  var saved = 0;
+
+  for (var dayNum in progEditorState.pendingChanges) {
+    var exList = progEditorState.pendingChanges[dayNum];
+    if (!exList.length) continue;
+    var day = progEditorState.dayData[dayNum];
+
+    try {
+      var sessionId = day && day.session_id;
+
+      // If no session exists for this day, create one
+      if (!sessionId) {
+        var sessR = await sb.from('sessions').insert({
+          name: 'Day '+dayNum,
+          session_type: 'gym',
+          mesocycle_id: progEditorState.mesoId
+        }).select().single();
+        if (sessR.error) throw sessR.error;
+        sessionId = sessR.data.id;
+
+        // Link to cycle_day
+        if (day && day.cycle_day_id) {
+          await sb.from('cycle_days').update({session_id: sessionId}).eq('id', day.cycle_day_id);
+        }
+      }
+
+      // Get current max sort_order
+      var curR = await sb.from('session_exercises').select('sort_order').eq('session_id', sessionId).order('sort_order', {ascending:false}).limit(1);
+      var baseOrder = curR.data && curR.data[0] ? curR.data[0].sort_order : 0;
+
+      // Insert new exercises
+      var toInsert = exList.map(function(ex, idx){
+        return {
+          session_id: sessionId,
+          exercise_id: ex.exercise_id,
+          sets: ex.sets,
+          reps: ex.reps,
+          rest_sec: ex.rest_sec,
+          sort_order: baseOrder + (idx+1)*10
+        };
+      });
+
+      var insR = await sb.from('session_exercises').insert(toInsert);
+      if (insR.error) throw insR.error;
+      saved += exList.length;
+    } catch(e) {
+      errors.push('Day '+dayNum+': '+e.message);
+    }
+  }
+
+  if (btn) { btn.disabled=false; btn.textContent='Save Changes'; }
+
+  if (errors.length) {
+    document.getElementById('prog-editor-status').textContent = 'Errors: '+errors.join(', ');
+  } else {
+    showToast('✓ '+saved+' exercises saved to program');
+    progEditorState.pendingChanges = {};
+    progEditorState.dirty = false;
+    document.getElementById('prog-editor-status').textContent = 'All changes saved';
+    // Reload
+    await openProgEditor(progEditorState.athleteId, progEditorState.mesoId,
+      document.getElementById('prog-editor-subtitle').textContent);
+  }
 }
 
 // ── ANALYTICS ────────────────────────────────────────────────
