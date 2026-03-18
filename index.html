@@ -4021,6 +4021,21 @@ function closeSummary() {
   document.body.style.overflow = '';
 }
 
+// ── TOAST ────────────────────────────────────────────────────
+function showToast(msg, duration) {
+  var t = document.getElementById('kratos-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'kratos-toast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(30,30,30,.95);color:#fff;padding:10px 20px;border-radius:10px;font-size:.82rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity .25s;max-width:90vw;text-align:center;border:1px solid rgba(255,255,255,.1)';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.style.opacity='0'; }, duration||2500);
+}
+
 // ── STRIPE ───────────────────────────────────────────────────
 var WORKER_URL = 'https://kratos-ai.dcarera.workers.dev';
 var STRIPE_PK  = 'pk_test_51TBXLmCILlzdLTCXmUvoplj49VxyQXaeqbW4F7tDHz6TKCIZsdYlnzJaGMYIzTdujZ9WTyDpqTOxTbEwRhYbQV1o00Chx0uYOg';
@@ -5483,17 +5498,29 @@ async function selectAlternative(exId, exName) {
   }
 
   // Save to DB
-  sb.from('logbook').upsert({
-    athlete_id: ME.id,
-    session_exercise_id: altModalState.seId,
-    cycle_day_id: altModalState.dayDataId,
-    alt_exercise_id: exId,
-    alt_exercise_name: exName
-  }, { onConflict: 'athlete_id,session_exercise_id,cycle_day_id' }).then(function(){
-    showToast('✓ Alternative: '+exName);
-  }).catch(function(){
-    showToast('Alternative: '+exName);
-  });
+  var cacheEntry = logbookCache[altModalState.dayDataId+'_'+altModalState.seId];
+  if (cacheEntry && cacheEntry.id) {
+    sb.from('logbook').update({
+      alt_exercise_id: exId,
+      alt_exercise_name: exName
+    }).eq('id', cacheEntry.id).then(function(){
+      showToast('✓ Alternative saved: '+exName);
+    });
+  } else {
+    sb.from('logbook').insert({
+      athlete_id: ME.id,
+      session_exercise_id: altModalState.seId,
+      cycle_day_id: altModalState.dayDataId,
+      cycle_id: currentCycle ? currentCycle.id : null,
+      logged_date: new Date().toISOString().split('T')[0],
+      alt_exercise_id: exId,
+      alt_exercise_name: exName,
+      done: false
+    }).then(function(r){
+      if (r.data) logbookCache[altModalState.dayDataId+'_'+altModalState.seId] = r.data;
+      showToast('✓ Alternative: '+exName);
+    }).catch(function(){ showToast('Alternative noted: '+exName); });
+  }
 
   closeAltModal();
 }
@@ -5580,13 +5607,14 @@ async function saveExtraExercise() {
     set1_reps: reps
   };
 
-  // Try with extra columns first
-  var r = await sb.from('logbook').insert(Object.assign({}, payload, {
+  // Use upsert to avoid 409 conflicts
+  var extraPayload = Object.assign({}, payload, {
     is_extra: true,
     extra_exercise_id: extraModalState.selectedExId,
     extra_exercise_name: name,
     sets: sets
-  }));
+  });
+  var r = await sb.from('logbook').insert(extraPayload).select().single();
 
   if (r.error) {
     console.log('Extra insert error:', r.error.message);
