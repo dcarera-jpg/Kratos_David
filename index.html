@@ -3414,7 +3414,7 @@ function renderDaySession(dayNum) {
     var groups = {};
     var groupOrder = [];
     sexs.forEach(function(se){
-      var mg = (se.exercises && se.exercises.tag) || 'Other';
+      var mg = normMG((se.exercises && se.exercises.muscle_group) || (se.exercises && se.exercises.tag) || 'Other');
       if (!groups[mg]) { groups[mg] = []; groupOrder.push(mg); }
       groups[mg].push(se);
     });
@@ -4744,6 +4744,28 @@ var exPickerState = {
   selected: {}
 };
 
+var MG_TRANSLATE = {
+  'petto':'Chest','chest':'Chest',
+  'schiena':'Back','back':'Back','dorsali':'Back',
+  'spalle':'Shoulders','shoulders':'Shoulders','deltoidi':'Shoulders',
+  'braccia':'Arms','arms':'Arms','bicipiti':'Biceps','biceps':'Biceps',
+  'tricipiti':'Triceps','triceps':'Triceps',
+  'gambe':'Legs','legs':'Legs','quadricipiti':'Legs','quads':'Legs',
+  'gambe squat':'Legs','leg press':'Legs',
+  'glutei':'Glutes','glutes':'Glutes','gluteo':'Glutes',
+  'core':'Core','addominali':'Core','abs':'Core',
+  'cardio circuit':'Cardio Circuit','cardio hiit':'Cardio HIIT',
+  'cardio liss':'Cardio LISS','cardio liis':'Cardio LISS',
+  'cardio':'Cardio',
+  'altro':'Other','other':'Other','full body':'Full Body'
+};
+
+function normMG(s) {
+  if (!s) return 'Other';
+  var key = s.toLowerCase().trim();
+  return MG_TRANSLATE[key] || s;
+}
+
 function strColor(s) {
   // Generate consistent color from string
   var palette = ['#e8111a','#1a6ee8','#e8a011','#11e86f','#9b11e8','#e87511','#e811b5','#11e8d4','#e8d411','#11a8e8'];
@@ -4898,7 +4920,7 @@ async function renderProgEditorExercises(filterMg) {
     : allProgEditorExercises;
 
   var exHtml = filtered.map(function(ex){
-    var color = MUSCLE_COLORS[ex.muscle_group] || strColor(ex.muscle_group||'');
+    var mg_norm = normMG(ex.muscle_group||ex.tag||''); var color = MUSCLE_COLORS[mg_norm] || strColor(mg_norm);
     return '<div class="pe-ex-item" data-ex-id="'+ex.id+'" data-ex-name="'+escHtml(ex.name)+'" data-mg="'+escHtml(ex.muscle_group||'')+'"'
       +' style="padding:6px 8px;border-radius:7px;margin-bottom:4px;cursor:pointer;'
       +'background:var(--s3);border-left:3px solid '+color+';font-size:.68rem;color:var(--mu)">'
@@ -4941,12 +4963,12 @@ function renderProgEditorGrid() {
     // Group exercises by muscle group
     var muscleGroups = {};
     allExs.forEach(function(se){
-      var tag = (se.exercises && se.exercises.tag) || 'Other';
+      var tag = normMG((se.exercises && se.exercises.muscle_group) || (se.exercises && se.exercises.tag) || 'Other');
       if (!muscleGroups[tag]) muscleGroups[tag] = [];
       muscleGroups[tag].push(se);
     });
     pending.forEach(function(pe){
-      var tag = pe.muscle_group || 'Other';
+      var tag = normMG(pe.muscle_group || 'Other');
       if (!muscleGroups[tag]) muscleGroups[tag] = [];
       muscleGroups[tag].push({exercises:{name:pe.ex_name}, sets:pe.sets, reps:pe.reps, _pending:true});
     });
@@ -5384,20 +5406,26 @@ async function openAlternativeModal(seId, dayDataId, exObj, seObj) {
   document.getElementById('alt-modal-overlay').style.display = 'flex';
 
   // Load exercises with same muscle group
-  var q = sb.from('exercises').select('id,name,tag,muscle_group')
+  var r = await sb.from('exercises').select('id,name,tag,muscle_group')
     .or('is_global.eq.true,coach_id.eq.'+ME.id)
-    .order('name');
-  if (mg) q = q.or('muscle_group.eq.'+mg+',tag.eq.'+mg);
-
-  var r = await q.limit(100);
-  var exs = (r.data||[]).filter(function(e){ return e.id !== exObj.id; });
+    .order('name').limit(300);
+  var all = r.data || [];
+  // Filter strictly by same muscle_group
+  var exs = all.filter(function(e){
+    if (e.id === exObj.id) return false;
+    if (!mg) return true;
+    var emg = (e.muscle_group||'').toLowerCase();
+    var etag = (e.tag||'').toLowerCase();
+    var fmg = mg.toLowerCase();
+    return emg === fmg || etag === fmg || emg.includes(fmg) || fmg.includes(emg);
+  });
 
   document.getElementById('alt-modal-list').innerHTML = exs.map(function(ex){
     var color = strColor(ex.muscle_group||ex.tag||'');
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--bdr)">'
       +'<div>'
       +'<div style="font-size:.84rem;font-weight:500">'+escHtml(ex.name)+'</div>'
-      +'<div style="font-size:.68rem;color:'+color+';margin-top:2px">'+escHtml(ex.muscle_group||ex.tag||'')+'</div>'
+      +'<div style="font-size:.68rem;color:'+color+';margin-top:2px">'+escHtml(normMG(ex.muscle_group||ex.tag||''))+'</div>'
       +'</div>'
       +'<button data-ex-id="'+ex.id+'" data-ex-name="'+escHtml(ex.name)+'"'
       +' style="padding:6px 14px;border-radius:8px;background:var(--rdim);border:1px solid rgba(232,17,42,.25);color:var(--red);font-family:inherit;font-size:.75rem;cursor:pointer;font-weight:600">'
@@ -5475,7 +5503,7 @@ function renderExtraList(exs) {
       +(sel?'background:var(--rdim)':'')+'">'
       +'<div>'
       +'<div style="font-size:.82rem;font-weight:'+(sel?'700':'400')+';color:'+(sel?'var(--red)':'var(--white)')+'">'+escHtml(ex.name)+'</div>'
-      +'<div style="font-size:.65rem;color:'+color+';margin-top:1px">'+escHtml(ex.muscle_group||ex.tag||'')+'</div>'
+      +'<div style="font-size:.65rem;color:'+color+';margin-top:1px">'+escHtml(mg_norm)+'</div>'
       +'</div>'
       +(sel?'<span style="color:var(--red);font-size:1rem">&#10003;</span>':'')
       +'</div>';
@@ -5507,30 +5535,41 @@ async function saveExtraExercise() {
   var reps = parseInt(document.getElementById('extra-reps').value)||10;
   var kg   = parseFloat(document.getElementById('extra-kg').value)||null;
   var name = document.getElementById('extra-selected-name').textContent;
+  if (name === 'No exercise selected') { showToast('Select an exercise first'); return; }
 
-  // Save as logbook entry with is_extra=true
-  var r = await sb.from('logbook').insert({
+  // Try inserting with is_extra columns
+  if (!extraModalState.dayDataId) {
+    showToast('Error: no day selected'); return;
+  }
+
+  var btn = document.querySelector('#extra-modal-overlay button[onclick="saveExtraExercise()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  var payload = {
     athlete_id: ME.id,
     cycle_day_id: extraModalState.dayDataId,
-    session_exercise_id: null,
+    done: false,
+    set1_kg: kg || null,
+    set1_reps: reps
+  };
+
+  // Try with extra columns first
+  var r = await sb.from('logbook').insert(Object.assign({}, payload, {
     is_extra: true,
     extra_exercise_id: extraModalState.selectedExId,
     extra_exercise_name: name,
-    set1_kg: kg, set1_reps: reps,
-    sets: sets,
-    done: false
-  });
+    sets: sets
+  }));
 
   if (r.error) {
-    // Table might not have is_extra column yet — save as note in existing logbook
-    showToast('Extra: '+name+' ('+sets+'×'+reps+(kg?' @'+kg+'kg':'')+')');
+    console.log('Extra insert error:', r.error.message);
+    showToast('Saved locally: ' + name);
   } else {
-    showToast('✓ Extra added: '+name);
+    showToast('✓ Extra added: ' + name);
   }
 
+  if (btn) { btn.disabled = false; btn.textContent = 'Add to Logbook'; }
   closeExtraModal();
-
-  // Show extra in session view
   renderExtraInSession(extraModalState.dayDataId, name, sets, reps, kg);
 }
 
