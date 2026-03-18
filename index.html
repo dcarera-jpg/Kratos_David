@@ -3270,7 +3270,12 @@ function loadLogbookForCycle() {
   sb.from('logbook').select('*').eq('athlete_id',ME.id).eq('cycle_id',currentCycle.id)
     .then(function(r){
       logbookCache={};
-      (r.data||[]).forEach(function(row){ logbookCache[row.cycle_day_id+'_'+row.session_exercise_id]=row; });
+      (r.data||[]).forEach(function(row){
+        var k = row.is_extra ? 'extra_'+row.id : row.cycle_day_id+'_'+row.session_exercise_id;
+        logbookCache[k]=row;
+        // Also index by cycle_day_id+session_exercise_id for normal lookup
+        if(!row.is_extra) logbookCache[row.cycle_day_id+'_'+row.session_exercise_id]=row;
+      });
       return loadPRs();
     }).catch(function(){ renderCycle(); });
 }
@@ -3435,6 +3440,23 @@ function renderDaySession(dayNum) {
     }
   }
   area.appendChild(card);
+
+  // Show any extra exercises logged for this day
+  var extraExs = Object.values(logbookCache).filter(function(row){
+    return row.cycle_day_id === dayData.id && row.is_extra && row.extra_exercise_name;
+  });
+  if (extraExs.length) {
+    var extraDiv = document.createElement('div');
+    extraDiv.style.cssText = 'margin-top:8px;background:var(--rdim);border:1px solid rgba(232,17,42,.2);border-radius:10px;padding:10px 12px';
+    extraDiv.innerHTML = '<div style="font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px">+ Extra</div>'
+      + extraExs.map(function(row){
+        return '<div style="font-size:.78rem;color:var(--mu);padding:3px 0;border-bottom:1px solid var(--bdr)">'
+          + escHtml(row.extra_exercise_name)
+          + (row.set1_reps ? ' <span style="color:var(--mu2)">× '+row.set1_reps+(row.set1_kg?' @'+row.set1_kg+'kg':'')+'</span>' : '')
+          + '</div>';
+      }).join('');
+    area.appendChild(extraDiv);
+  }
 }
 
 function buildExItem(se, dayData) {
@@ -3450,8 +3472,12 @@ function buildExItem(se, dayData) {
 
   var hdr=document.createElement('div'); hdr.className='ex-header';
   var hasMedia = ex.video_url || ex.gif_url;
+  var altName = log.alt_exercise_name || null;
+  var displayName = altName
+    ? '<span style="text-decoration:line-through;opacity:.4;font-size:.8em">'+escHtml(ex.name||'?')+'</span> <span style="color:var(--orn)">→ '+escHtml(altName)+'</span>'
+    : escHtml(ex.name||'?');
   hdr.innerHTML='<div class="ex-check" id="chk-'+dayData.id+'-'+se.id+'">'+(isDone?'&#10003;':'')+'</div>' +
-    '<div class="ex-info"><div class="ex-name">'+escHtml(ex.name||'?')+'</div>' +
+    '<div class="ex-info"><div class="ex-name">'+displayName+'</div>' +
     '<span class="ex-tag t-'+(ex.tag||'mec')+'">'+escHtml(ex.tag_label||'Mec')+'</span></div>' +
     '<div class="ex-sets-pill">'+se.sets+'&#215;'+(se.reps||'8-10')+'</div>';
   if (hasMedia) {
