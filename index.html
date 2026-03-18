@@ -1299,6 +1299,8 @@ function startAdmin() {
   document.getElementById('app').style.display = 'flex';
   document.getElementById('admin-nav').style.display = 'flex';
   document.getElementById('athlete-nav').style.display = 'none';
+  // Hide all athlete views
+  document.querySelectorAll('[id^="vv-"]').forEach(function(v){ v.classList.remove('on'); });
   asv('athletes');
   loadAthletes();
   loadEx();
@@ -3056,6 +3058,8 @@ function startAthlete() {
   document.getElementById('app').style.display='flex';
   document.getElementById('athlete-nav').style.display='flex';
   document.getElementById('admin-nav').style.display='none';
+  // Hide all admin views
+  document.querySelectorAll('[id^="av-"]').forEach(function(v){ v.classList.remove('on'); });
   vsv('cycle');
   if (!myProfile.coach_id) { renderNoCoach(); return; }
   checkPaymentReturn();
