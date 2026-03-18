@@ -4800,7 +4800,12 @@ async function renderProgEditorExercises(filterMg) {
     +'</div>';
 
   var filtered = filterMg
-    ? allProgEditorExercises.filter(function(ex){ return ex.muscle_group===filterMg||ex.tag===filterMg; })
+    ? allProgEditorExercises.filter(function(ex){
+        var mg = (ex.muscle_group||'').toLowerCase();
+        var tag = (ex.tag||'').toLowerCase();
+        var f = filterMg.toLowerCase();
+        return mg===f || tag===f || mg.includes(f) || tag.includes(f);
+      })
     : allProgEditorExercises;
 
   var exHtml = filtered.map(function(ex){
