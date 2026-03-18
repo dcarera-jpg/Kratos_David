@@ -3561,7 +3561,7 @@ function toggleEx(dayDataId,seId) {
   if(item) item.classList.toggle('open');
 }
 
-function saveLog(seId, cycleDayId, dayData) {
+async function saveLog(seId, cycleDayId, dayData) {
   var btn=document.getElementById('sbtn-'+cycleDayId+'-'+seId);
   if(btn){ btn.textContent='...'; btn.disabled=true; }
   var data={athlete_id:ME.id,session_exercise_id:seId,cycle_day_id:cycleDayId,cycle_id:currentCycle.id,logged_date:today.toISOString().split('T')[0]};
@@ -3573,15 +3573,12 @@ function saveLog(seId, cycleDayId, dayData) {
   }
   var cacheKey=cycleDayId+'_'+seId;
   var existing=logbookCache[cacheKey];
-  if(existing) data.done=existing.done;
-  var promise=existing&&existing.id
-    ?sb.from('logbook').update(data).eq('id',existing.id).select().single()
-    :sb.from('logbook').insert(data).select().single();
-  promise.then(function(r){
-    if(r.error){ if(btn){ btn.textContent='Error!'; btn.disabled=false; } return; }
-    if(r.data) logbookCache[cacheKey]=r.data;
-    if(btn){ btn.innerHTML='&#10003; Salvato'; setTimeout(function(){ if(btn){ btn.textContent='Save logbook'; btn.disabled=false; } },2000); }
-  }).catch(function(){ if(btn){ btn.textContent='Error'; btn.disabled=false; } });
+  if(existing) data.done=existing.done||false;
+
+  var r=await sb.from('logbook').upsert(data,{onConflict:'athlete_id,session_exercise_id,cycle_day_id'}).select().single();
+  if(r.error){ if(btn){ btn.textContent='Error!'; btn.disabled=false; } console.log('saveLog error:',r.error); return; }
+  if(r.data) logbookCache[cacheKey]=r.data;
+  if(btn){ btn.innerHTML='&#10003; Saved'; setTimeout(function(){ if(btn){ btn.textContent='Save logbook'; btn.disabled=false; } },2000); }
 }
 
 function toggleDone(seId, cycleDayId, dayData) {
@@ -3590,9 +3587,7 @@ function toggleDone(seId, cycleDayId, dayData) {
   var newDone=!(existing&&existing.done);
   var data={athlete_id:ME.id,session_exercise_id:seId,cycle_day_id:cycleDayId,cycle_id:currentCycle.id,done:newDone,logged_date:today.toISOString().split('T')[0]};
   if(existing){ data.set1_kg=existing.set1_kg;data.set1_reps=existing.set1_reps;data.set2_kg=existing.set2_kg;data.set2_reps=existing.set2_reps;data.set3_kg=existing.set3_kg;data.set3_reps=existing.set3_reps; }
-  var promise=existing&&existing.id
-    ?sb.from('logbook').update({done:newDone}).eq('id',existing.id).select().single()
-    :sb.from('logbook').insert(data).select().single();
+  var promise=sb.from('logbook').upsert(data,{onConflict:'athlete_id,session_exercise_id,cycle_day_id'}).select().single();
   promise.then(function(r){
     if(!r||r.error) return;
     logbookCache[cacheKey]=r.data||{done:newDone};
@@ -5499,28 +5494,17 @@ async function selectAlternative(exId, exName) {
 
   // Save to DB
   // Check if logbook entry exists, update or insert accordingly
-  sb.from('logbook')
-    .select('id')
-    .eq('athlete_id', ME.id)
-    .eq('session_exercise_id', altModalState.seId)
-    .eq('cycle_day_id', altModalState.dayDataId)
-    .maybeSingle()
-    .then(function(r) {
-      var updateData = { alt_exercise_id: exId, alt_exercise_name: exName };
-      if (r.data && r.data.id) {
-        sb.from('logbook').update(updateData).eq('id', r.data.id)
-          .then(function(){ showToast('✓ Alternative: '+exName); });
-      } else {
-        sb.from('logbook').insert(Object.assign(updateData, {
-          athlete_id: ME.id,
-          session_exercise_id: altModalState.seId,
-          cycle_day_id: altModalState.dayDataId,
-          cycle_id: currentCycle ? currentCycle.id : null,
-          logged_date: new Date().toISOString().split('T')[0],
-          done: false
-        })).then(function(){ showToast('✓ Alternative: '+exName); });
-      }
-    });
+  sb.from('logbook').upsert({
+    athlete_id: ME.id,
+    session_exercise_id: altModalState.seId,
+    cycle_day_id: altModalState.dayDataId,
+    cycle_id: currentCycle ? currentCycle.id : null,
+    logged_date: new Date().toISOString().split('T')[0],
+    alt_exercise_id: exId,
+    alt_exercise_name: exName,
+    done: false
+  }, { onConflict: 'athlete_id,session_exercise_id,cycle_day_id' })
+  .then(function(r){ showToast(r.error ? 'Error: '+r.error.message : '✓ Alternative: '+exName); });
 
   closeAltModal();
 }
@@ -5624,7 +5608,15 @@ async function saveExtraExercise() {
 
   if (r.error) {
     console.log('Extra insert error:', r.error.message);
-    showToast('Saved locally: ' + name);
+    // Try without extra columns as fallback
+    var r2 = await sb.from('logbook').insert({
+      athlete_id: ME.id,
+      cycle_day_id: extraModalState.dayDataId,
+      cycle_id: currentCycle ? currentCycle.id : null,
+      logged_date: new Date().toISOString().split('T')[0],
+      set1_reps: reps, set1_kg: kg||null, done: false
+    });
+    showToast(r2.error ? 'Error: '+r2.error.message : '✓ Extra logged');
   } else {
     showToast('✓ Extra added: ' + name);
   }
