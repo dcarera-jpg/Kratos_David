@@ -4692,6 +4692,14 @@ var exPickerState = {
   selected: {}
 };
 
+function strColor(s) {
+  // Generate consistent color from string
+  var palette = ['#e8111a','#1a6ee8','#e8a011','#11e86f','#9b11e8','#e87511','#e811b5','#11e8d4','#e8d411','#11a8e8'];
+  var hash = 0;
+  for (var i=0; i<s.length; i++) hash = s.charCodeAt(i) + ((hash<<5)-hash);
+  return palette[Math.abs(hash) % palette.length];
+}
+
 var MUSCLE_COLORS = {
   'Petto':              '#e8111a',
   'Chest':              '#e8111a',
@@ -4777,7 +4785,7 @@ function renderProgEditorMuscles() {
 
   el.innerHTML = '<div style="font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:6px;padding:0 2px">Tap to add to day</div>'
     + groups.map(function(mg){
-    var color = MUSCLE_COLORS[mg] || '#888';
+    var color = MUSCLE_COLORS[mg] || strColor(mg);
     return '<div class="pe-muscle-chip" data-muscle="'+escHtml(mg)+'"'
       +' style="padding:7px 8px;border-radius:8px;margin-bottom:5px;cursor:pointer;'
       +'background:'+color+'22;border:1px solid '+color+'44;font-size:.72rem;font-weight:600;color:'+color
@@ -4820,7 +4828,7 @@ async function renderProgEditorExercises(filterMg) {
     +'<div class="pe-filter-chip'+(filterMg?'':' active')+'" data-mg="" style="padding:3px 7px;border-radius:100px;font-size:.6rem;cursor:pointer;background:'+(filterMg?'var(--s4)':'var(--red)')+';color:'+(filterMg?'var(--mu)':'#fff')+';border:none">All</div>'
     + actualGroups.map(function(mg){
       var active = filterMg===mg;
-      var color = MUSCLE_COLORS[mg] || '#888';
+      var color = MUSCLE_COLORS[mg] || strColor(mg);
       return '<div class="pe-filter-chip'+(active?' active':'')+'" data-mg="'+escHtml(mg)+'"'
         +' style="padding:3px 7px;border-radius:100px;font-size:.6rem;cursor:pointer;'
         +'background:'+(active?color:color+'22')+';color:'+(active?'#fff':color)+';border:1px solid '+color+'44">'
@@ -4838,7 +4846,7 @@ async function renderProgEditorExercises(filterMg) {
     : allProgEditorExercises;
 
   var exHtml = filtered.map(function(ex){
-    var color = MUSCLE_COLORS[ex.muscle_group] || '#888';
+    var color = MUSCLE_COLORS[ex.muscle_group] || strColor(ex.muscle_group||'');
     return '<div class="pe-ex-item" data-ex-id="'+ex.id+'" data-ex-name="'+escHtml(ex.name)+'" data-mg="'+escHtml(ex.muscle_group||'')+'"'
       +' style="padding:6px 8px;border-radius:7px;margin-bottom:4px;cursor:pointer;'
       +'background:var(--s3);border-left:3px solid '+color+';font-size:.68rem;color:var(--mu)">'
