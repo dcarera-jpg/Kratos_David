@@ -3493,7 +3493,6 @@ function buildExItem(se, dayData) {
     sGrid.appendChild(sc);
   }
   body.appendChild(sGrid);
-  body.appendChild(altRow);
 
   var btnSave=document.createElement('button'); btnSave.className='btn-save'; btnSave.id='sbtn-'+dayData.id+'-'+se.id; btnSave.textContent='Save logbook';
   btnSave.onclick=(function(seid,ddid,ddobj){ return function(){ saveLog(seid,ddid,ddobj); }; })(se.id,dayData.id,dayData);
@@ -3502,7 +3501,7 @@ function buildExItem(se, dayData) {
   btnDone.innerHTML=isDone?'&#10003; Completato':'Mark as done';
   btnDone.onclick=(function(seid,ddid,ddobj){ return function(){ toggleDone(seid,ddid,ddobj); }; })(se.id,dayData.id,dayData);
 
-  // Alternative + Extra buttons row
+  // Alternative + Extra buttons row (declared BEFORE use)
   var altRow = document.createElement('div');
   altRow.style.cssText = 'display:flex;gap:6px;margin-top:6px';
   var btnAlt = document.createElement('button');
@@ -3515,6 +3514,7 @@ function buildExItem(se, dayData) {
   btnExtra.onclick = (function(ddid, exObj){ return function(e){ e.stopPropagation(); openExtraModal(ddid, exObj); }; })(dayData.id, ex);
   altRow.appendChild(btnAlt);
   altRow.appendChild(btnExtra);
+  body.appendChild(altRow);
 
   // Inline timer recupero
   if (se.rest_sec) {
