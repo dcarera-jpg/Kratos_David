@@ -5378,6 +5378,8 @@ function filterProgEditorExercises(mg) {
   renderProgEditorExercises(mg);
 }
 
+var mgDragState = null; // { mg, fromDay, seIds }
+
 function renderProgEditorGrid() {
   var grid = document.getElementById('prog-editor-grid');
   var html = '';
@@ -5389,14 +5391,16 @@ function renderProgEditorGrid() {
 
     // Group exercises by muscle group
     var muscleGroups = {};
+    var muscleGroupIds = {}; // mg -> [session_exercise ids]
     allExs.forEach(function(se){
       var tag = normMG((se.exercises && se.exercises.muscle_group) || (se.exercises && se.exercises.tag) || 'Other');
-      if (!muscleGroups[tag]) muscleGroups[tag] = [];
+      if (!muscleGroups[tag]) { muscleGroups[tag] = []; muscleGroupIds[tag] = []; }
       muscleGroups[tag].push(se);
+      muscleGroupIds[tag].push(se.id);
     });
     pending.forEach(function(pe){
       var tag = normMG(pe.muscle_group || 'Other');
-      if (!muscleGroups[tag]) muscleGroups[tag] = [];
+      if (!muscleGroups[tag]) { muscleGroups[tag] = []; muscleGroupIds[tag] = []; }
       muscleGroups[tag].push({exercises:{name:pe.ex_name}, sets:pe.sets, reps:pe.reps, _pending:true});
     });
 
@@ -5404,20 +5408,27 @@ function renderProgEditorGrid() {
       +' data-day="'+i+'"'
       +' ondragover="event.preventDefault();peDragOver(this,true)"'
       +' ondragleave="peDragOver(this,false)"'
-      +' ondrop="peDrop(event,'+i+')"'
+      +' ondrop="peDropFull(event,'+i+')"'
       +' style="background:var(--s2);border:1px solid '+(hasPending?'rgba(232,17,42,.4)':'var(--bdr)')+';border-radius:10px;padding:8px;min-height:100px">';
 
     html += '<div style="font-size:.62rem;font-weight:700;color:var(--mu2);margin-bottom:6px">Day '+i
       +(d&&d.session_name?' · <span style="color:var(--red)">'+escHtml(d.session_name)+'</span>':'')+'</div>';
 
-    // Render by muscle group with colored badges
+    // Render by muscle group — each group header is draggable
     Object.keys(muscleGroups).forEach(function(mg){
-      var color = MUSCLE_COLORS[mg] || '#888';
-      html += '<div style="margin-bottom:5px">';
-      html += '<div style="font-size:.56rem;font-weight:700;color:'+color+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">'+escHtml(mg)+'</div>';
+      var color = MUSCLE_COLORS[mg] || strColor(mg);
+      var ids = (muscleGroupIds[mg]||[]).filter(Boolean);
+      html += '<div class="pe-mg-group" draggable="true"'
+        +' data-mg="'+escHtml(mg)+'" data-from-day="'+i+'" data-se-ids="'+ids.join(',')+'"'
+        +' ondragstart="mgDragStart(event)"'
+        +' ondragend="mgDragEnd(event)"'
+        +' style="margin-bottom:6px;cursor:grab;border:1px solid '+color+'33;border-radius:7px;padding:4px 6px;background:'+color+'11">';
+      html += '<div style="font-size:.58rem;font-weight:700;color:'+color+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;display:flex;align-items:center;gap:4px">'
+        +'<span style="font-size:.6rem">⠿</span>'+escHtml(mg)
+        +' <span style="color:'+color+'88;font-weight:400">(drag to move)</span></div>';
       muscleGroups[mg].forEach(function(se){
         var name = se.exercises ? se.exercises.name : '?';
-        html += '<div style="font-size:.62rem;color:'+( se._pending?'var(--orn)':'var(--mu)')+';padding:2px 4px;border-radius:4px;'+(se._pending?'background:rgba(232,150,0,.08)':'')+'">'
+        html += '<div style="font-size:.6rem;color:'+(se._pending?'var(--orn)':'var(--mu)')+';padding:1px 4px">'
           +'· '+escHtml(name);
         if (se.sets&&se.reps) html += ' <span style="color:var(--mu2)">'+se.sets+'×'+se.reps+'</span>';
         html += '</div>';
@@ -5428,10 +5439,86 @@ function renderProgEditorGrid() {
     if (!allExs.length && !pending.length) {
       html += '<div style="font-size:.62rem;color:var(--mu2);text-align:center;padding:10px 0">Drop here</div>';
     }
-
     html += '</div>';
   }
   grid.innerHTML = html;
+}
+
+function mgDragStart(e) {
+  var el = e.currentTarget;
+  mgDragState = {
+    mg:      el.dataset.mg,
+    fromDay: parseInt(el.dataset.fromDay),
+    seIds:   el.dataset.seIds ? el.dataset.seIds.split(',').map(Number).filter(Boolean) : []
+  };
+  peDragData = null; // clear exercise drag
+  el.style.opacity = '.4';
+}
+
+function mgDragEnd(e) {
+  e.currentTarget.style.opacity = '1';
+}
+
+async function peDropFull(e, toDay) {
+  e.preventDefault();
+  var cell = document.querySelector('.pe-day-cell[data-day="'+toDay+'"]');
+  if (cell) peDragOver(cell, false);
+
+  // If dragging a muscle group block
+  if (mgDragState && mgDragState.fromDay !== toDay) {
+    await moveMuscleGroupToDay(mgDragState, toDay);
+    mgDragState = null;
+    return;
+  }
+  mgDragState = null;
+
+  // Fall through to normal exercise drop
+  if (peDragData) peDrop(e, toDay);
+}
+
+async function moveMuscleGroupToDay(state, toDay) {
+  var fromDay = state.fromDay;
+  var mg = state.mg;
+  var seIds = state.seIds;
+
+  if (!seIds.length) {
+    showToast('No exercises to move (pending changes cannot be moved)');
+    return;
+  }
+
+  document.getElementById('prog-editor-status').textContent = 'Moving ' + mg + ' from Day ' + fromDay + ' to Day ' + toDay + '...';
+
+  // Get target day session — create if needed
+  var tDay = progEditorState.dayData[toDay];
+  var toSessionId = tDay && tDay.session_id;
+
+  if (!toSessionId) {
+    var sessR = await sb.from('sessions').insert({
+      name: 'Day ' + toDay,
+      session_type: 'gym',
+      mesocycle_id: progEditorState.mesoId
+    }).select().single();
+    if (sessR.error) { showToast('Error creating session: ' + sessR.error.message); return; }
+    toSessionId = sessR.data.id;
+    if (tDay && tDay.cycle_day_id) {
+      await sb.from('cycle_days').update({ session_id: toSessionId }).eq('id', tDay.cycle_day_id);
+    }
+  }
+
+  // Move session_exercises to new session
+  var moveR = await sb.from('session_exercises')
+    .update({ session_id: toSessionId })
+    .in('id', seIds);
+
+  if (moveR.error) {
+    showToast('Error moving: ' + moveR.error.message); return;
+  }
+
+  showToast('✓ ' + mg + ' moved from Day ' + fromDay + ' to Day ' + toDay);
+
+  // Reload editor
+  await openProgEditor(progEditorState.athleteId, progEditorState.mesoId,
+    document.getElementById('prog-editor-subtitle').textContent);
 }
 
 // ── Day Picker (tap-to-add flow) ─────────────────────────────
