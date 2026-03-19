@@ -352,7 +352,25 @@ select.inp{cursor:pointer}
           </select>
         </div>
         <div id="ex-count" style="font-size:.68rem;color:var(--mu2);margin-bottom:8px"></div>
-        <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('ex-form')">+ Nuovo exerciseso</button>
+
+        <!-- My Custom Exercises Section -->
+        <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:12px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div>
+              <div style="font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2)">My Custom Exercises</div>
+              <div style="font-size:.65rem;color:var(--mu2);margin-top:2px" id="my-ex-count">0 exercises</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button onclick="openCustomExModal(null)" style="padding:6px 12px;border-radius:8px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu);font-family:inherit;font-size:.72rem;cursor:pointer">+ Create</button>
+              <button onclick="openAIExModal()" style="padding:6px 12px;border-radius:8px;background:var(--rdim);border:1px solid rgba(232,17,42,.25);color:var(--red);font-family:inherit;font-size:.72rem;cursor:pointer;font-weight:600">✨ AI Generate</button>
+            </div>
+          </div>
+          <div id="my-ex-list"><div style="font-size:.72rem;color:var(--mu2)">No custom exercises yet.</div></div>
+        </div>
+
+        <!-- Global Library -->
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px">Global Library</div>
+        <button class="btn-red" style="margin-bottom:12px" onclick="toggleEl('ex-form')">+ Add to Library</button>
         <div id="ex-form" class="iform" style="display:none">
           <div class="iform-title">NEW EXERCISE</div>
           <div class="field"><label>Name *</label><input class="inp" id="exf-n" placeholder="e.g. Panca Piana"></div>
@@ -1132,6 +1150,94 @@ select.inp{cursor:pointer}
   </div>
 </div>
 
+<!-- CUSTOM EXERCISE MODAL -->
+<div id="custom-ex-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
+  <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:16px;width:100%;max-width:480px;margin:auto;overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between">
+      <div id="custom-ex-modal-title" style="font-weight:700;font-size:.9rem">New Custom Exercise</div>
+      <button onclick="closeCustomExModal()" style="background:none;border:none;color:var(--mu);font-size:1.2rem;cursor:pointer">&#10005;</button>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+      <div class="field"><label>Name *</label><input class="inp" id="cex-name" placeholder="e.g. Nordic Curl"></div>
+      <div class="field"><label>Description</label><textarea class="inp" id="cex-desc" rows="2" placeholder="What this exercise is and why it's useful..."></textarea></div>
+      <div class="field"><label>Instructions / Technique</label><textarea class="inp" id="cex-instr" rows="3" placeholder="Step by step execution..."></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="field"><label>Muscle Group</label>
+          <input class="inp" id="cex-mg" placeholder="e.g. Legs, Rehab, Core"></div>
+        <div class="field"><label>Equipment</label>
+          <input class="inp" id="cex-eq" placeholder="e.g. Bodyweight, Band"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="field"><label>Type</label>
+          <select class="inp" id="cex-tag">
+            <option value="mec">Mechanical</option>
+            <option value="met">Metabolic</option>
+            <option value="pre">Pre-Activation</option>
+            <option value="str">Stretching</option>
+            <option value="rehab">Rehabilitation</option>
+          </select></div>
+        <div class="field"><label>Gender</label>
+          <select class="inp" id="cex-gender">
+            <option value="unisex">Unisex</option>
+            <option value="donna">Female</option>
+            <option value="uomo">Male</option>
+          </select></div>
+      </div>
+      <div class="field"><label>Video URL (YouTube)</label><input class="inp" id="cex-video" placeholder="https://youtube.com/..."></div>
+      <div class="field">
+        <label>Visibility</label>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <button id="vis-private" onclick="setVisibility('private')" style="flex:1;padding:8px;border-radius:8px;background:var(--rdim);border:1px solid rgba(232,17,42,.3);color:var(--red);font-family:inherit;font-size:.72rem;cursor:pointer;font-weight:600">&#128274; Private</button>
+          <button id="vis-shared" onclick="setVisibility('shared')" style="flex:1;padding:8px;border-radius:8px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu);font-family:inherit;font-size:.72rem;cursor:pointer">&#128101; Shared</button>
+          <button id="vis-public" onclick="setVisibility('public')" style="flex:1;padding:8px;border-radius:8px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu);font-family:inherit;font-size:.72rem;cursor:pointer">&#127758; Public</button>
+        </div>
+        <div id="cex-shared-with" style="display:none;margin-top:8px">
+          <input class="inp" id="cex-share-email" placeholder="Coach email to share with..." style="margin-bottom:6px">
+          <button onclick="addShareTarget()" style="width:100%;padding:8px;border-radius:8px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu);font-family:inherit;font-size:.75rem;cursor:pointer">Add Coach</button>
+          <div id="cex-share-list" style="margin-top:6px"></div>
+        </div>
+      </div>
+      <input type="hidden" id="cex-id">
+      <input type="hidden" id="cex-visibility" value="private">
+      <button onclick="saveCustomEx()" style="width:100%;padding:12px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer">Save Exercise</button>
+      <div id="cex-msg" style="display:none;font-size:.75rem;padding:8px;border-radius:8px;text-align:center"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AI EXERCISE GENERATOR MODAL -->
+<div id="ai-ex-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
+  <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:16px;width:100%;max-width:480px;margin:auto;overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-weight:700;font-size:.9rem">✨ AI Exercise Generator</div>
+      <button onclick="closeAIExModal()" style="background:none;border:none;color:var(--mu);font-size:1.2rem;cursor:pointer">&#10005;</button>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+      <div class="field">
+        <label>Describe the exercise you need</label>
+        <textarea class="inp" id="ai-ex-prompt" rows="4" placeholder="e.g. A rehabilitation exercise for the rotator cuff, suitable for athletes recovering from shoulder surgery, with bodyweight or light resistance band..."></textarea>
+      </div>
+      <button onclick="generateAIExercise()" id="ai-ex-btn" style="width:100%;padding:12px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer">✨ Generate Exercise</button>
+      <div id="ai-ex-output" style="display:none">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px;padding-top:8px;border-top:1px solid var(--bdr)">AI Generated — Edit before saving</div>
+        <div class="field"><label>Name</label><input class="inp" id="ai-ex-name"></div>
+        <div class="field"><label>Description</label><textarea class="inp" id="ai-ex-desc" rows="2"></textarea></div>
+        <div class="field"><label>Instructions</label><textarea class="inp" id="ai-ex-instr" rows="4"></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="field"><label>Muscle Group</label><input class="inp" id="ai-ex-mg"></div>
+          <div class="field"><label>Equipment</label><input class="inp" id="ai-ex-eq"></div>
+        </div>
+        <div class="field"><label>Suggested Sets × Reps</label><input class="inp" id="ai-ex-params"></div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button onclick="saveAIExercise()" style="flex:1;padding:11px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer">Save to My Exercises</button>
+          <button onclick="regenerateAIExercise()" style="padding:11px 14px;border-radius:9px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu);font-family:inherit;font-size:.82rem;cursor:pointer">↺ Retry</button>
+        </div>
+      </div>
+      <div id="ai-ex-status" style="font-size:.75rem;color:var(--mu2);text-align:center;display:none"></div>
+    </div>
+  </div>
+</div>
+
 <!-- RIEPILOGO ALLENAMENTO MODAL -->
 <div id="summary-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:500;align-items:flex-start;justify-content:center;padding-top:20px;overflow-y:auto" onclick="closeSummary()">
   <div onclick="event.stopPropagation()" style="width:100%;max-width:480px;padding:0 14px 60px">
@@ -1392,8 +1498,15 @@ function startAdmin() {
   document.getElementById('app').style.display = 'flex';
   document.getElementById('admin-nav').style.display = 'flex';
   document.getElementById('athlete-nav').style.display = 'none';
-  // Hide all athlete views
-  document.querySelectorAll('[id^="vv-"]').forEach(function(v){ v.classList.remove('on'); });
+  // Hide all athlete views and overlays completely
+  document.querySelectorAll('[id^="vv-"]').forEach(function(v){
+    v.classList.remove('on');
+    v.style.display = 'none';
+  });
+  // Hide athlete nav
+  document.getElementById('athlete-nav').style.display = 'none';
+  // Reset body overflow
+  document.body.style.overflow = '';
   asv('athletes');
   loadAthletes();
   loadEx();
@@ -1480,6 +1593,7 @@ function asv(name) {
   if (b) b.classList.add('on');
   if (name === 'msgs') renderAdminMsgs();
   if (name === 'prog' && allEx.length === 0) loadEx();
+  if (name === 'prog') loadMyExercises();
   if (name === 'ai') aiPopulateAthleteSelector();
   if (name === 'profile') loadCoachReviews();
 }
@@ -1494,6 +1608,7 @@ function aPTab(t) {
     document.getElementById('apc-' + n).style.display = n===t ? 'block' : 'none';
     document.getElementById('apt-' + n).classList.toggle('on', n===t);
   });
+  if (t === 'ex') loadMyExercises();
   if (t === 'sess' && !allSess.length) loadSess();
   if (t === 'meso') loadMeso();
 }
@@ -3161,8 +3276,12 @@ function startAthlete() {
   document.getElementById('app').style.display='flex';
   document.getElementById('athlete-nav').style.display='flex';
   document.getElementById('admin-nav').style.display='none';
-  // Hide all admin views
-  document.querySelectorAll('[id^="av-"]').forEach(function(v){ v.classList.remove('on'); });
+  // Hide all admin views completely
+  document.querySelectorAll('[id^="av-"]').forEach(function(v){
+    v.classList.remove('on');
+    v.style.display = 'none';
+  });
+  document.getElementById('admin-nav').style.display = 'none';
   vsv('cycle');
   if (!myProfile.coach_id) { renderNoCoach(); return; }
   checkPaymentReturn();
@@ -4764,6 +4883,276 @@ function useAssessmentInAI(athId) {
 
       showToast('Assessment loaded into AI Coach ✓');
     }).catch(function(){});
+}
+
+// ── CUSTOM EXERCISES ─────────────────────────────────────────
+var myExercises = [];
+var shareTargets = [];
+var editingExId = null;
+
+async function loadMyExercises() {
+  var r = await sb.from('exercises').select('*')
+    .eq('coach_id', ME.id)
+    .eq('is_global', false)
+    .order('name');
+  myExercises = r.data || [];
+  renderMyExercises();
+}
+
+function renderMyExercises() {
+  var el = document.getElementById('my-ex-list');
+  var countEl = document.getElementById('my-ex-count');
+  if (countEl) countEl.textContent = myExercises.length + ' exercise' + (myExercises.length !== 1 ? 's' : '');
+  if (!myExercises.length) {
+    el.innerHTML = '<div style="font-size:.72rem;color:var(--mu2);padding:4px 0">No custom exercises yet. Create one or use AI.</div>';
+    return;
+  }
+  el.innerHTML = myExercises.map(function(ex){
+    var vis = ex.visibility || 'private';
+    var visIcon = vis === 'public' ? '🌍' : vis === 'shared' ? '👥' : '🔒';
+    var color = strColor(ex.muscle_group||'');
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bdr)">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:.82rem;font-weight:500">'+escHtml(ex.name)+'</div>'
+      +'<div style="font-size:.65rem;color:'+color+';margin-top:1px">'+escHtml(normMG(ex.muscle_group||ex.tag||''))+'</div>'
+      +'</div>'
+      +'<div style="font-size:.75rem">'+visIcon+'</div>'
+      +'<button data-ex-id="'+ex.id+'" style="padding:4px 10px;border-radius:7px;background:var(--s3);border:1px solid var(--bdr);color:var(--mu);font-family:inherit;font-size:.68rem;cursor:pointer">Edit</button>'
+      +'<button data-del-id="'+ex.id+'" style="padding:4px 8px;border-radius:7px;background:none;border:none;color:var(--mu2);font-size:.75rem;cursor:pointer">✕</button>'
+      +'</div>';
+  }).join('');
+
+  // Wire edit/delete buttons
+  el.querySelectorAll('[data-ex-id]').forEach(function(btn){
+    btn.addEventListener('click', function(){ openCustomExModal(this.dataset.exId); });
+  });
+  el.querySelectorAll('[data-del-id]').forEach(function(btn){
+    btn.addEventListener('click', function(){ deleteCustomEx(parseInt(this.dataset.delId)); });
+  });
+}
+
+function openCustomExModal(exId) {
+  editingExId = exId;
+  shareTargets = [];
+  document.getElementById('cex-msg').style.display = 'none';
+  document.getElementById('cex-shared-with').style.display = 'none';
+  document.getElementById('cex-share-list').innerHTML = '';
+
+  if (exId) {
+    var ex = myExercises.find(function(e){ return String(e.id) === String(exId); });
+    if (ex) {
+      document.getElementById('custom-ex-modal-title').textContent = 'Edit: ' + ex.name;
+      document.getElementById('cex-name').value = ex.name || '';
+      document.getElementById('cex-desc').value = ex.description || '';
+      document.getElementById('cex-instr').value = ex.instructions || ex.notes || '';
+      document.getElementById('cex-mg').value = ex.muscle_group || '';
+      document.getElementById('cex-eq').value = ex.equipment || '';
+      document.getElementById('cex-tag').value = ex.tag || 'mec';
+      document.getElementById('cex-gender').value = ex.gender || 'unisex';
+      document.getElementById('cex-video').value = ex.video_url || '';
+      document.getElementById('cex-id').value = ex.id;
+      setVisibility(ex.visibility || 'private');
+    }
+  } else {
+    document.getElementById('custom-ex-modal-title').textContent = 'New Custom Exercise';
+    ['cex-name','cex-desc','cex-instr','cex-mg','cex-eq','cex-video'].forEach(function(id){
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('cex-id').value = '';
+    document.getElementById('cex-tag').value = 'mec';
+    document.getElementById('cex-gender').value = 'unisex';
+    setVisibility('private');
+  }
+  document.getElementById('custom-ex-overlay').style.display = 'flex';
+}
+
+function closeCustomExModal() {
+  document.getElementById('custom-ex-overlay').style.display = 'none';
+}
+
+function setVisibility(vis) {
+  document.getElementById('cex-visibility').value = vis;
+  ['private','shared','public'].forEach(function(v){
+    var btn = document.getElementById('vis-'+v);
+    if (!btn) return;
+    var active = v === vis;
+    btn.style.background = active ? 'var(--rdim)' : 'var(--s3)';
+    btn.style.borderColor = active ? 'rgba(232,17,42,.3)' : 'var(--bdr)';
+    btn.style.color = active ? 'var(--red)' : 'var(--mu)';
+    btn.style.fontWeight = active ? '600' : '400';
+  });
+  document.getElementById('cex-shared-with').style.display = vis === 'shared' ? 'block' : 'none';
+}
+
+async function addShareTarget() {
+  var email = document.getElementById('cex-share-email').value.trim();
+  if (!email) return;
+  var r = await sb.from('profiles').select('id,full_name,email').eq('email', email).maybeSingle();
+  if (!r.data) { showToast('Coach not found: ' + email); return; }
+  if (shareTargets.find(function(t){ return t.id === r.data.id; })) { showToast('Already added'); return; }
+  shareTargets.push(r.data);
+  document.getElementById('cex-share-email').value = '';
+  renderShareList();
+}
+
+function renderShareList() {
+  var listEl = document.getElementById('cex-share-list');
+  listEl.innerHTML = shareTargets.map(function(t){
+    return '<div data-share-id="'+escHtml(t.id)+'" style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--s3);border-radius:7px;margin-top:4px;font-size:.75rem">'
+      +'<span>'+escHtml(t.full_name||t.email)+'</span>'
+      +'<button data-rm-id="'+escHtml(t.id)+'" style="background:none;border:none;color:var(--mu2);cursor:pointer;font-size:.8rem">✕</button>'
+      +'</div>';
+  }).join('');
+  listEl.querySelectorAll('[data-rm-id]').forEach(function(btn){
+    btn.addEventListener('click', function(){ removeShareTarget(this.dataset.rmId); });
+  });
+}
+
+function removeShareTarget(id) {
+  shareTargets = shareTargets.filter(function(t){ return t.id !== id; });
+  renderShareList();
+}
+
+async function saveCustomEx() {
+  var name = document.getElementById('cex-name').value.trim();
+  if (!name) { showToast('Name is required'); return; }
+
+  var btn = document.querySelector('#custom-ex-overlay button[onclick="saveCustomEx()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  var data = {
+    name:         name,
+    description:  document.getElementById('cex-desc').value.trim() || null,
+    instructions: document.getElementById('cex-instr').value.trim() || null,
+    muscle_group: document.getElementById('cex-mg').value.trim() || null,
+    equipment:    document.getElementById('cex-eq').value.trim() || null,
+    tag:          document.getElementById('cex-tag').value,
+    gender:       document.getElementById('cex-gender').value,
+    video_url:    document.getElementById('cex-video').value.trim() || null,
+    visibility:   document.getElementById('cex-visibility').value,
+    coach_id:     ME.id,
+    created_by:   ME.id,
+    is_global:    false
+  };
+
+  var exId = document.getElementById('cex-id').value;
+  var r;
+  if (exId) {
+    r = await sb.from('exercises').update(data).eq('id', exId).select().single();
+  } else {
+    r = await sb.from('exercises').insert(data).select().single();
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Save Exercise'; }
+
+  if (r.error) {
+    showToast('Error: ' + r.error.message); return;
+  }
+
+  // Save share targets if shared
+  if (data.visibility === 'shared' && shareTargets.length && r.data) {
+    var shares = shareTargets.map(function(t){
+      return { exercise_id: r.data.id, shared_by: ME.id, shared_with: t.id };
+    });
+    await sb.from('exercise_shares').upsert(shares, { onConflict: 'exercise_id,shared_with' });
+  }
+
+  showToast('✓ Exercise saved');
+  closeCustomExModal();
+  await loadMyExercises();
+  loadEx(); // refresh global list too
+}
+
+async function deleteCustomEx(exId) {
+  if (!confirm('Delete this exercise?')) return;
+  await sb.from('exercises').delete().eq('id', exId).eq('coach_id', ME.id);
+  showToast('Exercise deleted');
+  await loadMyExercises();
+}
+
+// ── AI EXERCISE GENERATOR ─────────────────────────────────────
+function openAIExModal() {
+  document.getElementById('ai-ex-prompt').value = '';
+  document.getElementById('ai-ex-output').style.display = 'none';
+  document.getElementById('ai-ex-status').style.display = 'none';
+  document.getElementById('ai-ex-btn').disabled = false;
+  document.getElementById('ai-ex-btn').textContent = '✨ Generate Exercise';
+  document.getElementById('ai-ex-overlay').style.display = 'flex';
+}
+
+function closeAIExModal() {
+  document.getElementById('ai-ex-overlay').style.display = 'none';
+}
+
+async function generateAIExercise() {
+  var prompt = document.getElementById('ai-ex-prompt').value.trim();
+  if (!prompt) { showToast('Describe the exercise first'); return; }
+
+  var btn = document.getElementById('ai-ex-btn');
+  var status = document.getElementById('ai-ex-status');
+  btn.disabled = true; btn.textContent = '✨ Generating...';
+  status.textContent = 'AI is creating your exercise...';
+  status.style.display = 'block';
+  document.getElementById('ai-ex-output').style.display = 'none';
+
+  try {
+    var resp = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        system: "You are an expert strength and conditioning coach and physiotherapist. Generate a detailed exercise based on the coach description. Respond ONLY with a JSON object (no markdown, no backticks) with these fields: name (string), description (string, 1-2 sentences), instructions (string, numbered steps), muscle_group (string), equipment (string), suggested_params (string like 3x12 or 2x15), tag (one of: mec, met, pre, str, rehab).",
+        messages: [{ role: 'user', content: 'Create an exercise: ' + prompt }]
+      })
+    });
+    var data = await resp.json();
+    var text = data.content && data.content[0] ? data.content[0].text : '';
+    // Clean JSON
+    text = text.replace(/```json|```/g, '').trim();
+    var ex = JSON.parse(text);
+
+    document.getElementById('ai-ex-name').value  = ex.name || '';
+    document.getElementById('ai-ex-desc').value  = ex.description || '';
+    document.getElementById('ai-ex-instr').value = ex.instructions || '';
+    document.getElementById('ai-ex-mg').value    = ex.muscle_group || '';
+    document.getElementById('ai-ex-eq').value    = ex.equipment || '';
+    document.getElementById('ai-ex-params').value = ex.suggested_params || '';
+    document.getElementById('ai-ex-output').style.display = 'block';
+    status.style.display = 'none';
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = '✨ Generate Exercise';
+}
+
+function regenerateAIExercise() {
+  generateAIExercise();
+}
+
+async function saveAIExercise() {
+  var name = document.getElementById('ai-ex-name').value.trim();
+  if (!name) { showToast('Name is required'); return; }
+
+  var r = await sb.from('exercises').insert({
+    name:         name,
+    description:  document.getElementById('ai-ex-desc').value.trim() || null,
+    instructions: document.getElementById('ai-ex-instr').value.trim() || null,
+    muscle_group: document.getElementById('ai-ex-mg').value.trim() || null,
+    equipment:    document.getElementById('ai-ex-eq').value.trim() || null,
+    notes:        'Suggested: ' + (document.getElementById('ai-ex-params').value || ''),
+    tag:          'mec',
+    is_global:    false,
+    coach_id:     ME.id,
+    created_by:   ME.id,
+    visibility:   'private'
+  }).select().single();
+
+  if (r.error) { showToast('Error: ' + r.error.message); return; }
+  showToast('✓ Exercise saved to My Exercises');
+  closeAIExModal();
+  await loadMyExercises();
 }
 
 // ── PROGRAM EDITOR ───────────────────────────────────────────
