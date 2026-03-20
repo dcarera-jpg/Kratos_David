@@ -2993,11 +2993,43 @@ function openExerciseDemo(ex, se) {
     }
   }
 
-  // Description — fetch from wger.de async
+  // Fetch wger.de: description + video (free, no key needed)
   var descEl = document.getElementById('exdemo-desc');
   descEl.textContent = '';
   descEl.style.display = 'none';
-  _fetchWgerExDesc(ex, descEl);
+  var _demoMediaShown = false;
+  _fetchWgerExInfo(ex.name || '', function(type, urlOrArr) {
+    if (!videoArea.isConnected || _demoMediaShown) return;
+    _demoMediaShown = true;
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'margin-bottom:12px';
+    if (type === 'video') {
+      wrap.style.cssText += ';border-radius:12px;overflow:hidden;background:#111';
+      var vEl = document.createElement('video');
+      vEl.src = urlOrArr;
+      vEl.controls = true;
+      vEl.loop = true;
+      vEl.playsInline = true;
+      vEl.style.cssText = 'width:100%;display:block;max-height:300px;object-fit:contain';
+      wrap.appendChild(vEl);
+    } else {
+      // images: show up to 2 side by side
+      var imgs = Array.isArray(urlOrArr) ? urlOrArr.slice(0, 2) : [urlOrArr];
+      wrap.style.cssText += ';display:flex;gap:6px';
+      imgs.forEach(function(src) {
+        var img = document.createElement('img');
+        img.src = src;
+        img.style.cssText = 'flex:1;width:0;border-radius:10px;object-fit:cover;max-height:200px;background:#111';
+        img.onerror = function(){ wrap.style.display = 'none'; };
+        wrap.appendChild(img);
+      });
+    }
+    videoArea.insertBefore(wrap, videoArea.firstChild);
+  }, function(desc) {
+    if (!descEl.isConnected || descEl.textContent.trim()) return;
+    descEl.textContent = desc;
+    descEl.style.display = 'block';
+  });
 
   document.getElementById('exdemo-overlay').style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -3011,30 +3043,50 @@ function closeExerciseDemo() {
   document.body.style.overflow = '';
 }
 
-function _fetchWgerExDesc(ex, descEl) {
-  var name = (ex.name_en || ex.name || '').trim();
-  if (!name) return;
-  fetch('https://wger.de/api/v2/exercise/search/?term=' + encodeURIComponent(name) + '&format=json&language=english')
-    .then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(data) {
-      if (!data) return null;
-      var s = (data.suggestions || [])[0];
-      var baseId = s && s.data && s.data.base_id;
-      if (!baseId) return null;
-      return fetch('https://wger.de/api/v2/exerciseinfo/' + baseId + '/?format=json')
-        .then(function(r){ return r.ok ? r.json() : null; });
-    })
-    .then(function(info) {
-      if (!info || !descEl.isConnected) return;
-      var trans = (info.translations || []).find(function(t){ return t.language === 2; });
-      var raw = (trans && trans.description) ? trans.description : '';
-      var desc = raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-      if (desc.length > 10) {
-        descEl.textContent = desc.length > 400 ? desc.slice(0, 400) + '\u2026' : desc;
-        descEl.style.display = 'block';
-      }
-    })
-    .catch(function(){});
+function _fetchWgerExInfo(name, onMedia, onDesc) {
+  // onMedia(type, url)  — type: 'video' | 'images', url: string or array
+  // onDesc(text)
+  var q = (name || '').trim();
+  if (!q) return;
+  var searchNames = [_resolveExName(q), q].filter(function(n,i,a){ return n && a.indexOf(n) === i; });
+  var idx = 0;
+
+  function tryNext() {
+    if (idx >= searchNames.length) return;
+    var sn = searchNames[idx++];
+    fetch('https://wger.de/api/v2/exercise/search/?term=' + encodeURIComponent(sn) + '&format=json&language=english')
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data) {
+        var s = data && (data.suggestions || [])[0];
+        var baseId = s && s.data && s.data.base_id;
+        if (!baseId) { tryNext(); return; }
+        return fetch('https://wger.de/api/v2/exerciseinfo/' + baseId + '/?format=json')
+          .then(function(r){ return r.ok ? r.json() : null; })
+          .then(function(info) {
+            if (!info) { tryNext(); return; }
+            // Description (English)
+            var trans = (info.translations || []).find(function(t){ return t.language === 2; });
+            var raw = (trans && trans.description) ? trans.description : '';
+            var desc = raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+            if (desc.length > 10) onDesc(desc.length > 400 ? desc.slice(0, 400) + '\u2026' : desc);
+            // Video (mp4) — rare but best
+            var videos = info.videos || [];
+            if (videos.length > 0) {
+              var vUrl = videos[0].video || '';
+              if (vUrl && !vUrl.startsWith('http')) vUrl = 'https://wger.de' + vUrl;
+              if (vUrl) { onMedia('video', vUrl); return; }
+            }
+            // Images — common fallback
+            var imgs = (info.images || []).map(function(img) {
+              var u = img.image || '';
+              return u.startsWith('http') ? u : 'https://wger.de' + u;
+            }).filter(Boolean);
+            if (imgs.length > 0) onMedia('images', imgs);
+          });
+      })
+      .catch(function(){ tryNext(); });
+  }
+  tryNext();
 }
 
 // Italian → English exercise name map for ExerciseDB lookup
