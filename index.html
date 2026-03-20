@@ -712,6 +712,16 @@ select.inp{cursor:pointer}
         <button onclick="copyJoinCode()" style="margin-top:10px;background:var(--rdim);border:1px solid rgba(232,17,42,.2);color:var(--red);border-radius:8px;padding:7px 18px;font-size:.75rem;cursor:pointer;font-family:inherit">Copy Code</button>
       </div>
 
+      <!-- Language selector (coach) -->
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">LANGUAGE / LINGUA / IDIOMA</div>
+        <div style="display:flex;gap:8px">
+          <button class="lang-btn" data-lang="en" onclick="setLanguage('en')" style="flex:1;padding:9px;border-radius:9px;font-family:inherit;font-size:.8rem;cursor:pointer;background:var(--rdim);border:1px solid rgba(232,17,42,.3);color:var(--red)">🇺🇸 EN</button>
+          <button class="lang-btn" data-lang="it" onclick="setLanguage('it')" style="flex:1;padding:9px;border-radius:9px;font-family:inherit;font-size:.8rem;cursor:pointer;background:var(--s3);border:1px solid var(--bdr);color:var(--mu)">🇮🇹 IT</button>
+          <button class="lang-btn" data-lang="es" onclick="setLanguage('es')" style="flex:1;padding:9px;border-radius:9px;font-family:inherit;font-size:.8rem;cursor:pointer;background:var(--s3);border:1px solid var(--bdr);color:var(--mu)">🇪🇸 ES</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -813,13 +823,13 @@ select.inp{cursor:pointer}
 
   <!-- ADMIN NAV -->
   <nav class="bnav" id="admin-nav">
-    <button class="bni on" id="abn-athletes" onclick="asv('athletes')"><span class="bni-ic">&#128101;</span><span class="bni-lb">Athletes</span></button>
-    <button class="bni"    id="abn-new"      onclick="asv('new')"><span class="bni-ic">&#10133;</span><span class="bni-lb">New</span></button>
-    <button class="bni"    id="abn-prog"     onclick="asv('prog')"><span class="bni-ic">&#128203;</span><span class="bni-lb">Programs</span></button>
-    <button class="bni"    id="abn-ai"       onclick="asv('ai')"><span class="bni-ic">&#129504;</span><span class="bni-lb">AI</span></button>
-    <button class="bni"    id="abn-msgs"     onclick="asv('msgs')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Messages</span></button>
-    <button class="bni"    id="abn-analytics" onclick="asv('analytics');loadAnalytics()"><span class="bni-ic">&#128200;</span><span class="bni-lb">Stats</span></button>
-    <button class="bni"    id="abn-profile"  onclick="asv('profile');loadCoachProfileForm()"><span class="bni-ic">&#127775;</span><span class="bni-lb">Profile</span></button>
+    <button class="bni on" id="abn-athletes" onclick="asv('athletes')"><span class="bni-ic">&#128101;</span><span class="bni-lb" data-i18n="nav_athletes">Athletes</span></button>
+    <button class="bni"    id="abn-new"      onclick="asv('new')"><span class="bni-ic">&#10133;</span><span class="bni-lb" data-i18n="nav_new">New</span></button>
+    <button class="bni"    id="abn-prog"     onclick="asv('prog')"><span class="bni-ic">&#128203;</span><span class="bni-lb" data-i18n="nav_programs">Programs</span></button>
+    <button class="bni"    id="abn-ai"       onclick="asv('ai')"><span class="bni-ic">&#129504;</span><span class="bni-lb" data-i18n="nav_ai">AI</span></button>
+    <button class="bni"    id="abn-msgs"     onclick="asv('msgs')"><span class="bni-ic">&#128172;</span><span class="bni-lb" data-i18n="nav_messages">Messages</span></button>
+    <button class="bni"    id="abn-analytics" onclick="asv('analytics');loadAnalytics()"><span class="bni-ic">&#128200;</span><span class="bni-lb" data-i18n="nav_stats">Stats</span></button>
+    <button class="bni"    id="abn-profile"  onclick="asv('profile');loadCoachProfileForm()"><span class="bni-ic">&#127775;</span><span class="bni-lb" data-i18n="nav_profile">Profile</span></button>
   </nav>
 
   <!-- ════════════════════════════════════════════════════ ATHLETE VIEWS -->
@@ -1065,6 +1075,16 @@ select.inp{cursor:pointer}
       <button class="btn-red" style="width:100%;padding:14px;font-size:.9rem" onclick="saveAssessment()">💾 Save Assessment</button>
       <div id="ass-msg" style="display:none;margin-top:10px;padding:10px;border-radius:10px;font-size:.78rem;text-align:center"></div>
 
+      <!-- Language selector (athlete) -->
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-top:12px">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">LANGUAGE / LINGUA / IDIOMA</div>
+        <div style="display:flex;gap:8px">
+          <button class="lang-btn" data-lang="en" onclick="setLanguage('en')" style="flex:1;padding:9px;border-radius:9px;font-family:inherit;font-size:.8rem;cursor:pointer;background:var(--rdim);border:1px solid rgba(232,17,42,.3);color:var(--red)">🇺🇸 EN</button>
+          <button class="lang-btn" data-lang="it" onclick="setLanguage('it')" style="flex:1;padding:9px;border-radius:9px;font-family:inherit;font-size:.8rem;cursor:pointer;background:var(--s3);border:1px solid var(--bdr);color:var(--mu)">🇮🇹 IT</button>
+          <button class="lang-btn" data-lang="es" onclick="setLanguage('es')" style="flex:1;padding:9px;border-radius:9px;font-family:inherit;font-size:.8rem;cursor:pointer;background:var(--s3);border:1px solid var(--bdr);color:var(--mu)">🇪🇸 ES</button>
+        </div>
+      </div>
+
       <!-- STORICO -->
       <div style="margin-top:20px">
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">ASSESSMENT HISTORY</div>
@@ -1096,11 +1116,11 @@ select.inp{cursor:pointer}
 
   <!-- ATHLETE NAV -->
   <nav class="bnav" id="athlete-nav">
-    <button class="bni on" id="vbn-cycle" onclick="vsv('cycle')"><span class="bni-ic">&#128197;</span><span class="bni-lb">Cycle</span></button>
-    <button class="bni"    id="vbn-timer" onclick="vsv('timer')"><span class="bni-ic">&#9201;</span><span class="bni-lb">Timer</span></button>
-    <button class="bni"    id="vbn-coach" onclick="vsv('coach')"><span class="bni-ic">&#128172;</span><span class="bni-lb">Coach</span></button>
-    <button class="bni"    id="vbn-assessment" onclick="vsv('assessment');loadAssessmentForm()"><span class="bni-ic">&#128203;</span><span class="bni-lb">Profile</span></button>
-    <button class="bni"    id="vbn-stats" onclick="vsv('stats')"><span class="bni-ic">&#128200;</span><span class="bni-lb">Stats</span></button>
+    <button class="bni on" id="vbn-cycle" onclick="vsv('cycle')"><span class="bni-ic">&#128197;</span><span class="bni-lb" data-i18n="nav_cycle">Cycle</span></button>
+    <button class="bni"    id="vbn-timer" onclick="vsv('timer')"><span class="bni-ic">&#9201;</span><span class="bni-lb" data-i18n="nav_timer">Timer</span></button>
+    <button class="bni"    id="vbn-coach" onclick="vsv('coach')"><span class="bni-ic">&#128172;</span><span class="bni-lb" data-i18n="nav_coach">Coach</span></button>
+    <button class="bni"    id="vbn-assessment" onclick="vsv('assessment');loadAssessmentForm()"><span class="bni-ic">&#128203;</span><span class="bni-lb" data-i18n="nav_profile">Profile</span></button>
+    <button class="bni"    id="vbn-stats" onclick="vsv('stats')"><span class="bni-ic">&#128200;</span><span class="bni-lb" data-i18n="nav_stats">Stats</span></button>
   </nav>
 
 </div><!-- end #app -->
@@ -1443,6 +1463,7 @@ function boot() {
         if (!pr.data) { showLogin(); return; }
         myProfile = pr.data;
         APP_ROLE = myProfile.role;
+        initLanguage(myProfile.preferred_language);
         document.getElementById('loader').style.display = 'none';
         if (APP_ROLE === 'admin' || APP_ROLE === 'coach') { startAdmin(); }
         else { startAthlete(); }
@@ -4283,6 +4304,182 @@ function showToast(msg, duration) {
 
 // ── STRIPE ───────────────────────────────────────────────────
 var WORKER_URL = 'https://kratos-ai.dcarera.workers.dev';
+
+// ── INTERNATIONALIZATION ──────────────────────────────────────
+var CURRENT_LANG = 'en';
+
+var TRANSLATIONS = {
+  en: {
+    // Navbar
+    nav_athletes:  'Athletes',
+    nav_new:       'New',
+    nav_programs:  'Programs',
+    nav_ai:        'AI',
+    nav_messages:  'Messages',
+    nav_stats:     'Stats',
+    nav_profile:   'Profile',
+    nav_cycle:     'Cycle',
+    nav_timer:     'Timer',
+    nav_coach:     'Coach',
+    // Buttons
+    btn_save:      'Save',
+    btn_cancel:    'Cancel',
+    btn_logout:    'Logout',
+    btn_subscribe: 'Subscribe',
+    btn_send:      'Send',
+    btn_copy:      'Copy Code',
+    // Forms
+    lbl_name:      'Display Name',
+    lbl_bio:       'Bio',
+    lbl_city:      'City',
+    lbl_price:     'Monthly Price ($)',
+    lbl_weight:    'Weight (kg)',
+    lbl_height:    'Height (cm)',
+    lbl_goal:      'Main goal',
+    // Messages
+    msg_saved:     'Saved!',
+    msg_error:     'Error',
+    msg_loading:   'Loading…',
+    msg_no_data:   'No data yet.',
+    msg_sub_active:'Subscription active',
+    // Sections
+    sec_payments:  'PAYMENTS',
+    sec_retention: 'RETENTION',
+    sec_analytics: 'ANALYTICS',
+    sec_premium:   'PREMIUM',
+    sec_progress:  'MY PROGRESS',
+    sec_profile:   'MY PROFILE',
+    sec_body:      'BODY MEASUREMENTS',
+    sec_training:  'TRAINING',
+    sec_lifestyle: 'LIFESTYLE',
+    sec_injuries:  'INJURIES & LIMITATIONS',
+    sec_notes:     'FREE NOTES',
+  },
+  it: {
+    nav_athletes:  'Atleti',
+    nav_new:       'Nuovo',
+    nav_programs:  'Programmi',
+    nav_ai:        'AI',
+    nav_messages:  'Messaggi',
+    nav_stats:     'Stats',
+    nav_profile:   'Profilo',
+    nav_cycle:     'Ciclo',
+    nav_timer:     'Timer',
+    nav_coach:     'Coach',
+    btn_save:      'Salva',
+    btn_cancel:    'Annulla',
+    btn_logout:    'Esci',
+    btn_subscribe: 'Abbonati',
+    btn_send:      'Invia',
+    btn_copy:      'Copia Codice',
+    lbl_name:      'Nome visualizzato',
+    lbl_bio:       'Bio',
+    lbl_city:      'Città',
+    lbl_price:     'Prezzo mensile ($)',
+    lbl_weight:    'Peso (kg)',
+    lbl_height:    'Altezza (cm)',
+    lbl_goal:      'Obiettivo principale',
+    msg_saved:     'Salvato!',
+    msg_error:     'Errore',
+    msg_loading:   'Caricamento…',
+    msg_no_data:   'Nessun dato.',
+    msg_sub_active:'Abbonamento attivo',
+    sec_payments:  'PAGAMENTI',
+    sec_retention: 'FIDELIZZAZIONE',
+    sec_analytics: 'ANALYTICS',
+    sec_premium:   'PREMIUM',
+    sec_progress:  'I MIEI PROGRESSI',
+    sec_profile:   'IL MIO PROFILO',
+    sec_body:      'MISURE CORPOREE',
+    sec_training:  'ALLENAMENTO',
+    sec_lifestyle: 'STILE DI VITA',
+    sec_injuries:  'INFORTUNI & LIMITAZIONI',
+    sec_notes:     'NOTE LIBERE',
+  },
+  es: {
+    nav_athletes:  'Atletas',
+    nav_new:       'Nuevo',
+    nav_programs:  'Programas',
+    nav_ai:        'IA',
+    nav_messages:  'Mensajes',
+    nav_stats:     'Stats',
+    nav_profile:   'Perfil',
+    nav_cycle:     'Ciclo',
+    nav_timer:     'Cronómetro',
+    nav_coach:     'Coach',
+    btn_save:      'Guardar',
+    btn_cancel:    'Cancelar',
+    btn_logout:    'Salir',
+    btn_subscribe: 'Suscribirse',
+    btn_send:      'Enviar',
+    btn_copy:      'Copiar Código',
+    lbl_name:      'Nombre visible',
+    lbl_bio:       'Bio',
+    lbl_city:      'Ciudad',
+    lbl_price:     'Precio mensual ($)',
+    lbl_weight:    'Peso (kg)',
+    lbl_height:    'Altura (cm)',
+    lbl_goal:      'Objetivo principal',
+    msg_saved:     '¡Guardado!',
+    msg_error:     'Error',
+    msg_loading:   'Cargando…',
+    msg_no_data:   'Sin datos aún.',
+    msg_sub_active:'Suscripción activa',
+    sec_payments:  'PAGOS',
+    sec_retention: 'RETENCIÓN',
+    sec_analytics: 'ANALÍTICAS',
+    sec_premium:   'PREMIUM',
+    sec_progress:  'MI PROGRESO',
+    sec_profile:   'MI PERFIL',
+    sec_body:      'MEDIDAS CORPORALES',
+    sec_training:  'ENTRENAMIENTO',
+    sec_lifestyle: 'ESTILO DE VIDA',
+    sec_injuries:  'LESIONES & LIMITACIONES',
+    sec_notes:     'NOTAS LIBRES',
+  },
+};
+
+function t(key) {
+  var dict = TRANSLATIONS[CURRENT_LANG] || TRANSLATIONS['en'];
+  return dict[key] || TRANSLATIONS['en'][key] || key;
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+}
+
+function setLanguageBtnUI(lang) {
+  document.querySelectorAll('.lang-btn').forEach(function(btn) {
+    var isActive = btn.getAttribute('data-lang') === lang;
+    btn.style.background   = isActive ? 'var(--rdim)'               : 'var(--s3)';
+    btn.style.borderColor  = isActive ? 'rgba(232,17,42,.3)'         : 'var(--bdr)';
+    btn.style.color        = isActive ? 'var(--red)'                 : 'var(--mu)';
+  });
+}
+
+async function setLanguage(lang) {
+  if (!TRANSLATIONS[lang]) return;
+  CURRENT_LANG = lang;
+  localStorage.setItem('kratos_lang', lang);
+  applyTranslations();
+  setLanguageBtnUI(lang);
+  // Persist in profile
+  if (ME) {
+    await sb.from('profiles').update({ preferred_language: lang }).eq('id', ME.id);
+  }
+  showToast(lang === 'en' ? 'Language: English' : lang === 'it' ? 'Lingua: Italiano' : 'Idioma: Español');
+}
+
+function initLanguage(profileLang) {
+  var stored = localStorage.getItem('kratos_lang');
+  CURRENT_LANG = stored || profileLang || 'en';
+  if (!TRANSLATIONS[CURRENT_LANG]) CURRENT_LANG = 'en';
+  applyTranslations();
+  setLanguageBtnUI(CURRENT_LANG);
+}
 var STRIPE_PK  = 'pk_test_51TBXLmCILlzdLTCXmUvoplj49VxyQXaeqbW4F7tDHz6TKCIZsdYlnzJaGMYIzTdujZ9WTyDpqTOxTbEwRhYbQV1o00Chx0uYOg';
 var stripeObj  = null; // initialized on first use
 
