@@ -653,6 +653,16 @@ select.inp{cursor:pointer}
         </div>
       </div>
 
+      <!-- Notifications -->
+      <div class="iform">
+        <div class="iform-title">&#128276; NOTIFICATIONS</div>
+        <div class="field">
+          <label>Telegram Chat ID <span style="color:var(--mu2);font-weight:400;text-transform:none;font-size:.65rem">— ricevi notifiche quando un atleta completa un ciclo</span></label>
+          <input class="inp" id="prof-telegram" placeholder="es. 123456789" inputmode="numeric">
+          <div style="font-size:.65rem;color:var(--mu2);margin-top:4px;line-height:1.5">Come ottenere il Chat ID: crea un bot via @BotFather → invia un messaggio al bot → apri <span style="color:var(--orn)">api.telegram.org/bot{TOKEN}/getUpdates</span> → copia <code style="background:var(--s3);padding:1px 4px;border-radius:3px">result[0].message.chat.id</code></div>
+        </div>
+      </div>
+
       <button class="btn-red" style="width:100%;padding:14px;font-size:.9rem" onclick="saveCoachProfile()">&#128190; Save Profile</button>
       <div id="prof-msg" style="display:none;padding:10px;border-radius:10px;font-size:.78rem;text-align:center"></div>
 
@@ -851,6 +861,21 @@ select.inp{cursor:pointer}
         <button id="ath-payment-banner-btn" style="flex-shrink:0;padding:7px 14px;border-radius:8px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer">Subscribe</button>
       </div>
       <div id="ath-sub-status" style="display:none;margin:10px 14px 0"></div>
+
+      <!-- CYCLE COMPLETE BANNER -->
+      <div id="cycle-complete-banner" style="display:none;margin:12px 14px 0;background:var(--s2);border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:16px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:1.2rem">🏆</span>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.08em;color:var(--grn)">Ciclo completato!</div>
+        </div>
+        <div style="font-size:.76rem;color:var(--mu2);margin-bottom:14px;line-height:1.5">Ottimo lavoro! Scegli come continuare — il tuo coach riceverà una notifica automatica.</div>
+        <div style="display:flex;gap:8px">
+          <button id="btn-cycle-next" onclick="athleteChooseCycle('next')" style="flex:1;padding:11px 8px;border-radius:10px;background:var(--grn);border:none;color:#000;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent">▶ Prossimo ciclo</button>
+          <button id="btn-cycle-repeat" onclick="athleteChooseCycle('repeat')" style="flex:1;padding:11px 8px;border-radius:10px;background:none;border:1px solid rgba(16,185,129,.35);color:var(--grn);font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent">↺ Ripeti stesso</button>
+        </div>
+        <div id="cycle-choice-msg" style="display:none;margin-top:10px;font-size:.74rem;padding:8px 10px;border-radius:9px"></div>
+      </div>
+
       <div class="cycle-header">
         <div class="cycle-title" id="ath-cycle-title">Cycle</div>
       </div>
@@ -4019,6 +4044,104 @@ function renderCycle() {
 
   if(!selectedDayNum) selectedDayNum=currentDay;
   renderDaySession(selectedDayNum);
+
+  // Show cycle-complete banner if athlete is on or past day 10
+  var banner = document.getElementById('cycle-complete-banner');
+  if (banner) banner.style.display = currentDay >= 10 ? 'block' : 'none';
+}
+
+// ── CYCLE COMPLETE: ATHLETE SELF-SERVICE ─────────────────────
+async function athleteChooseCycle(type) {
+  var btnNext   = document.getElementById('btn-cycle-next');
+  var btnRepeat = document.getElementById('btn-cycle-repeat');
+  var msgEl     = document.getElementById('cycle-choice-msg');
+  if (btnNext)   btnNext.disabled   = true;
+  if (btnRepeat) btnRepeat.disabled = true;
+
+  function _showMsg(text, ok) {
+    if (!msgEl) return;
+    msgEl.textContent = text;
+    msgEl.style.background = ok ? 'rgba(16,185,129,.1)' : 'rgba(232,17,42,.1)';
+    msgEl.style.color = ok ? 'var(--grn)' : 'var(--red)';
+    msgEl.style.display = 'block';
+  }
+
+  try {
+    var cycleName = currentCycle ? currentCycle.name : '?';
+    var athleteName = myProfile.full_name || myProfile.email || 'Atleta';
+
+    if (type === 'repeat') {
+      await sb.from('profiles').update({
+        current_day: 1,
+        cycle_start_date: new Date().toISOString().split('T')[0]
+      }).eq('id', ME.id);
+      myProfile.current_day = 1;
+      var msg = '↺ ' + athleteName + ' ha completato il ciclo "' + cycleName + '" e ha scelto di RIPETERLO.';
+      await notifyCoachCycleChoice(msg);
+      _showMsg('✓ Ciclo ripetuto! Il coach è stato notificato.', true);
+      setTimeout(function(){ loadCycle(); }, 1200);
+      return;
+    }
+
+    // type === 'next' — find next cycle in mesocycle
+    if (!myProfile.current_mesocycle_id) {
+      var msg2 = '🏆 ' + athleteName + ' ha completato il ciclo "' + cycleName + '"! Nessun mesocycle assegnato — richiede nuovo programma.';
+      await notifyCoachCycleChoice(msg2);
+      _showMsg('✓ Coach notificato! Attendi l\'assegnazione del nuovo programma.', true);
+      return;
+    }
+
+    var r = await sb.from('cycles')
+      .select('id, name, order_index')
+      .eq('mesocycle_id', myProfile.current_mesocycle_id)
+      .order('order_index', { ascending: true });
+    var cycles = r.data || [];
+    var curIdx = cycles.findIndex(function(c){ return c.id === myProfile.current_cycle_id; });
+    var nextCycle = curIdx >= 0 ? cycles[curIdx + 1] : null;
+
+    if (!nextCycle) {
+      // Mesocycle finito — notifica coach e attendi
+      var msg3 = '🏆 ' + athleteName + ' ha completato TUTTI i cicli del mesocycle! È pronto per un nuovo programma.';
+      await notifyCoachCycleChoice(msg3);
+      _showMsg('✓ Mesocycle completato! Il coach è stato notificato per assegnare un nuovo programma.', true);
+      return;
+    }
+
+    // Avanza al ciclo successivo
+    await sb.from('profiles').update({
+      current_cycle_id:   nextCycle.id,
+      current_day:        1,
+      cycle_start_date:   new Date().toISOString().split('T')[0]
+    }).eq('id', ME.id);
+    myProfile.current_cycle_id = nextCycle.id;
+    myProfile.current_day = 1;
+    var msg4 = '▶ ' + athleteName + ' ha completato "' + cycleName + '" e ha avanzato al ciclo: ' + nextCycle.name;
+    await notifyCoachCycleChoice(msg4);
+    _showMsg('✓ Avanzato a: ' + nextCycle.name + '! Coach notificato.', true);
+    setTimeout(function(){ loadCycle(); }, 1200);
+
+  } catch(e) {
+    _showMsg('Errore. Riprova.', false);
+    if (btnNext)   btnNext.disabled   = false;
+    if (btnRepeat) btnRepeat.disabled = false;
+  }
+}
+
+async function notifyCoachCycleChoice(text) {
+  if (!myProfile.coach_id) return;
+  // 1. In-app chat message
+  await sb.from('messages').insert({
+    athlete_id:  ME.id,
+    sender_id:   ME.id,
+    sender_role: 'athlete',
+    text:        text
+  }).catch(function(){});
+  // 2. Telegram notification via Worker
+  await fetch(WORKER_URL + '/notify/telegram', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ coach_id: myProfile.coach_id, text: text })
+  }).catch(function(){});
 }
 
 function selectCycleDay(n) {
@@ -5603,8 +5726,9 @@ function loadCoachProfileForm() {
       if (d.location_city)   { var el=document.getElementById('prof-city');     if(el) el.value=d.location_city; }
       if (d.location_state)  { var el=document.getElementById('prof-state');    if(el) el.value=d.location_state; }
       if (d.years_exp)       { var el=document.getElementById('prof-exp');      if(el) el.value=d.years_exp; }
-      if (d.price_per_month) { var el=document.getElementById('prof-price');    if(el) el.value=d.price_per_month; }
-      if (d.avatar_url)      { var el=document.getElementById('prof-avatar');   if(el) el.value=d.avatar_url; previewAvatar(d.avatar_url); }
+      if (d.price_per_month)   { var el=document.getElementById('prof-price');    if(el) el.value=d.price_per_month; }
+      if (d.avatar_url)        { var el=document.getElementById('prof-avatar');   if(el) el.value=d.avatar_url; previewAvatar(d.avatar_url); }
+      if (d.telegram_chat_id)  { var el=document.getElementById('prof-telegram'); if(el) el.value=d.telegram_chat_id; }
 
       // Public toggle
       var tog = document.getElementById('prof-public');
@@ -5751,6 +5875,7 @@ function saveCoachProfile() {
   var tiktok    = (document.getElementById('prof-tiktok')||{}).value||'';
   var youtube   = (document.getElementById('prof-youtube')||{}).value||'';
   var website   = (document.getElementById('prof-website')||{}).value||'';
+  var telegram  = (document.getElementById('prof-telegram')||{}).value.trim()||'';
 
   var profileData = {
     id:               ME.id,
@@ -5766,7 +5891,8 @@ function saveCoachProfile() {
     instagram_url:    instagram || null,
     tiktok_url:       tiktok    || null,
     youtube_url:      youtube   || null,
-    website_url:      website   || null
+    website_url:      website   || null,
+    telegram_chat_id: telegram  || null
   };
 
   // Also update full_name in profiles

@@ -54,6 +54,9 @@ export default {
     // ── EXERCISE DEMO ─────────────────────────────────────────
     if (path === '/exercise/gif') return handleExerciseGif(request, env);
 
+    // ── NOTIFICATIONS ────────────────────────────────────────
+    if (path === '/notify/telegram') return handleNotifyTelegram(request, env);
+
     return err('Not found', 404);
   },
 };
@@ -83,6 +86,38 @@ async function handleExerciseGif(request, env) {
     });
   } catch (e) {
     return json({ gifUrl: null });
+  }
+}
+
+// ── TELEGRAM NOTIFICATION ────────────────────────────────────
+async function handleNotifyTelegram(request, env) {
+  const { coach_id, text } = await request.json().catch(() => ({}));
+  if (!coach_id || !text) return err('coach_id and text required');
+
+  const token = env.TELEGRAM_BOT_TOKEN;
+  if (!token) return json({ sent: false, reason: 'no_token' });
+
+  const sb = sbClient(env.SUPABASE_URL, env.SUPABASE_SK);
+  const { data: cp } = await sb.from('coach_profiles')
+    .select('telegram_chat_id').eq('id', coach_id).single();
+
+  const chatId = cp?.telegram_chat_id;
+  if (!chatId) return json({ sent: false, reason: 'no_chat_id' });
+
+  try {
+    const res = await fetch(
+      `https://api.telegram.org/bot${token}/sendMessage`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
+      }
+    );
+    const data = await res.json();
+    if (!data.ok) return json({ sent: false, reason: data.description });
+    return json({ sent: true });
+  } catch (e) {
+    return json({ sent: false, reason: e.message });
   }
 }
 
