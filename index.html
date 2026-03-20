@@ -3072,16 +3072,15 @@ function _fetchExerciseDB(name, cb) {
   var q = _resolveExName(name);
   if (!q) { cb(null, null); return; }
   var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  var timer = setTimeout(function(){ if (ctrl) ctrl.abort(); cb(null, null); }, 6000);
-  fetch('https://exercisedb.p.rapidapi.com/exercises/name/' + encodeURIComponent(q) + '?limit=1&offset=0', {
-    headers: { 'X-RapidAPI-Key': EXERCISEDB_KEY, 'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com' },
+  var timer = setTimeout(function(){ if (ctrl) ctrl.abort(); cb(null, null); }, 7000);
+  // Proxy through Cloudflare Worker to avoid CORS / RapidAPI browser restrictions
+  fetch('https://kratos-ai.dcarera.workers.dev/exercise/gif?name=' + encodeURIComponent(q), {
     signal: ctrl ? ctrl.signal : undefined
   })
   .then(function(r){ return r.ok ? r.json() : null; })
   .then(function(data){
     clearTimeout(timer);
-    var hit = Array.isArray(data) && data.length > 0 && data[0];
-    cb(hit ? hit.gifUrl : null, hit || null);
+    cb(data && data.gifUrl ? data.gifUrl : null, data || null);
   })
   .catch(function(){ clearTimeout(timer); cb(null, null); });
 }

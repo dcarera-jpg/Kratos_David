@@ -51,9 +51,40 @@ export default {
     if (path === '/stripe/athlete-premium')  return handleAthletePremium(request, env);
     if (path === '/stripe/athlete-premium-cancel') return handleAthletePremiumCancel(request, env);
 
+    // ── EXERCISE DEMO ─────────────────────────────────────────
+    if (path === '/exercise/gif') return handleExerciseGif(request, env);
+
     return err('Not found', 404);
   },
 };
+
+// ── EXERCISE GIF PROXY ───────────────────────────────────────
+async function handleExerciseGif(request, env) {
+  const url  = new URL(request.url);
+  const name = (url.searchParams.get('name') || '').trim();
+  if (!name) return json({ gifUrl: null });
+
+  const key = env.EXERCISEDB_KEY || '3e59b788camshee488ed2feded38p13518fjsn389730d70e1c';
+
+  try {
+    const res = await fetch(
+      'https://exercisedb.p.rapidapi.com/exercises/name/' + encodeURIComponent(name) + '?limit=1&offset=0',
+      { headers: { 'X-RapidAPI-Key': key, 'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com' } }
+    );
+    if (!res.ok) return json({ gifUrl: null, apiStatus: res.status });
+    const data = await res.json();
+    const hit = Array.isArray(data) && data[0];
+    if (!hit) return json({ gifUrl: null });
+    return json({
+      gifUrl:       hit.gifUrl,
+      bodyPart:     hit.bodyPart     || '',
+      target:       hit.target       || '',
+      instructions: hit.instructions || [],
+    });
+  } catch (e) {
+    return json({ gifUrl: null });
+  }
+}
 
 // ── AI CHAT ──────────────────────────────────────────────────
 async function handleAIChat(request, env) {
