@@ -2946,51 +2946,45 @@ function openExerciseDemo(ex, se) {
       '</div>' +
       '<div style="text-align:center;font-size:.65rem;color:var(--mu2);margin-top:6px">Tocca ▶ per riprodurre</div>';
   } else {
-    // Show YouTube search card immediately, then upgrade to GIF if ExerciseDB finds one
     var exName = ex.name || '';
     _showExDemoMedia(videoArea, exName, null, null);
-    if (EXERCISEDB_KEY) {
-      _fetchExerciseDB(exName, function(gifUrl, exInfo) {
-        if (!videoArea.isConnected || !gifUrl) return;
-        // Inject GIF above the existing YouTube card
-        var gifWrap = document.createElement('div');
-        gifWrap.style.cssText = 'border-radius:12px;overflow:hidden;background:#111;text-align:center;margin-bottom:10px';
-        var gifImg = document.createElement('img');
-        gifImg.src = gifUrl;
-        gifImg.alt = exName;
-        gifImg.style.cssText = 'max-width:100%;height:auto;display:block;margin:0 auto';
-        gifImg.loading = 'lazy';
-        gifWrap.appendChild(gifImg);
-        videoArea.insertBefore(gifWrap, videoArea.firstChild);
-        // Show body part + target badges if available
-        if (exInfo && (exInfo.bodyPart || exInfo.target)) {
-          var badgeRow = document.createElement('div');
-          badgeRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px';
-          if (exInfo.bodyPart) {
-            var b1 = document.createElement('span');
-            b1.style.cssText = 'font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:rgba(245,158,11,.1);color:var(--orn);border:1px solid rgba(245,158,11,.2)';
-            b1.textContent = exInfo.bodyPart;
-            badgeRow.appendChild(b1);
-          }
-          if (exInfo.target) {
-            var b2 = document.createElement('span');
-            b2.style.cssText = 'font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:rgba(99,102,241,.1);color:#818cf8;border:1px solid rgba(99,102,241,.2)';
-            b2.textContent = exInfo.target;
-            badgeRow.appendChild(b2);
-          }
-          videoArea.insertBefore(badgeRow, videoArea.children[1] || null);
+    // exercisedb.dev — free, no key, animated GIFs for 1300+ exercises
+    _fetchExerciseDB(exName, function(gifUrl, exInfo) {
+      if (!videoArea.isConnected || !gifUrl) return;
+      _demoMediaShown = true;
+      // GIF card
+      var gifWrap = document.createElement('div');
+      gifWrap.style.cssText = 'border-radius:12px;overflow:hidden;background:#111;text-align:center;margin-bottom:10px';
+      var gifImg = document.createElement('img');
+      gifImg.src = gifUrl;
+      gifImg.alt = exName;
+      gifImg.style.cssText = 'max-width:100%;height:auto;display:block;margin:0 auto';
+      gifWrap.appendChild(gifImg);
+      videoArea.insertBefore(gifWrap, videoArea.firstChild);
+      // Badges
+      if (exInfo && (exInfo.bodyPart || exInfo.target)) {
+        var bRow = document.createElement('div');
+        bRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px';
+        [exInfo.bodyPart, exInfo.target].filter(Boolean).forEach(function(lbl, i) {
+          var sp = document.createElement('span');
+          sp.style.cssText = i === 0
+            ? 'font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:rgba(245,158,11,.1);color:var(--orn);border:1px solid rgba(245,158,11,.2)'
+            : 'font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:rgba(99,102,241,.1);color:#818cf8;border:1px solid rgba(99,102,241,.2)';
+          sp.textContent = lbl;
+          bRow.appendChild(sp);
+        });
+        videoArea.insertBefore(bRow, videoArea.children[1] || null);
+      }
+      // Instructions
+      var instrArr = exInfo && exInfo.instructions;
+      if (instrArr && instrArr.length) {
+        var dEl = document.getElementById('exdemo-desc');
+        if (dEl && !dEl.textContent.trim()) {
+          dEl.textContent = instrArr.slice(0, 6).map(function(s, i){ return (i+1) + '. ' + s; }).join('\n');
+          dEl.style.display = 'block';
         }
-        // Show step-by-step instructions in description area
-        var instrArr = exInfo && exInfo.instructions;
-        if (instrArr && instrArr.length) {
-          var descEl2 = document.getElementById('exdemo-desc');
-          if (descEl2 && !descEl2.textContent.trim()) {
-            descEl2.textContent = instrArr.slice(0, 5).map(function(s, i){ return (i+1) + '. ' + s; }).join('\n');
-            descEl2.style.display = 'block';
-          }
-        }
-      });
-    }
+      }
+    });
   }
 
   // Fetch wger.de: description + video/images (free, no key)
@@ -3169,18 +3163,24 @@ function _resolveExName(name) {
 }
 
 function _fetchExerciseDB(name, cb) {
-  var q = _resolveExName(name);
+  // exercisedb.dev — free, open-source, no API key, 1300+ exercises with animated GIFs
+  var q = _resolveExName(name) || name;
   if (!q) { cb(null, null); return; }
   var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
   var timer = setTimeout(function(){ if (ctrl) ctrl.abort(); cb(null, null); }, 7000);
-  // Proxy through Cloudflare Worker to avoid CORS / RapidAPI browser restrictions
-  fetch('https://kratos-ai.dcarera.workers.dev/exercise/gif?name=' + encodeURIComponent(q), {
+  fetch('https://exercisedb.dev/api/v1/exercises/search?q=' + encodeURIComponent(q.toLowerCase()) + '&limit=1', {
     signal: ctrl ? ctrl.signal : undefined
   })
   .then(function(r){ return r.ok ? r.json() : null; })
   .then(function(data){
     clearTimeout(timer);
-    cb(data && data.gifUrl ? data.gifUrl : null, data || null);
+    var hit = data && data.success && data.data && data.data[0];
+    if (!hit || !hit.gifUrl) { cb(null, null); return; }
+    cb(hit.gifUrl, {
+      bodyPart:     (hit.bodyParts     || [])[0] || '',
+      target:       (hit.targetMuscles || [])[0] || '',
+      instructions: (hit.instructions  || []).map(function(s){ return s.replace(/^Step:\d+\s*/i, ''); }),
+    });
   })
   .catch(function(){ clearTimeout(timer); cb(null, null); });
 }
