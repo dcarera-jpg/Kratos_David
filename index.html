@@ -196,7 +196,7 @@ select.inp{cursor:pointer}
 .ath-msg-bub.mine{background:var(--s4)}
 .ath-msg-meta{font-size:.6rem;color:var(--mu2);margin-bottom:3px}
 </style>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.383.0/umd/lucide.min.js"></script>
 </head>
 <body>
 
@@ -5867,9 +5867,43 @@ function scheduleLucideRefresh() {
   _lucideTimer = setTimeout(function() {
     if (window.lucide && typeof lucide.createIcons === 'function') {
       lucide.createIcons({ nameAttr: 'data-lucide' });
+    } else {
+      // Lucide not loaded yet — apply fallback initials to any pending icons
+      _applyLucideFallback();
     }
-  }, 60);
+  }, 300);
 }
+
+function _applyLucideFallback() {
+  document.querySelectorAll('[data-lucide]').forEach(function(el) {
+    if (el.querySelector('svg')) return; // already replaced
+    var pill = el.parentElement;
+    if (!pill) return;
+    // Extract color from sibling style
+    var colorMatch = (pill.style.cssText || '').match(/border:[^;]*?(#[0-9a-fA-F]{6})/);
+    var color = colorMatch ? colorMatch[1] : '#888';
+    var iconName = el.getAttribute('data-lucide') || '';
+    // Derive initial from icon name (dumbbell→D, footprints→F, etc.)
+    var initial = iconName.charAt(0).toUpperCase();
+    el.outerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">'
+      + '<text x="12" y="17" text-anchor="middle" font-size="14" font-weight="bold" fill="' + color + '">'
+      + initial + '</text></svg>';
+  });
+}
+
+// Also run createIcons on DOMContentLoaded and after a 1s safety net
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.lucide && typeof lucide.createIcons === 'function') {
+    lucide.createIcons({ nameAttr: 'data-lucide' });
+  }
+});
+setTimeout(function() {
+  if (window.lucide && typeof lucide.createIcons === 'function') {
+    lucide.createIcons({ nameAttr: 'data-lucide' });
+  } else {
+    _applyLucideFallback();
+  }
+}, 1000);
 
 // Returns an HTML string with a data-lucide <i> inside a colored pill.
 // createIcons() replaces the <i> with real SVG after DOM insertion.
