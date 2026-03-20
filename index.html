@@ -196,7 +196,6 @@ select.inp{cursor:pointer}
 .ath-msg-bub.mine{background:var(--s4)}
 .ath-msg-meta{font-size:.6rem;color:var(--mu2);margin-bottom:3px}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.383.0/umd/lucide.min.js"></script>
 </head>
 <body>
 
@@ -3726,12 +3725,7 @@ function buildExItem(se, dayData) {
     '<div class="ex-info"><div class="ex-name">'+displayName+'</div>' +
     '<span class="ex-tag t-'+(ex.tag||'mec')+'">'+escHtml(ex.tag_label||'Mec')+'</span></div>' +
     '<div class="ex-sets-pill">'+se.sets+'&#215;'+(se.reps||'8-10')+'</div>';
-  // Insert icon as separate DOM node (SVG via innerHTML string fails on iOS WebKit)
-  var iconWrap = document.createElement('div');
-  iconWrap.style.cssText = 'width:40px;height:40px;flex-shrink:0;pointer-events:none';
-  iconWrap.innerHTML = getExerciseIconSVG(ex.muscle_group, ex.tag);
-  hdr.insertBefore(iconWrap, hdr.firstChild);
-  scheduleLucideRefresh();
+  hdr.insertBefore(getExerciseIconEl(ex.muscle_group, ex.tag), hdr.firstChild);
   var videoExId = altExId || ex.id;
   if (hasMedia || altExId) {
     var vidBtn = document.createElement('button');
@@ -5835,108 +5829,94 @@ var MUSCLE_COLORS = {
   'Full Body':          '#888'
 };
 
-// ── EXERCISE ICONS (Lucide) ───────────────────────────────────
-// Maps muscle_group → Lucide icon name + accent color
-var EXERCISE_ICON_MAP = {
-  'Chest':           { icon: 'dumbbell',    color: '#E8112A' },
-  'Petto':           { icon: 'dumbbell',    color: '#E8112A' },
-  'Back':            { icon: 'activity',    color: '#1a6ee8' },
-  'Schiena':         { icon: 'activity',    color: '#1a6ee8' },
-  'Shoulders':       { icon: 'arrow-up',    color: '#e8a011' },
-  'Spalle':          { icon: 'arrow-up',    color: '#e8a011' },
-  'Biceps':          { icon: 'dumbbell',    color: '#10B981' },
-  'Braccia':         { icon: 'dumbbell',    color: '#10B981' },
-  'Triceps':         { icon: 'dumbbell',    color: '#9b11e8' },
-  'Legs':            { icon: 'footprints',  color: '#e87511' },
-  'Gambe':           { icon: 'footprints',  color: '#e87511' },
-  'Gambe Squat':     { icon: 'footprints',  color: '#e87511' },
-  'Glutes':          { icon: 'move',        color: '#e811b5' },
-  'Glutei':          { icon: 'move',        color: '#e811b5' },
-  'Core':            { icon: 'layers',      color: '#11e8d4' },
-  'Cardio':          { icon: 'heart-pulse', color: '#118ae8' },
-  'Cardio HIIT':     { icon: 'flame',       color: '#f97316' },
-  'Cardio LISS':     { icon: 'bike',        color: '#38bdf8' },
-  'Cardio Circuit':  { icon: 'zap',         color: '#0ea5e9' },
-  'Full Body':       { icon: 'move',        color: '#888'    },
+// ── EXERCISE ICONS (wger.de anatomical illustrations) ────────
+// https://wger.de/static/images/muscles/main/muscle-{id}.svg
+// IDs: 1=Biceps, 2=Ant.Deltoid, 4=Pectoralis, 5=Triceps,
+//      6=Rectus abdominis, 7=Obliques, 8=Gastrocnemius,
+//      10=Quadriceps, 11=Gluteus maximus, 12=Soleus,
+//      13=Iliopsoas, 14=Post.Deltoid, 15=Trapezius, 16=Latissimus
+var WGER_MUSCLE_ID = {
+  'Biceps':          1,
+  'Braccia':         1,
+  'Shoulders':       2,
+  'Spalle':          2,
+  'Anterior Deltoid':2,
+  'Posterior Deltoid':14,
+  'Chest':           4,
+  'Petto':           4,
+  'Triceps':         5,
+  'Core':            6,
+  'Abs':             6,
+  'Addome':          6,
+  'Obliques':        7,
+  'Obliqui':         7,
+  'Calves':          8,
+  'Polpacci':        8,
+  'Legs':            10,
+  'Gambe':           10,
+  'Gambe Squat':     10,
+  'Quadriceps':      10,
+  'Quadricipiti':    10,
+  'Glutes':          11,
+  'Glutei':          11,
+  'Soleus':          12,
+  'Hip Flexors':     13,
+  'Trapezius':       15,
+  'Trapezio':        15,
+  'Back':            16,
+  'Schiena':         16,
+  'Latissimus':      16,
+  'Lats':            16,
 };
 
-// Debounced refresh — runs ONE createIcons() call after all buildExItem calls finish
-var _lucideTimer = null;
-function scheduleLucideRefresh() {
-  clearTimeout(_lucideTimer);
-  _lucideTimer = setTimeout(function() {
-    if (window.lucide && typeof lucide.createIcons === 'function') {
-      lucide.createIcons({ nameAttr: 'data-lucide' });
-    } else {
-      // Lucide not loaded yet — apply fallback initials to any pending icons
-      _applyLucideFallback();
-    }
-  }, 300);
-}
+var WGER_BASE = 'https://wger.de/static/images/muscles/main/muscle-';
 
-function _applyLucideFallback() {
-  document.querySelectorAll('[data-lucide]').forEach(function(el) {
-    if (el.querySelector('svg')) return; // already replaced
-    var pill = el.parentElement;
-    if (!pill) return;
-    // Extract color from sibling style
-    var colorMatch = (pill.style.cssText || '').match(/border:[^;]*?(#[0-9a-fA-F]{6})/);
-    var color = colorMatch ? colorMatch[1] : '#888';
-    var iconName = el.getAttribute('data-lucide') || '';
-    // Derive initial from icon name (dumbbell→D, footprints→F, etc.)
-    var initial = iconName.charAt(0).toUpperCase();
-    el.outerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">'
-      + '<text x="12" y="17" text-anchor="middle" font-size="14" font-weight="bold" fill="' + color + '">'
-      + initial + '</text></svg>';
-  });
-}
-
-// Also run createIcons on DOMContentLoaded and after a 1s safety net
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.lucide && typeof lucide.createIcons === 'function') {
-    lucide.createIcons({ nameAttr: 'data-lucide' });
-  }
-});
-setTimeout(function() {
-  if (window.lucide && typeof lucide.createIcons === 'function') {
-    lucide.createIcons({ nameAttr: 'data-lucide' });
-  } else {
-    _applyLucideFallback();
-  }
-}, 1000);
-
-// Returns an HTML string with a data-lucide <i> inside a colored pill.
-// createIcons() replaces the <i> with real SVG after DOM insertion.
-function getExerciseIconSVG(muscleGroup, tag) {
-  var mg   = muscleGroup || tag || '';
-  var norm = normMG(mg);
-  var def  = EXERCISE_ICON_MAP[norm] || EXERCISE_ICON_MAP[mg] || null;
-  if (!def) {
-    var keys = Object.keys(EXERCISE_ICON_MAP);
+function getExerciseIconEl(muscleGroup, tag) {
+  var mg    = muscleGroup || tag || '';
+  var norm  = normMG(mg);
+  var id    = WGER_MUSCLE_ID[norm] || WGER_MUSCLE_ID[mg] || null;
+  // partial match fallback
+  if (!id) {
+    var keys = Object.keys(WGER_MUSCLE_ID);
     for (var i = 0; i < keys.length; i++) {
       if (mg.toLowerCase().indexOf(keys[i].toLowerCase()) !== -1 ||
           keys[i].toLowerCase().indexOf(mg.toLowerCase()) !== -1) {
-        def = EXERCISE_ICON_MAP[keys[i]]; break;
+        id = WGER_MUSCLE_ID[keys[i]]; break;
       }
     }
   }
-  var iconName = def ? def.icon : 'dumbbell';
-  var color    = def ? def.color : (MUSCLE_COLORS[norm] || MUSCLE_COLORS[mg] || strColor(mg));
 
-  return '<div style="width:40px;height:40px;border-radius:9px;background:' + color
-    + '1a;border:1px solid ' + color + '33;display:flex;align-items:center;'
-    + 'justify-content:center;flex-shrink:0">'
-    + '<i data-lucide="' + iconName + '" style="width:22px;height:22px;'
-    + 'color:' + color + ';stroke:' + color + ';display:block"></i>'
-    + '</div>';
+  var color = MUSCLE_COLORS[norm] || MUSCLE_COLORS[mg] || strColor(mg);
+  var wrap  = document.createElement('div');
+  wrap.style.cssText = 'width:40px;height:40px;border-radius:9px;background:' + color
+    + '18;border:1px solid ' + color + '30;flex-shrink:0;pointer-events:none;overflow:hidden';
+
+  if (id) {
+    var img = document.createElement('img');
+    img.src    = WGER_BASE + id + '.svg';
+    img.width  = 40;
+    img.height = 40;
+    img.alt    = norm || mg;
+    img.style.cssText = 'display:block;width:40px;height:40px;object-fit:contain;opacity:.85';
+    // fallback to colored initial if image fails to load
+    img.onerror = function() {
+      wrap.removeChild(img);
+      wrap.appendChild(_muscleInitialSVG(norm || mg, color));
+    };
+    wrap.appendChild(img);
+  } else {
+    wrap.appendChild(_muscleInitialSVG(norm || mg, color));
+  }
+  return wrap;
 }
 
-// Legacy wrapper (kept for compatibility)
-function getExerciseIcon(muscleGroup, tag) {
-  var wrap = document.createElement('div');
-  wrap.style.cssText = 'width:40px;height:40px;flex-shrink:0;pointer-events:none';
-  wrap.innerHTML = getExerciseIconSVG(muscleGroup, tag);
-  return wrap;
+function _muscleInitialSVG(label, color) {
+  var initial = (label || '?').charAt(0).toUpperCase();
+  var el = document.createElement('div');
+  el.style.cssText = 'width:40px;height:40px;display:flex;align-items:center;'
+    + 'justify-content:center;font-family:Bebas Neue,sans-serif;font-size:1.1rem;color:' + color;
+  el.textContent = initial;
+  return el;
 }
 
 async function openProgEditor(athleteId, mesoId, athleteName) {
