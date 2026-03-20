@@ -686,6 +686,17 @@ select.inp{cursor:pointer}
               <div style="font-size:.68rem;opacity:.8;margin-top:2px">$49/mo + 3% commission</div>
             </button>
           </div>
+          <!-- Plan B subscription status -->
+          <div id="plan-b-sub-status" style="display:none;margin-top:10px;padding:10px;border-radius:10px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.18)">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-size:.78rem;font-weight:600;color:var(--grn)" id="plan-b-sub-label">✓ Plan B active</div>
+                <div style="font-size:.65rem;color:var(--mu2);margin-top:2px" id="plan-b-sub-detail">$49/mo · renews automatically</div>
+              </div>
+              <button id="plan-b-cancel-btn" onclick="cancelPlanB()" style="padding:5px 12px;border-radius:8px;background:none;border:1px solid rgba(232,17,42,.3);color:var(--red);font-family:inherit;font-size:.7rem;cursor:pointer">Cancel</button>
+            </div>
+          </div>
+          <div id="plan-b-msg" style="display:none;margin-top:8px;font-size:.72rem;padding:6px 10px;border-radius:8px"></div>
         </div>
         <button id="stripe-connect-btn" onclick="startStripeConnect()" style="width:100%;padding:11px;border-radius:9px;background:var(--s3);border:1px solid var(--bdr);color:var(--white);font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:600">
           Connect Stripe Account
@@ -4239,6 +4250,7 @@ function loadStripeConnectStatus() {
         if (isActive) {
           btn.onclick = function(){ openStripeExpressDashboard(); };
           planSel.style.display = 'block';
+          loadPlanBStatus();
         } else {
           btn.onclick = function(){ recheckStripeStatus(); };
         }
@@ -4281,11 +4293,115 @@ async function startStripeConnect() {
   }
 }
 
-function setKratosPlan(plan) {
+async function setKratosPlan(plan) {
   setKratosPlanUI(plan);
-  sb.from('coach_profiles').update({ kratos_plan: plan }).eq('id', ME.id)
-    .then(function(){ showToast('Plan updated to Plan ' + plan); })
-    .catch(function(){});
+  if (plan === 'B') {
+    await subscribePlanB();
+  } else {
+    // Switching back to A: cancel Plan B subscription if any
+    await sb.from('coach_profiles').update({ kratos_plan: 'A' }).eq('id', ME.id);
+    showToast('Switched to Plan A (Free + 8%)');
+    loadPlanBStatus();
+  }
+}
+
+async function subscribePlanB() {
+  var msgEl = document.getElementById('plan-b-msg');
+  var btn   = document.getElementById('plan-b-btn');
+  if (btn) { btn.disabled = true; }
+  if (msgEl) { msgEl.style.display = 'none'; }
+
+  try {
+    var r = await fetch(WORKER_URL + '/stripe/coach-subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ coach_id: ME.id, email: myProfile.email })
+    });
+    var data = await r.json();
+    if (data.error) throw new Error(data.error);
+
+    if (data.url) {
+      // Redirect to Stripe checkout for subscription
+      window.location.href = data.url;
+    } else if (data.subscription_id) {
+      // Already created via existing payment method
+      showToast('✓ Plan B activated!');
+      loadPlanBStatus();
+    }
+  } catch(e) {
+    if (msgEl) {
+      msgEl.textContent = 'Error: ' + e.message;
+      msgEl.style.background = 'rgba(232,17,42,.1)'; msgEl.style.color = 'var(--red)';
+      msgEl.style.display = 'block';
+    }
+    setKratosPlanUI('A');
+  } finally {
+    if (btn) { btn.disabled = false; }
+  }
+}
+
+async function cancelPlanB() {
+  var btn   = document.getElementById('plan-b-cancel-btn');
+  var msgEl = document.getElementById('plan-b-msg');
+  if (!confirm('Cancel Plan B? You will switch to Plan A (Free + 8% commission).')) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Cancelling…'; }
+
+  try {
+    var cpR = await sb.from('coach_profiles').select('stripe_subscription_id').eq('id', ME.id).single();
+    var subId = cpR.data && cpR.data.stripe_subscription_id;
+
+    if (subId) {
+      var r = await fetch(WORKER_URL + '/stripe/coach-cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription_id: subId, coach_id: ME.id })
+      });
+      var data = await r.json();
+      if (data.error) throw new Error(data.error);
+    }
+
+    await sb.from('coach_profiles').update({ kratos_plan: 'A', stripe_subscription_id: null }).eq('id', ME.id);
+    showToast('Plan B cancelled — back to Plan A');
+    setKratosPlanUI('A');
+    loadPlanBStatus();
+  } catch(e) {
+    if (msgEl) {
+      msgEl.textContent = 'Error: ' + e.message;
+      msgEl.style.background = 'rgba(232,17,42,.1)'; msgEl.style.color = 'var(--red)';
+      msgEl.style.display = 'block';
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Cancel'; }
+  }
+}
+
+async function loadPlanBStatus() {
+  var statusEl = document.getElementById('plan-b-sub-status');
+  var labelEl  = document.getElementById('plan-b-sub-label');
+  var detailEl = document.getElementById('plan-b-sub-detail');
+  if (!statusEl) return;
+
+  var r = await sb.from('coach_profiles')
+    .select('kratos_plan,stripe_subscription_id,stripe_subscription_status')
+    .eq('id', ME.id).single();
+  var d = r.data;
+  if (!d) return;
+
+  var isPlanB = d.kratos_plan === 'B';
+  var isActive = isPlanB && (d.stripe_subscription_status === 'active' || d.stripe_subscription_status === 'trialing');
+
+  statusEl.style.display = isActive ? 'block' : 'none';
+  if (isActive) {
+    if (labelEl) labelEl.textContent = '✓ Plan B active';
+    if (detailEl) detailEl.textContent = '$49/mo · renews automatically';
+    statusEl.style.background = 'rgba(16,185,129,.07)';
+    statusEl.style.borderColor = 'rgba(16,185,129,.18)';
+  } else if (isPlanB && d.stripe_subscription_id) {
+    statusEl.style.display = 'block';
+    if (labelEl) { labelEl.textContent = '⏳ Plan B pending'; labelEl.style.color = 'var(--orn)'; }
+    if (detailEl) detailEl.textContent = 'Subscription being processed';
+    statusEl.style.background = 'rgba(245,158,11,.07)';
+    statusEl.style.borderColor = 'rgba(245,158,11,.18)';
+  }
 }
 
 function setKratosPlanUI(plan) {
