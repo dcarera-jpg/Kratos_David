@@ -2993,12 +2993,13 @@ function openExerciseDemo(ex, se) {
     }
   }
 
-  // Fetch wger.de: description + video (free, no key needed)
+  // Fetch wger.de: description + video/images (free, no key)
   var descEl = document.getElementById('exdemo-desc');
   descEl.textContent = '';
   descEl.style.display = 'none';
   var _demoMediaShown = false;
-  _fetchWgerExInfo(ex.name || '', function(type, urlOrArr) {
+
+  function _injectExMedia(type, urlOrArr) {
     if (!videoArea.isConnected || _demoMediaShown) return;
     _demoMediaShown = true;
     var wrap = document.createElement('div');
@@ -3007,28 +3008,33 @@ function openExerciseDemo(ex, se) {
       wrap.style.cssText += ';border-radius:12px;overflow:hidden;background:#111';
       var vEl = document.createElement('video');
       vEl.src = urlOrArr;
-      vEl.controls = true;
-      vEl.loop = true;
-      vEl.playsInline = true;
+      vEl.controls = true; vEl.loop = true; vEl.playsInline = true;
       vEl.style.cssText = 'width:100%;display:block;max-height:300px;object-fit:contain';
       wrap.appendChild(vEl);
     } else {
-      // images: show up to 2 side by side
-      var imgs = Array.isArray(urlOrArr) ? urlOrArr.slice(0, 2) : [urlOrArr];
+      var imgArr = Array.isArray(urlOrArr) ? urlOrArr.slice(0, 2) : [urlOrArr];
       wrap.style.cssText += ';display:flex;gap:6px';
-      imgs.forEach(function(src) {
+      imgArr.forEach(function(src) {
         var img = document.createElement('img');
         img.src = src;
-        img.style.cssText = 'flex:1;width:0;border-radius:10px;object-fit:cover;max-height:200px;background:#111';
+        img.style.cssText = 'flex:1;min-width:0;border-radius:10px;object-fit:cover;max-height:220px;background:#111';
         img.onerror = function(){ wrap.style.display = 'none'; };
         wrap.appendChild(img);
       });
     }
     videoArea.insertBefore(wrap, videoArea.firstChild);
-  }, function(desc) {
+  }
+
+  // 1. Try wger.de video/images
+  _fetchWgerExInfo(ex.name || '', _injectExMedia, function(desc) {
     if (!descEl.isConnected || descEl.textContent.trim()) return;
     descEl.textContent = desc;
     descEl.style.display = 'block';
+  });
+
+  // 2. free-exercise-db on GitHub (800+ exercises, images always available)
+  _fetchFreeExDBImages(ex.name || '', function(imgUrls) {
+    _injectExMedia('images', imgUrls);
   });
 
   document.getElementById('exdemo-overlay').style.display = 'flex';
@@ -3087,6 +3093,48 @@ function _fetchWgerExInfo(name, onMedia, onDesc) {
       .catch(function(){ tryNext(); });
   }
   tryNext();
+}
+
+// ── FREE EXERCISE DB (GitHub) ────────────────────────────────
+// https://github.com/yuhonas/free-exercise-db — 800+ exercises, JPG images
+var _freeExDBCache = null;
+var _freeExDBLoading = false;
+var _freeExDBQueue = [];
+
+function _loadFreeExDB(cb) {
+  if (_freeExDBCache) { cb(_freeExDBCache); return; }
+  _freeExDBQueue.push(cb);
+  if (_freeExDBLoading) return;
+  _freeExDBLoading = true;
+  fetch('https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json')
+    .then(function(r){ return r.ok ? r.json() : []; })
+    .then(function(data) {
+      _freeExDBCache = Array.isArray(data) ? data : [];
+      _freeExDBLoading = false;
+      var q = _freeExDBQueue.splice(0); q.forEach(function(fn){ fn(_freeExDBCache); });
+    })
+    .catch(function() {
+      _freeExDBCache = [];
+      _freeExDBLoading = false;
+      var q = _freeExDBQueue.splice(0); q.forEach(function(fn){ fn([]); });
+    });
+}
+
+function _fetchFreeExDBImages(exName, cb) {
+  var BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+  _loadFreeExDB(function(exercises) {
+    if (!exercises.length) return;
+    var q = (exName || '').toLowerCase().trim();
+    var en = (_resolveExName(q) || '').toLowerCase().trim();
+    // Try exact match on either name, then partial
+    var hit = exercises.find(function(e){ return e.name.toLowerCase() === q; })
+           || exercises.find(function(e){ return e.name.toLowerCase() === en; })
+           || exercises.find(function(e){ return e.name.toLowerCase().indexOf(q) !== -1; })
+           || (en && exercises.find(function(e){ return e.name.toLowerCase().indexOf(en) !== -1; }))
+           || null;
+    if (!hit || !hit.images || !hit.images.length) return;
+    cb(hit.images.slice(0, 2).map(function(p){ return BASE + p; }));
+  });
 }
 
 // Italian → English exercise name map for ExerciseDB lookup
