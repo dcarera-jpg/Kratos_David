@@ -2933,11 +2933,11 @@ function openExerciseDemo(ex, se) {
   notesEl.textContent = notesStr;
   notesEl.style.display = notesStr ? 'block' : 'none';
 
-  // Video — saved direct link or YouTube search
+  // Video / Demo area — ExerciseDB GIF if key set, else YouTube
   var videoArea = document.getElementById('exdemo-video');
   var savedVidId = ytVideoId(ex.video_url || '');
-  var ytSearch = 'https://www.youtube.com/results?search_query=' + encodeURIComponent((ex.name || '') + ' esercizio tutorial esecuzione corretta');
   if (savedVidId) {
+    // Saved direct YouTube embed
     videoArea.innerHTML =
       '<div style="position:relative;padding-bottom:56.25%;border-radius:12px;overflow:hidden;background:#000">' +
         '<iframe src="https://www.youtube.com/embed/' + savedVidId + '?rel=0&playsinline=1" ' +
@@ -2945,14 +2945,16 @@ function openExerciseDemo(ex, se) {
           'allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>' +
       '</div>' +
       '<div style="text-align:center;font-size:.65rem;color:var(--mu2);margin-top:6px">Tocca ▶ per riprodurre</div>';
+  } else if (EXERCISEDB_KEY) {
+    // Try ExerciseDB GIF
+    videoArea.innerHTML = '<div style="text-align:center;padding:28px 0;color:var(--mu2);font-size:.8rem">Caricamento demo...</div>';
+    _fetchExerciseDB(ex.name || '', function(gifUrl, exInfo) {
+      if (!videoArea.isConnected) return;
+      _showExDemoMedia(videoArea, ex.name || '', gifUrl, exInfo);
+    });
   } else {
-    videoArea.innerHTML =
-      '<a href="' + escHtml(ytSearch) + '" target="_blank" style="display:flex;align-items:center;gap:14px;background:rgba(255,0,0,.07);border:1px solid rgba(255,0,0,.22);border-radius:12px;padding:16px;text-decoration:none">' +
-        '<div style="width:52px;height:52px;background:rgba(220,0,0,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;color:#fff">&#9654;</div>' +
-        '<div><div style="font-weight:700;font-size:.9rem;color:var(--txt)">Guarda il tutorial</div>' +
-        '<div style="font-size:.7rem;color:var(--mu2);margin-top:3px">' + escHtml(ex.name || '') + ' &mdash; esecuzione corretta</div>' +
-        '<div style="font-size:.65rem;color:var(--orn);margin-top:3px">Apre YouTube &rarr;</div></div>' +
-      '</a>';
+    // No key — show YouTube search link directly
+    _showExDemoMedia(videoArea, ex.name || '', null, null);
   }
 
   // Description — fetch from wger.de async
@@ -2997,6 +2999,67 @@ function _fetchWgerExDesc(ex, descEl) {
       }
     })
     .catch(function(){});
+}
+
+function _fetchExerciseDB(name, cb) {
+  // Normalize: lowercase, keep only ascii letters/spaces for best match
+  var q = name.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  fetch('https://exercisedb.p.rapidapi.com/exercises/name/' + encodeURIComponent(q) + '?limit=1&offset=0', {
+    headers: {
+      'X-RapidAPI-Key': EXERCISEDB_KEY,
+      'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com'
+    }
+  })
+  .then(function(r){ return r.ok ? r.json() : null; })
+  .then(function(data){
+    var hit = Array.isArray(data) && data[0];
+    cb(hit ? hit.gifUrl : null, hit || null);
+  })
+  .catch(function(){ cb(null, null); });
+}
+
+function _showExDemoMedia(container, exName, gifUrl, exInfo) {
+  var ytSearch = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(exName + ' proper form tutorial');
+  if (gifUrl) {
+    // Animated GIF from ExerciseDB
+    var bodyPart = exInfo && exInfo.bodyPart ? exInfo.bodyPart : '';
+    var target   = exInfo && exInfo.target   ? exInfo.target   : '';
+    container.innerHTML =
+      '<div style="border-radius:12px;overflow:hidden;background:#111;text-align:center;margin-bottom:10px">' +
+        '<img src="' + escHtml(gifUrl) + '" alt="' + escHtml(exName) + '" ' +
+          'style="max-width:100%;height:auto;display:block;margin:0 auto" loading="lazy">' +
+      '</div>' +
+      (bodyPart || target
+        ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' +
+            (bodyPart ? '<span style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:rgba(245,158,11,.1);color:var(--orn);border:1px solid rgba(245,158,11,.2)">' + escHtml(bodyPart) + '</span>' : '') +
+            (target   ? '<span style="font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:rgba(99,102,241,.1);color:#818cf8;border:1px solid rgba(99,102,241,.2)">'  + escHtml(target)   + '</span>' : '') +
+          '</div>'
+        : '') +
+      '<a href="' + escHtml(ytSearch) + '" target="_blank" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,0,0,.06);border:1px solid rgba(255,0,0,.18);border-radius:8px;text-decoration:none;margin-top:2px">' +
+        '<span style="font-size:.7rem;color:rgba(220,0,0,.9)">&#9654;</span>' +
+        '<span style="font-size:.7rem;color:var(--mu2)">Guarda anche su YouTube</span>' +
+        '<span style="font-size:.65rem;color:var(--mu2);margin-left:auto">&rarr;</span>' +
+      '</a>';
+    // Show instructions if available
+    var instrArr = exInfo && exInfo.instructions;
+    if (instrArr && instrArr.length) {
+      var descEl = document.getElementById('exdemo-desc');
+      if (descEl && !descEl.textContent) {
+        var instrText = instrArr.slice(0, 5).map(function(s, i){ return (i+1) + '. ' + s; }).join('\n');
+        descEl.style.display = 'block';
+        descEl.textContent = instrText;
+      }
+    }
+  } else {
+    // No GIF — YouTube search card
+    container.innerHTML =
+      '<a href="' + escHtml(ytSearch) + '" target="_blank" style="display:flex;align-items:center;gap:14px;background:rgba(255,0,0,.07);border:1px solid rgba(255,0,0,.22);border-radius:12px;padding:16px;text-decoration:none">' +
+        '<div style="width:52px;height:52px;background:rgba(220,0,0,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;color:#fff">&#9654;</div>' +
+        '<div><div style="font-weight:700;font-size:.9rem;color:var(--txt)">Guarda il tutorial</div>' +
+        '<div style="font-size:.7rem;color:var(--mu2);margin-top:3px">' + escHtml(exName) + ' &mdash; proper form</div>' +
+        '<div style="font-size:.65rem;color:var(--orn);margin-top:3px">Apre YouTube &rarr;</div></div>' +
+      '</a>';
+  }
 }
 
 function saveExMedia() {
@@ -3871,15 +3934,26 @@ function buildExItem(se, dayData) {
     })(ex, se);
   }
   var videoExId = altExId || ex.id;
-  if (hasMedia || altExId) {
+  if (ex.video_url || altExId) {
+    // Has a saved video or alt exercise — show 🎬 (opens video modal)
     var vidBtn = document.createElement('button');
     vidBtn.textContent = '🎬';
     vidBtn.setAttribute('style', 'background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer;margin-left:4px;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation');
-    (function(eid){ 
+    (function(eid){
       vidBtn.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openVideoModal(eid); }, {passive:false});
       vidBtn.addEventListener('click', function(e){ e.stopPropagation(); openVideoModal(eid); });
     })(videoExId);
     hdr.appendChild(vidBtn);
+  } else {
+    // No saved video — show ▶ Demo button (opens exercise demo modal)
+    var demoBtn = document.createElement('button');
+    demoBtn.innerHTML = '&#9654; Demo';
+    demoBtn.setAttribute('style', 'background:none;border:1px solid rgba(99,102,241,.35);color:#818cf8;border-radius:8px;padding:5px 9px;font-size:.72rem;font-weight:700;letter-spacing:.04em;cursor:pointer;margin-left:4px;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation');
+    (function(exData, seData){
+      demoBtn.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openExerciseDemo(exData, seData); }, {passive:false});
+      demoBtn.addEventListener('click', function(e){ e.stopPropagation(); openExerciseDemo(exData, seData); });
+    })(ex, se);
+    hdr.appendChild(demoBtn);
   }
   hdr.onclick=(function(ddid,seid){ return function(){ toggleEx(ddid,seid); }; })(dayData.id,se.id);
 
@@ -6014,6 +6088,10 @@ var WGER_MUSCLE_ID = {
 };
 
 var WGER_BASE = 'https://wger.de/static/images/muscles/main/muscle-';
+
+// ExerciseDB (RapidAPI) — set your free key here to enable animated GIF demos
+// Get key at: https://rapidapi.com/justin-WFnsXH_t6/api/exercisedb
+var EXERCISEDB_KEY = '';  // e.g. 'abc123...'
 
 function getExerciseIconEl(muscleGroup, tag) {
   var mg    = muscleGroup || tag || '';
