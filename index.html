@@ -1394,6 +1394,38 @@ select.inp{cursor:pointer}
   </div>
 </div>
 
+<!-- EXERCISE DEMO MODAL -->
+<div id="exdemo-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:400;align-items:flex-start;justify-content:center;padding-top:16px;overflow-y:auto;-webkit-overflow-scrolling:touch" onclick="closeExerciseDemo()">
+  <div onclick="event.stopPropagation()" style="width:100%;max-width:480px;padding:0 14px 60px">
+    <!-- Header -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+      <div style="flex:1;padding-right:10px">
+        <div id="exdemo-title" style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.08em;color:var(--txt);line-height:1.1"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
+          <span id="exdemo-muscle-tag" style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:6px;border:1px solid"></span>
+          <span id="exdemo-prescription" style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:.06em;color:var(--orn)"></span>
+        </div>
+      </div>
+      <button onclick="closeExerciseDemo()" style="background:none;border:none;color:var(--mu);font-size:1.4rem;cursor:pointer;flex-shrink:0;padding:4px">&#10005;</button>
+    </div>
+
+    <!-- Anatomy visual -->
+    <div id="exdemo-anatomy" style="margin-bottom:16px;text-align:center"></div>
+
+    <!-- Demo / Video -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px">DEMO &amp; TUTORIAL</div>
+      <div id="exdemo-video"></div>
+    </div>
+
+    <!-- Description from wger.de -->
+    <div id="exdemo-desc" style="display:none;font-size:.8rem;color:var(--mu2);line-height:1.55;padding:12px;background:var(--s3);border-radius:10px;margin-bottom:12px"></div>
+
+    <!-- Coach notes -->
+    <div id="exdemo-notes" style="display:none;font-size:.78rem;color:var(--mu);line-height:1.5;padding:10px 12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.18);border-radius:10px"></div>
+  </div>
+</div>
+
 <!-- OVERRIDE MODAL -->
 <div id="override-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center" onclick="closeOverrideModal()">
   <div onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 16px 32px;max-height:85vh;overflow-y:auto">
@@ -2864,6 +2896,109 @@ function closeVideoModal() {
   document.body.style.overflow = '';
 }
 
+// ── EXERCISE DEMO MODAL ────────────────────────────────────────
+function openExerciseDemo(ex, se) {
+  // Title + prescription
+  document.getElementById('exdemo-title').textContent = ex.name || '?';
+  document.getElementById('exdemo-prescription').textContent = se ? (se.sets + '\u00d7' + (se.reps || '8-10')) : '';
+
+  // Muscle tag badge
+  var mg = ex.muscle_group || ex.tag || '';
+  var color = MUSCLE_COLORS[normMG(mg)] || strColor(mg);
+  var tagEl = document.getElementById('exdemo-muscle-tag');
+  tagEl.textContent = mg || 'Exercise';
+  tagEl.style.background = color + '22';
+  tagEl.style.color = color;
+  tagEl.style.borderColor = color + '44';
+
+  // Muscle anatomy image — show front + back body with highlighted muscle
+  var muscleId = WGER_MUSCLE_ID[normMG(mg)] || WGER_MUSCLE_ID[mg] || null;
+  var anatEl = document.getElementById('exdemo-anatomy');
+  anatEl.innerHTML = '';
+  if (muscleId) {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:12px;justify-content:center;align-items:center';
+    var img1 = document.createElement('img');
+    img1.src = 'https://wger.de/static/images/muscles/main/muscle-' + muscleId + '.svg';
+    img1.alt = mg;
+    img1.style.cssText = 'width:120px;height:120px;object-fit:contain;border-radius:12px;background:' + color + '10;border:1px solid ' + color + '25;padding:8px';
+    img1.onerror = function() { wrap.style.display = 'none'; };
+    wrap.appendChild(img1);
+    anatEl.appendChild(wrap);
+  }
+
+  // Notes
+  var notesEl = document.getElementById('exdemo-notes');
+  var notesStr = ex.notes || '';
+  notesEl.textContent = notesStr;
+  notesEl.style.display = notesStr ? 'block' : 'none';
+
+  // Video — saved direct link or YouTube search
+  var videoArea = document.getElementById('exdemo-video');
+  var savedVidId = ytVideoId(ex.video_url || '');
+  var ytSearch = 'https://www.youtube.com/results?search_query=' + encodeURIComponent((ex.name || '') + ' esercizio tutorial esecuzione corretta');
+  if (savedVidId) {
+    videoArea.innerHTML =
+      '<div style="position:relative;padding-bottom:56.25%;border-radius:12px;overflow:hidden;background:#000">' +
+        '<iframe src="https://www.youtube.com/embed/' + savedVidId + '?rel=0&playsinline=1" ' +
+          'style="position:absolute;inset:0;width:100%;height:100%;border:none" ' +
+          'allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>' +
+      '</div>' +
+      '<div style="text-align:center;font-size:.65rem;color:var(--mu2);margin-top:6px">Tocca ▶ per riprodurre</div>';
+  } else {
+    videoArea.innerHTML =
+      '<a href="' + escHtml(ytSearch) + '" target="_blank" style="display:flex;align-items:center;gap:14px;background:rgba(255,0,0,.07);border:1px solid rgba(255,0,0,.22);border-radius:12px;padding:16px;text-decoration:none">' +
+        '<div style="width:52px;height:52px;background:rgba(220,0,0,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;color:#fff">&#9654;</div>' +
+        '<div><div style="font-weight:700;font-size:.9rem;color:var(--txt)">Guarda il tutorial</div>' +
+        '<div style="font-size:.7rem;color:var(--mu2);margin-top:3px">' + escHtml(ex.name || '') + ' &mdash; esecuzione corretta</div>' +
+        '<div style="font-size:.65rem;color:var(--orn);margin-top:3px">Apre YouTube &rarr;</div></div>' +
+      '</a>';
+  }
+
+  // Description — fetch from wger.de async
+  var descEl = document.getElementById('exdemo-desc');
+  descEl.textContent = '';
+  descEl.style.display = 'none';
+  _fetchWgerExDesc(ex, descEl);
+
+  document.getElementById('exdemo-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeExerciseDemo() {
+  var va = document.getElementById('exdemo-video');
+  var iframe = va ? va.querySelector('iframe') : null;
+  if (iframe) iframe.src = iframe.src;
+  document.getElementById('exdemo-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function _fetchWgerExDesc(ex, descEl) {
+  var name = (ex.name_en || ex.name || '').trim();
+  if (!name) return;
+  fetch('https://wger.de/api/v2/exercise/search/?term=' + encodeURIComponent(name) + '&format=json&language=english')
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (!data) return null;
+      var s = (data.suggestions || [])[0];
+      var baseId = s && s.data && s.data.base_id;
+      if (!baseId) return null;
+      return fetch('https://wger.de/api/v2/exerciseinfo/' + baseId + '/?format=json')
+        .then(function(r){ return r.ok ? r.json() : null; });
+    })
+    .then(function(info) {
+      if (!info || !descEl.isConnected) return;
+      var trans = (info.translations || []).find(function(t){ return t.language === 2; });
+      var raw = (trans && trans.description) ? trans.description : '';
+      var desc = raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      if (desc.length > 10) {
+        descEl.textContent = desc.length > 400 ? desc.slice(0, 400) + '\u2026' : desc;
+        descEl.style.display = 'block';
+      }
+    })
+    .catch(function(){});
+}
+
 function saveExMedia() {
   var area  = document.getElementById('video-edit-area');
   var exId  = parseInt(area.dataset.exId);
@@ -3726,6 +3861,15 @@ function buildExItem(se, dayData) {
     '<span class="ex-tag t-'+(ex.tag||'mec')+'">'+escHtml(ex.tag_label||'Mec')+'</span></div>' +
     '<div class="ex-sets-pill">'+se.sets+'&#215;'+(se.reps||'8-10')+'</div>';
   hdr.insertBefore(getExerciseIconEl(ex.muscle_group, ex.tag), hdr.firstChild);
+  // Tap exercise name → open demo modal
+  var exNameEl = hdr.querySelector('.ex-name');
+  if (exNameEl) {
+    exNameEl.style.cssText += ';cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.2);text-underline-offset:3px';
+    (function(exData, seData){
+      exNameEl.addEventListener('click', function(e){ e.stopPropagation(); openExerciseDemo(exData, seData); });
+      exNameEl.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openExerciseDemo(exData, seData); }, {passive:false});
+    })(ex, se);
+  }
   var videoExId = altExId || ex.id;
   if (hasMedia || altExId) {
     var vidBtn = document.createElement('button');
