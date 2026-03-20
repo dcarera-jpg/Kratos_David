@@ -2945,16 +2945,52 @@ function openExerciseDemo(ex, se) {
           'allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>' +
       '</div>' +
       '<div style="text-align:center;font-size:.65rem;color:var(--mu2);margin-top:6px">Tocca ▶ per riprodurre</div>';
-  } else if (EXERCISEDB_KEY) {
-    // Try ExerciseDB GIF
-    videoArea.innerHTML = '<div style="text-align:center;padding:28px 0;color:var(--mu2);font-size:.8rem">Caricamento demo...</div>';
-    _fetchExerciseDB(ex.name || '', function(gifUrl, exInfo) {
-      if (!videoArea.isConnected) return;
-      _showExDemoMedia(videoArea, ex.name || '', gifUrl, exInfo);
-    });
   } else {
-    // No key — show YouTube search link directly
-    _showExDemoMedia(videoArea, ex.name || '', null, null);
+    // Show YouTube search card immediately, then upgrade to GIF if ExerciseDB finds one
+    var exName = ex.name || '';
+    _showExDemoMedia(videoArea, exName, null, null);
+    if (EXERCISEDB_KEY) {
+      _fetchExerciseDB(exName, function(gifUrl, exInfo) {
+        if (!videoArea.isConnected || !gifUrl) return;
+        // Inject GIF above the existing YouTube card
+        var gifWrap = document.createElement('div');
+        gifWrap.style.cssText = 'border-radius:12px;overflow:hidden;background:#111;text-align:center;margin-bottom:10px';
+        var gifImg = document.createElement('img');
+        gifImg.src = gifUrl;
+        gifImg.alt = exName;
+        gifImg.style.cssText = 'max-width:100%;height:auto;display:block;margin:0 auto';
+        gifImg.loading = 'lazy';
+        gifWrap.appendChild(gifImg);
+        videoArea.insertBefore(gifWrap, videoArea.firstChild);
+        // Show body part + target badges if available
+        if (exInfo && (exInfo.bodyPart || exInfo.target)) {
+          var badgeRow = document.createElement('div');
+          badgeRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px';
+          if (exInfo.bodyPart) {
+            var b1 = document.createElement('span');
+            b1.style.cssText = 'font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:rgba(245,158,11,.1);color:var(--orn);border:1px solid rgba(245,158,11,.2)';
+            b1.textContent = exInfo.bodyPart;
+            badgeRow.appendChild(b1);
+          }
+          if (exInfo.target) {
+            var b2 = document.createElement('span');
+            b2.style.cssText = 'font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:rgba(99,102,241,.1);color:#818cf8;border:1px solid rgba(99,102,241,.2)';
+            b2.textContent = exInfo.target;
+            badgeRow.appendChild(b2);
+          }
+          videoArea.insertBefore(badgeRow, videoArea.children[1] || null);
+        }
+        // Show step-by-step instructions in description area
+        var instrArr = exInfo && exInfo.instructions;
+        if (instrArr && instrArr.length) {
+          var descEl2 = document.getElementById('exdemo-desc');
+          if (descEl2 && !descEl2.textContent.trim()) {
+            descEl2.textContent = instrArr.slice(0, 5).map(function(s, i){ return (i+1) + '. ' + s; }).join('\n');
+            descEl2.style.display = 'block';
+          }
+        }
+      });
+    }
   }
 
   // Description — fetch from wger.de async
@@ -3001,21 +3037,53 @@ function _fetchWgerExDesc(ex, descEl) {
     .catch(function(){});
 }
 
+// Italian → English exercise name map for ExerciseDB lookup
+var IT_EN_EX = {
+  'squat': 'squat', 'panca piana': 'bench press', 'panca inclinata': 'incline bench press',
+  'panca': 'bench press', 'stacco da terra': 'deadlift', 'stacco': 'deadlift',
+  'rematore': 'bent over row', 'trazioni': 'pull up', 'pullup': 'pull up', 'pull up': 'pull up',
+  'dip': 'dips', 'affondi': 'lunges', 'leg press': 'leg press', 'leg curl': 'leg curl',
+  'leg extension': 'leg extension', 'calf raise': 'calf raise', 'alzate laterali': 'lateral raise',
+  'alzate frontali': 'front raise', 'croci': 'chest fly', 'lat machine': 'lat pulldown',
+  'lat pulldown': 'lat pulldown', 'military press': 'military press',
+  'shoulder press': 'shoulder press', 'lento avanti': 'shoulder press',
+  'hip thrust': 'hip thrust', 'plank': 'plank', 'curl bilanciere': 'barbell curl',
+  'curl manubri': 'dumbbell curl', 'curl': 'bicep curl', 'tricipiti': 'triceps pushdown',
+  'french press': 'triceps extension', 'push up': 'push up', 'flessioni': 'push up',
+  'crunch': 'crunch', 'sit up': 'sit up', 'face pull': 'face pull',
+  'scrollate': 'shrug', 'tirate al mento': 'upright row', 'romanian': 'romanian deadlift',
+  'rdl': 'romanian deadlift', 'good morning': 'good morning', 'hyperextension': 'back extension',
+  'cable row': 'seated cable row', 'chest press': 'chest press',
+};
+
+function _resolveExName(name) {
+  var low = (name || '').toLowerCase().trim();
+  if (IT_EN_EX[low]) return IT_EN_EX[low];
+  var keys = Object.keys(IT_EN_EX);
+  for (var i = 0; i < keys.length; i++) {
+    if (low.indexOf(keys[i]) !== -1) return IT_EN_EX[keys[i]];
+  }
+  // Strip Italian articles/prepositions, keep core word
+  return low.replace(/\b(con|da|di|del|della|dei|al|allo|agli|la|le|il|gli|un|una)\b/g, '')
+            .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 function _fetchExerciseDB(name, cb) {
-  // Normalize: lowercase, keep only ascii letters/spaces for best match
-  var q = name.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  var q = _resolveExName(name);
+  if (!q) { cb(null, null); return; }
+  var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var timer = setTimeout(function(){ if (ctrl) ctrl.abort(); cb(null, null); }, 6000);
   fetch('https://exercisedb.p.rapidapi.com/exercises/name/' + encodeURIComponent(q) + '?limit=1&offset=0', {
-    headers: {
-      'X-RapidAPI-Key': EXERCISEDB_KEY,
-      'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com'
-    }
+    headers: { 'X-RapidAPI-Key': EXERCISEDB_KEY, 'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com' },
+    signal: ctrl ? ctrl.signal : undefined
   })
   .then(function(r){ return r.ok ? r.json() : null; })
   .then(function(data){
-    var hit = Array.isArray(data) && data[0];
+    clearTimeout(timer);
+    var hit = Array.isArray(data) && data.length > 0 && data[0];
     cb(hit ? hit.gifUrl : null, hit || null);
   })
-  .catch(function(){ cb(null, null); });
+  .catch(function(){ clearTimeout(timer); cb(null, null); });
 }
 
 function _showExDemoMedia(container, exName, gifUrl, exInfo) {
