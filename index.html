@@ -769,6 +769,34 @@ select.inp{cursor:pointer}
         <div style="font-size:.68rem;color:var(--mu2);margin-top:6px">Athletes active in the last 14 days</div>
       </div>
 
+      <!-- Payments Dashboard -->
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2)">PAYMENTS</div>
+          <div id="an-stripe-payout-badge" style="font-size:.65rem;padding:3px 10px;border-radius:100px;background:var(--s3);color:var(--mu2);border:1px solid var(--bdr)">Loading…</div>
+        </div>
+        <!-- Monthly revenue -->
+        <div style="margin-bottom:14px">
+          <div style="font-size:.62rem;color:var(--mu2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em">Monthly Revenue (actual payouts)</div>
+          <div id="an-monthly-revenue" style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:.75rem;color:var(--mu2)">Loading…</div>
+          </div>
+        </div>
+        <!-- Last 10 payments -->
+        <div>
+          <div style="font-size:.62rem;color:var(--mu2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Last 10 Payments</div>
+          <div id="an-payments-list" style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:.75rem;color:var(--mu2)">Loading…</div>
+          </div>
+        </div>
+        <!-- Stripe link -->
+        <div id="an-stripe-link-wrap" style="display:none;margin-top:12px">
+          <a id="an-stripe-dashboard-link" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--grn);text-decoration:none;border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:7px 12px;background:rgba(16,185,129,.06)">
+            &#128279; View on Stripe Dashboard
+          </a>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -5843,6 +5871,9 @@ async function loadAnalytics() {
 
   // Athlete breakdown table
   renderAthleteBreakdown(athletes, activeIds, complianceScores, activeAthletes);
+
+  // Payments dashboard
+  loadPaymentsDashboard();
 }
 
 async function loadActivityChart(athIds) {
@@ -5905,6 +5936,100 @@ function renderAthleteBreakdown(athletes, activeIds, complianceScores, activeAth
       +(comp!==null?'<div style="font-size:.72rem;font-weight:600;color:'+(comp>=80?'var(--grn)':comp>=50?'var(--orn)':'var(--red)')+'">'+comp+'%</div>':'<div style="font-size:.72rem;color:var(--mu2)">—</div>')
       +'</div>';
   }).join('');
+}
+
+// ── PAYMENTS DASHBOARD ───────────────────────────────────────
+async function loadPaymentsDashboard() {
+  var listEl    = document.getElementById('an-payments-list');
+  var monthlyEl = document.getElementById('an-monthly-revenue');
+  var badgeEl   = document.getElementById('an-stripe-payout-badge');
+  var linkWrap  = document.getElementById('an-stripe-link-wrap');
+  var linkEl    = document.getElementById('an-stripe-dashboard-link');
+  if (!listEl) return;
+
+  // Fetch last 10 payments for this coach
+  var r = await sb.from('payments')
+    .select('amount_cents,fee_cents,coach_payout_cents,status,created_at')
+    .eq('coach_id', ME.id)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  var payments = r.data || [];
+
+  // Last 10 payments list
+  if (!payments.length) {
+    listEl.innerHTML = '<div style="font-size:.75rem;color:var(--mu2)">No payments yet.</div>';
+  } else {
+    listEl.innerHTML = payments.map(function(p) {
+      var amt    = p.amount_cents   ? '$' + (p.amount_cents   / 100).toFixed(2) : '—';
+      var fee    = p.fee_cents      ? '$' + (p.fee_cents      / 100).toFixed(2) : '—';
+      var payout = p.coach_payout_cents ? '$' + (p.coach_payout_cents / 100).toFixed(2) : '—';
+      var date   = p.created_at ? new Date(p.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'}) : '—';
+      var stColor = p.status === 'succeeded' ? 'var(--grn)' : p.status === 'pending' ? 'var(--orn)' : 'var(--red)';
+      return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 60px 50px;gap:4px;align-items:center;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:.72rem">'
+        + '<div style="color:var(--white);font-weight:600">' + payout + '<span style="color:var(--mu2);font-weight:400;font-size:.65rem"> payout</span></div>'
+        + '<div style="color:var(--mu2)">' + amt + ' gross</div>'
+        + '<div style="color:var(--mu2)">−' + fee + ' fee</div>'
+        + '<div style="color:' + stColor + ';font-size:.65rem;text-transform:capitalize">' + (p.status||'—') + '</div>'
+        + '<div style="color:var(--mu2);text-align:right">' + date + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  // Monthly revenue aggregation
+  var allR = await sb.from('payments')
+    .select('coach_payout_cents,created_at,status')
+    .eq('coach_id', ME.id)
+    .eq('status', 'succeeded')
+    .order('created_at', { ascending: false });
+
+  var allPayments = allR.data || [];
+  var monthly = {};
+  allPayments.forEach(function(p) {
+    if (!p.created_at) return;
+    var key = p.created_at.substring(0, 7); // YYYY-MM
+    monthly[key] = (monthly[key] || 0) + (p.coach_payout_cents || 0);
+  });
+
+  var monthKeys = Object.keys(monthly).sort().reverse().slice(0, 6);
+  if (!monthKeys.length) {
+    monthlyEl.innerHTML = '<div style="font-size:.75rem;color:var(--mu2)">No revenue data yet.</div>';
+  } else {
+    var maxMonthly = Math.max.apply(null, monthKeys.map(function(k){ return monthly[k]; })) || 1;
+    monthlyEl.innerHTML = monthKeys.map(function(k) {
+      var label = new Date(k + '-01').toLocaleDateString('en-US', {month:'short', year:'2-digit'});
+      var val   = monthly[k];
+      var pct   = Math.round(val / maxMonthly * 100);
+      return '<div style="display:flex;align-items:center;gap:8px">'
+        + '<div style="width:40px;font-size:.68rem;color:var(--mu2);flex-shrink:0">' + label + '</div>'
+        + '<div style="flex:1;height:6px;background:var(--s4);border-radius:3px;overflow:hidden">'
+        +   '<div style="width:' + pct + '%;height:100%;background:var(--grn);border-radius:3px"></div>'
+        + '</div>'
+        + '<div style="width:52px;text-align:right;font-size:.72rem;font-weight:600;color:var(--grn)">$' + (val/100).toFixed(0) + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  // Stripe Connect payout status + link
+  var cpR = await sb.from('coach_profiles')
+    .select('stripe_account_id,stripe_account_status')
+    .eq('id', ME.id).single();
+  var cp = cpR.data;
+  if (cp && cp.stripe_account_id) {
+    var isActive = cp.stripe_account_status === 'active' || cp.stripe_account_status === 'approved';
+    if (badgeEl) {
+      badgeEl.textContent = isActive ? '✓ Payouts active' : '⏳ Pending';
+      badgeEl.style.background    = isActive ? 'rgba(16,185,129,.12)' : 'rgba(245,158,11,.12)';
+      badgeEl.style.color         = isActive ? 'var(--grn)' : 'var(--orn)';
+      badgeEl.style.borderColor   = isActive ? 'rgba(16,185,129,.2)' : 'rgba(245,158,11,.2)';
+    }
+    if (linkWrap && linkEl && isActive) {
+      linkEl.href = 'https://dashboard.stripe.com/test/connect/accounts/' + cp.stripe_account_id;
+      linkWrap.style.display = 'block';
+    }
+  } else {
+    if (badgeEl) { badgeEl.textContent = 'Not connected'; }
+  }
 }
 
 // ── ALTERNATIVE & EXTRA EXERCISES ───────────────────────────
