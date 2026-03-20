@@ -839,6 +839,7 @@ select.inp{cursor:pointer}
     <div class="topbar">
       <div class="topbar-logo">KRATOS</div>
       <span class="badge badge-red" id="ath-cycle-badge">—</span>
+      <span id="ath-access-badge" style="display:none;font-size:.58rem;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:100px;border:1px solid"></span>
       <button class="btn-out" onclick="doLogout()">Logout</button>
     </div>
     <div class="scroll">
@@ -1870,11 +1871,22 @@ function buildAthCard(a) {
   var init = (a.full_name||a.email||'?').charAt(0).toUpperCase();
 
   var head = document.createElement('div'); head.className = 'ath-head';
+  // Access level badge for coach card header
+  var _athLevel = a.is_pilot ? 'pilot'
+    : (a.trial_ends_at && new Date(a.trial_ends_at) > new Date()) ? 'trial' : 'free';
+  var _athBadgeHtml = '';
+  if (_athLevel === 'pilot') {
+    _athBadgeHtml = '<span style="font-size:.55rem;font-weight:800;letter-spacing:.08em;padding:2px 6px;border-radius:100px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)">PILOT</span>';
+  } else if (_athLevel === 'trial') {
+    _athBadgeHtml = '<span style="font-size:.55rem;font-weight:800;letter-spacing:.08em;padding:2px 6px;border-radius:100px;background:rgba(245,158,11,.12);color:var(--orn);border:1px solid rgba(245,158,11,.3)">TRIAL·' + _trialDaysLeft(a.trial_ends_at) + 'd</span>';
+  }
+
   head.innerHTML = '<div class="ath-av">' + init + '</div>' +
     '<div class="ath-info">' +
-      '<div class="ath-name" style="display:flex;align-items:center;gap:5px">' +
+      '<div class="ath-name" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">' +
         escHtml(a.full_name||'Atleta') +
         '<span onclick="event.stopPropagation();openRenameAthlete(\''+a.id+'\',\''+escHtml(a.full_name||'')+'\')" style="cursor:pointer;font-size:.7rem;opacity:.5;padding:1px 4px;border-radius:4px;border:1px solid var(--bdr);line-height:1.4" title="Rinomina">✏</span>' +
+        _athBadgeHtml +
       '</div>' +
       '<div class="ath-email">' + escHtml(a.email||'') + '</div>' +
     '</div>' +
@@ -1956,7 +1968,39 @@ function buildAthCard(a) {
     if (noteBtn) noteBtn.addEventListener('click',  function(){ saveCoachNote(aid); });
   })(a.id);
 
-  body.appendChild(stats); body.appendChild(progSec); body.appendChild(assSec); body.appendChild(msgSec);
+  // ── Premium Access panel ──────────────────────────────────
+  var planSec = document.createElement('div');
+  planSec.id = 'plan-sec-' + a.id;
+  planSec.style.cssText = 'padding:10px 14px;border-top:1px solid var(--bdr)';
+  planSec.innerHTML = '<div style="font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px">Premium Access</div>';
+  var planBtnRow = document.createElement('div');
+  planBtnRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+  (function(ath) {
+    var hasActive = ath.is_pilot || (ath.trial_ends_at && new Date(ath.trial_ends_at) > new Date());
+    if (!ath.is_pilot) {
+      var btnTrial = document.createElement('button'); btnTrial.className = 'btn-out';
+      btnTrial.textContent = '⏱ 30d Trial';
+      btnTrial.onclick = function(){ startAthTrial(ath.id); };
+      planBtnRow.appendChild(btnTrial);
+    }
+    if (!ath.is_pilot) {
+      var btnPilot = document.createElement('button'); btnPilot.className = 'btn-out';
+      btnPilot.textContent = '★ Set Pilot';
+      btnPilot.style.cssText = 'border-color:rgba(16,185,129,.3);color:#10b981';
+      btnPilot.onclick = function(){ setAthPilot(ath.id); };
+      planBtnRow.appendChild(btnPilot);
+    }
+    if (hasActive) {
+      var btnRevoke = document.createElement('button'); btnRevoke.className = 'btn-out';
+      btnRevoke.textContent = 'Revoke';
+      btnRevoke.style.cssText = 'border-color:rgba(232,17,42,.3);color:var(--red)';
+      btnRevoke.onclick = function(){ revokeAthAccess(ath.id); };
+      planBtnRow.appendChild(btnRevoke);
+    }
+  })(a);
+  planSec.appendChild(planBtnRow);
+
+  body.appendChild(stats); body.appendChild(progSec); body.appendChild(planSec); body.appendChild(assSec); body.appendChild(msgSec);
   card.appendChild(head); card.appendChild(body);
 
   loadAthStats(a);
@@ -1964,6 +2008,33 @@ function buildAthCard(a) {
   loadAthMessages(a.id);
   loadAthAssessment(a.id);
   return card;
+}
+
+// ── COACH: TRIAL / PILOT MANAGEMENT ──────────────────────────
+async function startAthTrial(athleteId) {
+  var trialEnd = new Date();
+  trialEnd.setDate(trialEnd.getDate() + 30);
+  var r = await sb.from('profiles')
+    .update({ trial_ends_at: trialEnd.toISOString(), is_pilot: false })
+    .eq('id', athleteId);
+  if (r.error) { alert('Error: ' + r.error.message); return; }
+  loadAthletes();
+}
+
+async function setAthPilot(athleteId) {
+  var r = await sb.from('profiles')
+    .update({ is_pilot: true, trial_ends_at: null })
+    .eq('id', athleteId);
+  if (r.error) { alert('Error: ' + r.error.message); return; }
+  loadAthletes();
+}
+
+async function revokeAthAccess(athleteId) {
+  var r = await sb.from('profiles')
+    .update({ is_pilot: false, trial_ends_at: null })
+    .eq('id', athleteId);
+  if (r.error) { alert('Error: ' + r.error.message); return; }
+  loadAthletes();
 }
 
 function loadAthStats(a) {
@@ -5261,6 +5332,44 @@ function checkPaymentReturn() {
   }
 }
 
+// ── ATHLETE ACCESS LEVEL ─────────────────────────────────────
+// Returns: 'free' | 'trial' | 'pilot' | 'premium'
+function getAthleteAccessLevel(profile, premiumSub) {
+  if (!profile) return 'free';
+  if (profile.is_pilot) return 'pilot';
+  if (profile.trial_ends_at && new Date(profile.trial_ends_at) > new Date()) return 'trial';
+  if (premiumSub && premiumSub.status === 'active') return 'premium';
+  return 'free';
+}
+
+function _trialDaysLeft(trial_ends_at) {
+  if (!trial_ends_at) return 0;
+  return Math.max(0, Math.ceil((new Date(trial_ends_at) - new Date()) / 864e5));
+}
+
+function _updateAccessBadge(level, trial_ends_at) {
+  var el = document.getElementById('ath-access-badge');
+  if (!el) return;
+  if (level === 'free') { el.style.display = 'none'; return; }
+  el.style.display = '';
+  if (level === 'pilot') {
+    el.textContent = '★ PILOT';
+    el.style.background = 'rgba(16,185,129,.15)';
+    el.style.color = '#10b981';
+    el.style.borderColor = 'rgba(16,185,129,.3)';
+  } else if (level === 'trial') {
+    el.textContent = '⏱ TRIAL · ' + _trialDaysLeft(trial_ends_at) + 'd';
+    el.style.background = 'rgba(245,158,11,.15)';
+    el.style.color = 'var(--orn)';
+    el.style.borderColor = 'rgba(245,158,11,.3)';
+  } else {
+    el.textContent = '★ PREMIUM';
+    el.style.background = 'rgba(168,85,247,.15)';
+    el.style.color = '#a855f7';
+    el.style.borderColor = 'rgba(168,85,247,.3)';
+  }
+}
+
 // ── ATHLETE PREMIUM ──────────────────────────────────────────
 var athletePremiumSub = null;
 
@@ -5273,25 +5382,36 @@ async function loadAthletePremiumStatus() {
   if (!freeBlock) return;
 
   var r = await sb.from('athlete_subscriptions')
-    .select('*')
-    .eq('athlete_id', ME.id)
-    .eq('plan', 'premium')
-    .maybeSingle();
+    .select('*').eq('athlete_id', ME.id).eq('plan', 'premium').maybeSingle();
   athletePremiumSub = r.data;
 
-  var isPremium = r.data && r.data.status === 'active';
-  if (freeBlock)   freeBlock.style.display   = isPremium ? 'none'  : 'block';
-  if (activeBlock) activeBlock.style.display = isPremium ? 'block' : 'none';
-  if (badge) {
-    badge.textContent      = isPremium ? '★ Premium' : 'Free';
-    badge.style.background = isPremium ? 'rgba(168,85,247,.15)' : 'var(--s3)';
-    badge.style.color      = isPremium ? '#a855f7' : 'var(--mu2)';
-    badge.style.borderColor= isPremium ? 'rgba(168,85,247,.3)' : 'var(--bdr)';
-  }
-  if (bodyTrack) bodyTrack.style.display = isPremium ? 'block' : 'none';
-  if (aiForm)    aiForm.style.display    = isPremium ? 'block' : 'none';
+  var level = getAthleteAccessLevel(myProfile, athletePremiumSub);
+  var hasAccess = level !== 'free';
 
-  if (isPremium) loadBodyTrackerHistory();
+  if (freeBlock)   freeBlock.style.display   = hasAccess ? 'none'  : 'block';
+  if (activeBlock) activeBlock.style.display = hasAccess ? 'block' : 'none';
+  if (bodyTrack)   bodyTrack.style.display   = hasAccess ? 'block' : 'none';
+  if (aiForm)      aiForm.style.display      = hasAccess ? 'block' : 'none';
+
+  // Premium/stats badge
+  var badgeMap = {
+    pilot:   { text: '★ Pilot',   bg: 'rgba(16,185,129,.15)', color: '#10b981', border: 'rgba(16,185,129,.3)' },
+    trial:   { text: '⏱ Trial · ' + _trialDaysLeft(myProfile && myProfile.trial_ends_at) + 'd', bg: 'rgba(245,158,11,.15)', color: 'var(--orn)', border: 'rgba(245,158,11,.3)' },
+    premium: { text: '★ Premium', bg: 'rgba(168,85,247,.15)', color: '#a855f7', border: 'rgba(168,85,247,.3)' },
+    free:    { text: 'Free',      bg: 'var(--s3)',            color: 'var(--mu2)', border: 'var(--bdr)' },
+  };
+  var bm = badgeMap[level];
+  if (badge) {
+    badge.textContent       = bm.text;
+    badge.style.background  = bm.bg;
+    badge.style.color       = bm.color;
+    badge.style.borderColor = bm.border;
+  }
+
+  // Topbar badge on cycle view
+  _updateAccessBadge(level, myProfile && myProfile.trial_ends_at);
+
+  if (hasAccess) loadBodyTrackerHistory();
 }
 
 async function startAthletePremium() {
