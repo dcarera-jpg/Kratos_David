@@ -4112,8 +4112,8 @@ function renderNoCoach() {
       '<button class="btn-red" id="ath-joincode-btn" style="width:100%">Connect to Coach</button>' +
       '<div id="joincode-msg" style="display:none;margin-top:8px;font-size:.76rem;padding:8px;border-radius:8px;text-align:center"></div>' +
     '</div>';
-  document.getElementById('ath-cycle-badge').textContent = '—';
-  document.getElementById('ath-cycle-title').textContent = 'No coach connected';
+  var _b1=document.getElementById('ath-cycle-badge'); if(_b1) _b1.textContent='—';
+  var _t1=document.getElementById('ath-cycle-title'); if(_t1) _t1.textContent='No coach connected';
   var btn = document.getElementById('ath-joincode-btn');
   if (btn) btn.addEventListener('click', submitJoinCode);
 }
@@ -4200,8 +4200,8 @@ function renderNoProg(reason) {
     '<div class="no-prog"><div style="font-size:2rem;margin-bottom:10px">&#128203;</div>' +
     '<div style="font-weight:700;font-size:1rem;margin-bottom:6px">No Program</div>' +
     '<div style="font-size:.8rem;color:var(--mu2)">Your coach will assign you a program soon.</div>' + msg + subHtml + '</div>';
-  document.getElementById('ath-cycle-badge').textContent='—';
-  document.getElementById('ath-cycle-title').textContent='Waiting';
+  var _b2=document.getElementById('ath-cycle-badge'); if(_b2) _b2.textContent='—';
+  var _t2=document.getElementById('ath-cycle-title'); if(_t2) _t2.textContent='Waiting';
   if (myProfile && myProfile.coach_id) setTimeout(loadAthleteSubscription, 400);
 }
 
@@ -4263,8 +4263,8 @@ function loadOverrides() {
 
 function renderCycle() {
   var currentDay = myProfile.current_day || 1;
-  document.getElementById('ath-cycle-badge').textContent = 'Cycle '+currentCycle.cycle_number;
-  document.getElementById('ath-cycle-title').textContent = currentCycle.name + ' · Day '+currentDay+'/10';
+  var _b3=document.getElementById('ath-cycle-badge'); if(_b3) _b3.textContent='Cycle '+currentCycle.cycle_number;
+  var _t3=document.getElementById('ath-cycle-title'); if(_t3) _t3.textContent=currentCycle.name+' · Day '+currentDay+'/10';
   // Update workout title area
   var labelEl = document.getElementById('cycle-nav-label');
   var titleEl = document.getElementById('cycle-nav-title');
