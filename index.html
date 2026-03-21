@@ -6,6 +6,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kratos">
+<meta name="theme-color" content="#e8111a">
+<link rel="manifest" href="/Kratos_David/manifest.json">
+<link rel="apple-touch-icon" href="/Kratos_David/icons/icon-192.png">
 <title>KRATOS</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -8295,6 +8299,85 @@ function showFmsg(id,text,type){
 document.getElementById('li-pass').addEventListener('keydown',function(e){ if(e.key==='Enter') doLogin(); });
 
 boot();
+</script>
+
+<!-- ── PWA INSTALL BANNER ──────────────────────────────────── -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:72px;left:12px;right:12px;background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 16px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+  <div style="display:flex;align-items:flex-start;gap:12px">
+    <img src="/Kratos_David/icons/icon-192.png" style="width:40px;height:40px;border-radius:10px;flex-shrink:0">
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:700;font-size:.84rem;color:#fff;margin-bottom:3px">Install Kratos</div>
+      <div id="pwa-banner-msg" style="font-size:.72rem;color:#888;line-height:1.45">Add to your home screen for the best experience — faster, fullscreen, works offline.</div>
+    </div>
+    <button onclick="pwaDismiss()" style="background:none;border:none;color:#666;font-size:1.1rem;cursor:pointer;padding:0;flex-shrink:0;line-height:1">&#10005;</button>
+  </div>
+  <div id="pwa-banner-actions" style="display:flex;gap:8px;margin-top:12px">
+    <button onclick="pwaDismiss()" style="flex:1;padding:9px;border-radius:10px;background:none;border:1px solid rgba(255,255,255,.12);color:#888;font-family:inherit;font-size:.78rem;cursor:pointer">Not now</button>
+    <button id="pwa-install-btn" onclick="pwaInstall()" style="flex:2;padding:9px;border-radius:10px;background:#e8111a;border:none;color:#fff;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer">&#8623; Install</button>
+  </div>
+</div>
+
+<script>
+// ── PWA: Service Worker registration ─────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/Kratos_David/sw.js')
+      .then(function(reg) { console.log('SW registered', reg.scope); })
+      .catch(function(err) { console.log('SW error:', err); });
+  });
+}
+
+// ── PWA: Install banner ───────────────────────────────────────
+var _pwaPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _pwaPrompt = e;
+  if (!localStorage.getItem('kratos_pwa_dismissed')) {
+    setTimeout(function() {
+      document.getElementById('pwa-banner').style.display = 'block';
+    }, 3000);
+  }
+});
+
+window.addEventListener('appinstalled', function() {
+  document.getElementById('pwa-banner').style.display = 'none';
+  localStorage.setItem('kratos_pwa_dismissed', '1');
+});
+
+function pwaInstall() {
+  if (_pwaPrompt) {
+    _pwaPrompt.prompt();
+    _pwaPrompt.userChoice.then(function(r) {
+      if (r.outcome === 'accepted') localStorage.setItem('kratos_pwa_dismissed', '1');
+      _pwaPrompt = null;
+      document.getElementById('pwa-banner').style.display = 'none';
+    });
+  } else {
+    // iOS: show manual instructions
+    document.getElementById('pwa-banner-msg').innerHTML =
+      'On iOS: tap the <strong style="color:#fff">Share</strong> button &#8679; then <strong style="color:#fff">Add to Home Screen</strong>';
+    document.getElementById('pwa-install-btn').style.display = 'none';
+  }
+}
+
+function pwaDismiss() {
+  document.getElementById('pwa-banner').style.display = 'none';
+  localStorage.setItem('kratos_pwa_dismissed', '1');
+}
+
+// iOS: show banner manually (no beforeinstallprompt support)
+(function() {
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isStandalone = window.navigator.standalone === true;
+  if (isIOS && !isStandalone && !localStorage.getItem('kratos_pwa_dismissed')) {
+    setTimeout(function() {
+      var btn = document.getElementById('pwa-install-btn');
+      if (btn) btn.textContent = 'How to install';
+      document.getElementById('pwa-banner').style.display = 'block';
+    }, 3000);
+  }
+})();
 </script>
 </body>
 </html>
