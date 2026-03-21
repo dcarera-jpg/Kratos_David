@@ -57,7 +57,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--txt);font-size:15px;display:fl
 .badge-red{background:var(--rdim);color:var(--red)}
 .badge-orn{background:var(--odim);color:var(--orn)}
 .badge-grn{background:var(--gdim);color:var(--grn)}
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 14px calc(14px + var(--sb))}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 14px calc(14px + var(--sb));min-height:0}
 .bnav{display:flex;background:rgba(10,10,10,.95);backdrop-filter:blur(20px);border-top:1px solid var(--bdr);padding:6px 0 calc(6px + var(--sb));flex-shrink:0}
 .bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;cursor:pointer;border:none;background:none}
 .bni-ic{font-size:1.15rem}
@@ -162,14 +162,15 @@ select.inp{cursor:pointer}
 .cd-label{font-size:.52rem;color:var(--mu2);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;padding:0 2px}
 
 /* ── ATHLETE: SESSION ── */
-.sess-card{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.sess-card{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;margin-bottom:10px;overflow:hidden;min-height:0}
 .sess-head{padding:13px 14px;display:flex;align-items:center;gap:10px}
 .sess-icon{font-size:1.4rem}
 .sess-info{flex:1}
 .sess-name{font-weight:700;font-size:.95rem}
 .sess-meta{font-size:.72rem;color:var(--mu2);margin-top:2px}
 .sess-done-pill{padding:4px 10px;border-radius:12px;font-size:.65rem;font-weight:700;background:var(--gdim);color:var(--grn)}
-.ex-item{border-top:1px solid var(--bdr);overflow:hidden}
+.ex-item{border-top:1px solid var(--bdr);overflow:hidden;min-height:0}
+.ex-item.open{min-height:44px}
 .ex-item.done .ex-header{background:rgba(16,185,129,.05)}
 .ex-header{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer}
 .ex-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0;transition:all .2s}
