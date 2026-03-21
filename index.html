@@ -7572,32 +7572,51 @@ var extraModalState = { dayDataId:null, selectedExId:null, allExs:[] };
 async function openAlternativeModal(seId, dayDataId, exObj, seObj) {
   altModalState = { seId:seId, dayDataId:dayDataId, exObj:exObj, seObj:seObj };
   var mg = exObj.muscle_group || exObj.tag || '';
-  var mgNorm = normMG(mg);
+  var mgLabel = normMG(mg) || mg;
   document.getElementById('alt-modal-title').textContent = 'Alternatives for: ' + (exObj.name||'');
-  document.getElementById('alt-modal-sub').textContent = mgNorm ? 'Same group: ' + mgNorm : 'All exercises';
+  document.getElementById('alt-modal-sub').textContent = mgLabel ? mgLabel : 'All exercises';
   document.getElementById('alt-modal-list').innerHTML = '<div style="padding:12px;color:var(--mu2);font-size:.75rem">Loading...</div>';
   document.getElementById('alt-modal-overlay').style.display = 'flex';
 
-  // Load exercises with same muscle group
-  var r = await sb.from('exercises').select('id,name,tag,muscle_group')
+  var exs = await _loadAlternatives(mg, exObj.id);
+  _renderAltList(exs, mg, mgLabel);
+}
+
+async function _loadAlternatives(mg, excludeId) {
+  var base = sb.from('exercises').select('id,name,tag,muscle_group,video_url,gif_url')
     .or('is_global.eq.true,coach_id.eq.'+ME.id)
-    .order('name').limit(300);
-  var all = r.data || [];
-  // Filter strictly by same muscle_group
-  // Try strict match first, then loose
-  var exs = all.filter(function(e){
-    if (String(e.id) === String(exObj.id)) return false;
-    if (!mg) return true;
-    var emg = (e.muscle_group||'').toLowerCase().trim();
-    var etag = (e.tag||'').toLowerCase().trim();
-    var fmg = mg.toLowerCase().trim();
-    var fmgNorm = mgNorm.toLowerCase().trim();
-    return emg===fmg || etag===fmg || normMG(emg)===mgNorm || normMG(etag)===mgNorm
-      || emg.includes(fmg) || fmg.includes(emg)
-      || emg===fmgNorm || etag===fmgNorm;
-  });
-  // Update subtitle with count
-  document.getElementById('alt-modal-sub').textContent = (mgNorm||mg) + ' — ' + exs.length + ' exercises';
+    .neq('id', excludeId)
+    .order('name').limit(100);
+
+  if (!mg) {
+    var r = await base;
+    return r.data || [];
+  }
+
+  // Exact match on DB
+  var r = await sb.from('exercises').select('id,name,tag,muscle_group,video_url,gif_url')
+    .or('is_global.eq.true,coach_id.eq.'+ME.id)
+    .eq('muscle_group', mg)
+    .neq('id', excludeId)
+    .order('name').limit(100);
+  var exs = r.data || [];
+
+  // Fallback: ilike if exact returns nothing
+  if (!exs.length) {
+    var r2 = await sb.from('exercises').select('id,name,tag,muscle_group,video_url,gif_url')
+      .or('is_global.eq.true,coach_id.eq.'+ME.id)
+      .ilike('muscle_group', '%'+mg+'%')
+      .neq('id', excludeId)
+      .order('name').limit(100);
+    exs = r2.data || [];
+  }
+
+  return exs;
+}
+
+function _renderAltList(exs, mg, mgLabel) {
+  document.getElementById('alt-modal-sub').textContent =
+    (mgLabel || mg || 'All') + ' — ' + exs.length + ' exercise' + (exs.length===1?'':'s');
 
   document.getElementById('alt-modal-list').innerHTML = exs.map(function(ex){
     var color = strColor(ex.muscle_group||ex.tag||'');
@@ -7610,9 +7629,8 @@ async function openAlternativeModal(seId, dayDataId, exObj, seObj) {
       +' style="padding:6px 14px;border-radius:8px;background:var(--rdim);border:1px solid rgba(232,17,42,.25);color:var(--red);font-family:inherit;font-size:.75rem;cursor:pointer;font-weight:600">'
       +'Select</button>'
       +'</div>';
-  }).join('') || '<div style="padding:12px;color:var(--mu2);font-size:.75rem">No alternatives found</div>';
+  }).join('') || '<div style="padding:12px;color:var(--mu2);font-size:.75rem">No alternatives found for "'+escHtml(mgLabel||mg)+'"</div>';
 
-  // Wire select buttons
   document.querySelectorAll('#alt-modal-list button[data-ex-id]').forEach(function(btn){
     btn.addEventListener('click', function(){
       selectAlternative(this.dataset.exId, this.dataset.exName);
