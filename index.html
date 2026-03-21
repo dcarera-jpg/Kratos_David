@@ -4185,7 +4185,7 @@ function renderMeView() {
   if(nameEl) nameEl.textContent = name;
   if(title)  title.textContent  = name.split(' ')[0] || 'Me';
   // Access level sub-label
-  var level = localStorage.getItem('kratos_view_mode') || myProfile.view_mode || 'simple';
+  var level = (localStorage.getItem('kratos_view_mode') || myProfile.view_mode || 'pro').trim();
   var accessEl = document.getElementById('me-access-info');
   if(subEl) subEl.textContent = myProfile.coach_id ? 'Assigned coach · View: '+level : 'No coach assigned';
   if(accessEl){
@@ -4752,12 +4752,13 @@ function buildAltExtraRow(se, dayData, ex, isLight) {
 }
 
 function buildExItem(se, dayData) {
-  var viewMode = localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'simple';
+  var viewMode = (localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'pro').trim();
+  var exStyle  = (localStorage.getItem('kratos_ex_style')  || 'A').trim();
+  console.log('[buildExItem] viewMode='+viewMode+' exStyle='+exStyle);
   if (viewMode === 'simple') return buildExItemSimple(se, dayData);
   // Pro: delegate to style variant
-  var _style = localStorage.getItem('kratos_ex_style') || 'A';
-  if (_style === 'F') return buildExItemF(se, dayData);
-  if (_style === 'I') return buildExItemI(se, dayData);
+  if (exStyle === 'F') return buildExItemF(se, dayData);
+  if (exStyle === 'I') return buildExItemI(se, dayData);
   // Style A (default) — full screen card
   var cacheKey=dayData.id+'_'+se.id;
   var log=logbookCache[cacheKey]||{};
@@ -5172,7 +5173,7 @@ function _highlightViewMode(mode) {
 
 function initExStyleSettings() {
   setExStyle(localStorage.getItem('kratos_ex_style')||'A');
-  var vm = localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'simple';
+  var vm = (localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'pro').trim();
   _highlightViewMode(vm);
 }
 
@@ -8353,7 +8354,7 @@ async function saveExtraExercise() {
 }
 
 function buildExItemExtra(row, dayData) {
-  var viewMode = localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'simple';
+  var viewMode = (localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'pro').trim();
   var isDone = row.done || false;
   var rid = row.id;
 
@@ -8377,7 +8378,7 @@ function buildExItemExtra(row, dayData) {
   }
 
   // ── Pro ───────────────────────────────────────────────────
-  var _style = localStorage.getItem('kratos_ex_style') || 'A';
+  var _style = (localStorage.getItem('kratos_ex_style') || 'A').trim();
   var numSets = 3;
 
   // Style I: Clean List
