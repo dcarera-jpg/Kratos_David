@@ -885,27 +885,6 @@ select.inp{cursor:pointer}
   </div>
 
   <!-- ATHLETE: TIMER -->
-  <div class="view" id="vv-timer">
-    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-red">Timer</span></div>
-    <div class="scroll">
-      <div class="timer-wrap">
-        <div class="timer-disp" id="timerDisp">02:00</div>
-        <div class="timer-presets">
-          <button class="pre-btn" onclick="setPreset(60)">1'</button>
-          <button class="pre-btn" onclick="setPreset(90)">1'30"</button>
-          <button class="pre-btn on" onclick="setPreset(120)">2'</button>
-          <button class="pre-btn" onclick="setPreset(180)">3'</button>
-          <button class="pre-btn" onclick="setPreset(300)">5'</button>
-        </div>
-        <div class="timer-btns">
-          <button class="t-start" id="timerBtn" onclick="toggleTimer()">START</button>
-          <button class="t-reset" onclick="resetTimer()">Reset</button>
-        </div>
-      </div>
-      <div style="font-size:.75rem;color:var(--mu2);text-align:center;padding-top:8px">Press START after each set</div>
-    </div>
-  </div>
-
   <!-- ATHLETE: COACH MESSAGES -->
   <!-- STATS VIEW -->
   <div class="view" id="vv-stats" style="display:none">
@@ -1232,7 +1211,6 @@ select.inp{cursor:pointer}
   <!-- ATHLETE NAV -->
   <nav class="bnav" id="athlete-nav">
     <button class="bni on" id="vbn-cycle" onclick="vsv('cycle')"><span class="bni-ic">&#128197;</span><span class="bni-lb" data-i18n="nav_cycle">Cycle</span></button>
-    <button class="bni"    id="vbn-timer" onclick="vsv('timer')"><span class="bni-ic">&#9201;</span><span class="bni-lb" data-i18n="nav_timer">Timer</span></button>
     <button class="bni"    id="vbn-coach" onclick="vsv('coach')"><span class="bni-ic">&#128172;</span><span class="bni-lb" data-i18n="nav_coach">Coach</span></button>
     <button class="bni"    id="vbn-assessment" onclick="vsv('assessment');loadAssessmentForm()"><span class="bni-ic">&#128203;</span><span class="bni-lb" data-i18n="nav_profile">Profile</span></button>
     <button class="bni"    id="vbn-stats" onclick="vsv('stats')"><span class="bni-ic">&#128200;</span><span class="bni-lb" data-i18n="nav_stats">Stats</span></button>
