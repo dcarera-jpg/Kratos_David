@@ -1745,6 +1745,8 @@ function boot() {
         if (!pr.data) { showLogin(); return; }
         myProfile = pr.data;
         APP_ROLE = myProfile.role;
+        if (!localStorage.getItem('kratos_view_mode')) localStorage.setItem('kratos_view_mode', 'pro');
+        if (!localStorage.getItem('kratos_ex_style'))  localStorage.setItem('kratos_ex_style',  'A');
         initLanguage(myProfile.preferred_language);
         document.getElementById('loader').style.display = 'none';
         if (APP_ROLE === 'admin' || APP_ROLE === 'coach') { startAdmin(); }
@@ -1842,6 +1844,8 @@ async function doSignUp() {
   if (pr.error) { err.textContent = 'Account created but profile error: ' + pr.error.message; btn.disabled=false; return; }
   myProfile = pr.data;
   APP_ROLE = myProfile.role;
+  if (!localStorage.getItem('kratos_view_mode')) localStorage.setItem('kratos_view_mode', 'pro');
+  if (!localStorage.getItem('kratos_ex_style'))  localStorage.setItem('kratos_ex_style',  'A');
 
   // If coach, create coach_profiles entry
   if (APP_ROLE === 'coach') {
@@ -1870,6 +1874,8 @@ function doLogin() {
       if (!pr || !pr.data) { err.textContent = 'Profile not found'; btn.disabled=false; btn.textContent='Sign In'; return; }
       myProfile = pr.data;
       APP_ROLE = myProfile.role;
+      if (!localStorage.getItem('kratos_view_mode')) localStorage.setItem('kratos_view_mode', 'pro');
+      if (!localStorage.getItem('kratos_ex_style'))  localStorage.setItem('kratos_ex_style',  'A');
       document.getElementById('login-screen').style.display = 'none';
       if (APP_ROLE === 'admin' || APP_ROLE === 'coach') { startAdmin(); }
       else { startAthlete(); }
@@ -4185,7 +4191,7 @@ function renderMeView() {
   if(nameEl) nameEl.textContent = name;
   if(title)  title.textContent  = name.split(' ')[0] || 'Me';
   // Access level sub-label
-  var level = (localStorage.getItem('kratos_view_mode') || myProfile.view_mode || 'pro').trim();
+  var level = (localStorage.getItem('kratos_view_mode') || 'pro').trim();
   var accessEl = document.getElementById('me-access-info');
   if(subEl) subEl.textContent = myProfile.coach_id ? 'Assigned coach · View: '+level : 'No coach assigned';
   if(accessEl){
@@ -4601,8 +4607,7 @@ function selectCycleDay(n) {
 function renderDaySession(dayNum) {
   // Resolve style ONCE here so every exercise gets the same builder
   var _exStyle  = (localStorage.getItem('kratos_ex_style')  || 'A').trim();
-  var _viewMode = (localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'pro').trim();
-  console.log('[renderDaySession] viewMode='+_viewMode+' exStyle='+_exStyle);
+  var _viewMode = (localStorage.getItem('kratos_view_mode') || 'pro').trim();
   var _buildEx = _viewMode === 'simple' ? buildExItemSimple
                : _exStyle  === 'F'      ? buildExItemF
                : _exStyle  === 'I'      ? buildExItemI
@@ -4762,7 +4767,7 @@ function buildAltExtraRow(se, dayData, ex, isLight) {
 
 // Thin dispatcher — kept for any callers outside renderDaySession
 function buildExItem(se, dayData) {
-  var vm = (localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'pro').trim();
+  var vm = (localStorage.getItem('kratos_view_mode') || 'pro').trim();
   var es = (localStorage.getItem('kratos_ex_style')  || 'A').trim();
   if (vm === 'simple') return buildExItemSimple(se, dayData);
   if (es === 'F') return buildExItemF(se, dayData);
@@ -5185,7 +5190,7 @@ function _highlightViewMode(mode) {
 
 function initExStyleSettings() {
   setExStyle(localStorage.getItem('kratos_ex_style')||'A');
-  var vm = (localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'pro').trim();
+  var vm = (localStorage.getItem('kratos_view_mode') || 'pro').trim();
   _highlightViewMode(vm);
 }
 
@@ -8366,7 +8371,7 @@ async function saveExtraExercise() {
 }
 
 function buildExItemExtra(row, dayData) {
-  var viewMode = (localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'pro').trim();
+  var viewMode = (localStorage.getItem('kratos_view_mode') || 'pro').trim();
   var isDone = row.done || false;
   var rid = row.id;
 
