@@ -4166,6 +4166,11 @@ function vsv(name) {
   if(name==='settings') initExStyleSettings();
   if(name==='me') renderMeView();
   if(name==='program') renderProgram();
+  // Always re-render workout with current settings when navigating to it
+  if(name==='cycle' && typeof renderDaySession === 'function' && currentCycle) {
+    var cd = myProfile ? (myProfile.current_day||1) : 1;
+    renderDaySession(cd);
+  }
 }
 
 function renderMeView() {
@@ -5138,6 +5143,11 @@ function setExStyle(s) {
     el.style.borderColor = x===s ? 'var(--orn)' : (isI?'#e5e7eb':'var(--bdr)');
     el.style.boxShadow   = x===s ? '0 0 0 3px rgba(245,158,11,.18)' : 'none';
   });
+  // Re-render workout if loaded so change is visible immediately
+  if (typeof renderDaySession === 'function' && currentCycle) {
+    var cd = myProfile ? (myProfile.current_day||1) : 1;
+    renderDaySession(cd);
+  }
 }
 
 async function setViewMode(mode) {
