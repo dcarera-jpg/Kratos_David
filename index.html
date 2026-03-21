@@ -1188,6 +1188,55 @@ select.inp{cursor:pointer}
         </div>
       </div>
 
+      <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:12px;margin-top:4px">TRAINING VIEW</div>
+      <div style="font-size:.8rem;font-weight:600;color:var(--txt);margin-bottom:10px">Exercise detail level</div>
+
+      <div style="display:flex;gap:10px;margin-bottom:28px">
+        <!-- Simple -->
+        <div id="viewmode-simple" onclick="setViewMode('simple')" style="flex:1;background:var(--s2);border:2px solid var(--bdr);border-radius:14px;padding:12px 10px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+          <div style="background:var(--s3);border-radius:8px;padding:8px;margin-bottom:8px;min-height:72px;display:flex;flex-direction:column;justify-content:center;gap:5px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="width:10px;height:10px;border-radius:50%;border:2px solid var(--grn);flex-shrink:0"></div>
+              <div style="height:7px;background:var(--s4);border-radius:3px;flex:1"></div>
+              <div style="width:14px;height:14px;border-radius:4px;background:rgba(16,185,129,.25);flex-shrink:0"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="width:10px;height:10px;border-radius:50%;border:2px solid var(--bdr);flex-shrink:0"></div>
+              <div style="height:7px;background:var(--s4);border-radius:3px;flex:1"></div>
+              <div style="width:14px;height:14px;border-radius:4px;background:var(--s4);flex-shrink:0"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="width:10px;height:10px;border-radius:50%;border:2px solid var(--bdr);flex-shrink:0"></div>
+              <div style="height:7px;background:var(--s4);border-radius:3px;flex:1"></div>
+              <div style="width:14px;height:14px;border-radius:4px;background:var(--s4);flex-shrink:0"></div>
+            </div>
+          </div>
+          <div style="font-size:.72rem;font-weight:800;color:var(--txt);text-align:center;letter-spacing:.04em">Simple</div>
+          <div style="font-size:.6rem;color:var(--mu2);text-align:center;margin-top:2px">Just check done</div>
+        </div>
+
+        <!-- Pro -->
+        <div id="viewmode-pro" onclick="setViewMode('pro')" style="flex:1;background:var(--s2);border:2px solid var(--bdr);border-radius:14px;padding:12px 10px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+          <div style="background:var(--s3);border-radius:8px;padding:8px;margin-bottom:8px;min-height:72px">
+            <div style="display:flex;gap:3px;margin-bottom:5px">
+              <div style="flex:1;background:var(--s1);border-radius:3px;height:12px"></div>
+              <div style="flex:1;background:var(--s1);border-radius:3px;height:12px"></div>
+              <div style="flex:1;background:var(--s1);border-radius:3px;height:12px"></div>
+            </div>
+            <div style="height:6px;background:var(--orn);opacity:.35;border-radius:3px;margin-bottom:5px"></div>
+            <div style="display:flex;gap:3px">
+              <div style="flex:1;height:18px;background:var(--s4);border-radius:3px"></div>
+              <div style="flex:1;height:18px;background:rgba(245,158,11,.2);border-radius:3px"></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:2px">
+            <div style="font-size:.72rem;font-weight:800;color:var(--txt);letter-spacing:.04em">Pro</div>
+            <span style="font-size:.55rem;font-weight:700;color:#a855f7;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.25);padding:1px 5px;border-radius:4px">PRO</span>
+          </div>
+          <div style="font-size:.6rem;color:var(--mu2);text-align:center">Log weights &amp; PRs</div>
+        </div>
+      </div>
+
       <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">PREFERENCES</div>
       <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;overflow:hidden">
         <div style="padding:13px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between">
@@ -4334,6 +4383,9 @@ function renderDaySession(dayNum) {
 }
 
 function buildExItem(se, dayData) {
+  var viewMode = localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'simple';
+  if (viewMode === 'simple') return buildExItemSimple(se, dayData);
+  // Pro: delegate to style variant
   var _style = localStorage.getItem('kratos_ex_style') || 'A';
   if (_style === 'F') return buildExItemF(se, dayData);
   if (_style === 'I') return buildExItemI(se, dayData);
@@ -4482,6 +4534,94 @@ function buildExItem(se, dayData) {
   body.appendChild(btnSave); body.appendChild(btnDone);
   item.appendChild(hdr); item.appendChild(body);
   return item;
+}
+
+// ── STYLE SIMPLE ─────────────────────────────────────────────
+function buildExItemSimple(se, dayData) {
+  var cacheKey = dayData.id+'_'+se.id;
+  var log = logbookCache[cacheKey]||{};
+  var ex = se.exercises||{};
+  var isDone = log.done||false;
+
+  var item = document.createElement('div');
+  item.id = 'exi-'+dayData.id+'-'+se.id;
+  item.style.cssText = 'display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid '+(isDone?'rgba(16,185,129,.3)':'var(--bdr)')+';border-radius:13px;padding:13px 14px;margin-bottom:8px;transition:border-color .2s,opacity .2s'+(isDone?';opacity:.65':'');
+
+  // Done circle
+  var circle = document.createElement('div');
+  circle.id = 'chk-'+dayData.id+'-'+se.id;
+  circle.style.cssText = 'width:28px;height:28px;border-radius:50%;border:2px solid '+(isDone?'var(--grn)':'var(--bdr)')+';background:'+(isDone?'var(--grn)':'none')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:all .18s';
+  if (isDone) circle.innerHTML = '<svg width="13" height="10" viewBox="0 0 13 10"><polyline points="1,5 5,9 12,1" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  // Name + pill
+  var info = document.createElement('div');
+  info.style.cssText = 'flex:1;min-width:0';
+  var nameEl = document.createElement('div');
+  nameEl.style.cssText = 'font-weight:700;font-size:.88rem;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer';
+  nameEl.textContent = ex.name||'?';
+  (function(exData,seData){
+    nameEl.addEventListener('click', function(){ openExerciseDemo(exData,seData); });
+    nameEl.addEventListener('touchend', function(e){ e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false});
+  })(ex, se);
+  var pill = document.createElement('div');
+  pill.style.cssText = 'font-size:.72rem;color:var(--mu2);margin-top:2px';
+  pill.textContent = se.sets+'×'+(se.reps||'8-10')+(se.rest_sec?' · rest '+fmtSecs(se.rest_sec):'');
+  info.appendChild(nameEl);
+  info.appendChild(pill);
+
+  // Wire done toggle on circle and row tap on circle only
+  (function(seid,ddid,ddobj){
+    function tap(e){ e.stopPropagation(); toggleDoneSimple(seid,ddid,ddobj); }
+    circle.addEventListener('click', tap);
+    circle.addEventListener('touchend', function(e){ e.preventDefault(); tap(e); },{passive:false});
+  })(se.id, dayData.id, dayData);
+
+  item.appendChild(circle);
+  item.appendChild(info);
+
+  // Demo button (compact)
+  if (!ex.video_url) {
+    var demoBtn = document.createElement('button');
+    demoBtn.innerHTML = '&#9654;';
+    demoBtn.setAttribute('style','background:none;border:1px solid rgba(99,102,241,.3);color:#818cf8;border-radius:8px;width:28px;height:28px;font-size:.7rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation');
+    (function(exData,seData){
+      demoBtn.addEventListener('click', function(e){ e.stopPropagation(); openExerciseDemo(exData,seData); });
+      demoBtn.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false});
+    })(ex, se);
+    item.appendChild(demoBtn);
+  }
+
+  return item;
+}
+
+function toggleDoneSimple(seId, cycleDayId, dayData) {
+  var cacheKey = cycleDayId+'_'+seId;
+  var existing = logbookCache[cacheKey];
+  var newDone = !(existing&&existing.done);
+  var data = {athlete_id:ME.id, session_exercise_id:seId, cycle_day_id:cycleDayId, cycle_id:currentCycle.id, done:newDone, logged_date:today.toISOString().split('T')[0]};
+  sb.from('logbook').upsert(data,{onConflict:'athlete_id,session_exercise_id,cycle_day_id'}).select().single()
+    .then(function(r){
+      if(!r||r.error) return;
+      logbookCache[cacheKey] = r.data||{done:newDone};
+      var item = document.getElementById('exi-'+cycleDayId+'-'+seId);
+      var chk  = document.getElementById('chk-'+cycleDayId+'-'+seId);
+      var dot  = document.getElementById('dot-'+cycleDayId+'-'+seId);
+      if (item) {
+        item.style.borderColor = newDone ? 'rgba(16,185,129,.3)' : 'var(--bdr)';
+        item.style.opacity = newDone ? '.65' : '1';
+      }
+      if (chk) {
+        chk.style.borderColor = newDone ? 'var(--grn)' : 'var(--bdr)';
+        chk.style.background  = newDone ? 'var(--grn)' : 'none';
+        chk.innerHTML = newDone ? '<svg width="13" height="10" viewBox="0 0 13 10"><polyline points="1,5 5,9 12,1" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
+      }
+      if (dot) dot.className = 'prog-dot'+(newDone?' done':'');
+      if (newDone) {
+        var cd = myProfile.current_day||1;
+        var dd = (currentCycle.cycle_days||[]).find(function(d){ return d.day_number===cd; });
+        if (dd && isSessionDone(dd)) setTimeout(function(){ showWorkoutSummary(dd); }, 600);
+      }
+    }).catch(function(){});
 }
 
 // ── STYLE F: Timer Focus ──────────────────────────────────────
@@ -4636,8 +4776,30 @@ function setExStyle(s) {
   });
 }
 
+async function setViewMode(mode) {
+  localStorage.setItem('kratos_view_mode', mode);
+  if (myProfile) myProfile.view_mode = mode;
+  _highlightViewMode(mode);
+  // Persist to Supabase
+  await sb.from('profiles').update({ view_mode: mode }).eq('id', ME.id);
+  // Re-render current day so changes are visible immediately
+  var currentDay = myProfile ? (myProfile.current_day||1) : 1;
+  if (typeof renderDaySession === 'function') renderDaySession(currentDay);
+}
+
+function _highlightViewMode(mode) {
+  ['simple','pro'].forEach(function(m){
+    var el = document.getElementById('viewmode-'+m);
+    if (!el) return;
+    el.style.borderColor = m===mode ? 'var(--orn)' : 'var(--bdr)';
+    el.style.boxShadow   = m===mode ? '0 0 0 3px rgba(245,158,11,.18)' : 'none';
+  });
+}
+
 function initExStyleSettings() {
   setExStyle(localStorage.getItem('kratos_ex_style')||'A');
+  var vm = localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'simple';
+  _highlightViewMode(vm);
 }
 
 function toggleEx(dayDataId,seId) {
