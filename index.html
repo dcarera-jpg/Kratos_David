@@ -6221,7 +6221,12 @@ async function sendAIFormMsg() {
       })
     });
     var data = await r.json();
-    var reply = data.reply || data.error || 'No response.';
+    console.log('AI raw response:', JSON.stringify(data));
+    if (!r.ok || data.error) {
+      var errMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+      throw new Error(errMsg || 'HTTP ' + r.status);
+    }
+    var reply = typeof data.reply === 'string' ? data.reply : (data.reply ? JSON.stringify(data.reply) : 'No response.');
     document.getElementById('ai-form-typing').remove();
     msgsEl.innerHTML += '<div style="margin-bottom:4px"><span style="background:var(--s3);color:var(--white);border-radius:10px;padding:5px 10px;font-size:.75rem;display:inline-block;max-width:90%">' + escHtml(reply) + '</span></div>';
     msgsEl.scrollTop = msgsEl.scrollHeight;

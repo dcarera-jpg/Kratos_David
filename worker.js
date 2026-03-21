@@ -130,7 +130,14 @@ async function handleAIChat(request, env) {
   // Try Cloudflare AI first
   try {
     const aiResp = await env.AI.run(model, { messages });
-    return json({ reply: aiResp.response || aiResp.result || '' });
+    // aiResp can be { response: "text" } or { result: "text" } or { result: { response: "text" } }
+    let text = '';
+    if (typeof aiResp === 'string') text = aiResp;
+    else if (typeof aiResp?.response === 'string') text = aiResp.response;
+    else if (typeof aiResp?.result === 'string') text = aiResp.result;
+    else if (typeof aiResp?.result?.response === 'string') text = aiResp.result.response;
+    else text = JSON.stringify(aiResp);
+    return json({ reply: text });
   } catch (e) {
     // Fallback to OpenAI if key is set
     if (env.OPENAI_KEY) {
@@ -140,7 +147,10 @@ async function handleAIChat(request, env) {
         body: JSON.stringify({ model: 'gpt-4o-mini', messages, max_tokens: 1000 }),
       });
       const d = await r.json();
-      return json({ reply: d.choices?.[0]?.message?.content || '' });
+      const content = d.choices?.[0]?.message?.content;
+      if (typeof content === 'string') return json({ reply: content });
+      if (d.error) return err(typeof d.error === 'string' ? d.error : (d.error.message || JSON.stringify(d.error)), 502);
+      return json({ reply: '' });
     }
     return err('AI unavailable: ' + e.message, 503);
   }
