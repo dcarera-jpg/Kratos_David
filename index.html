@@ -3917,7 +3917,8 @@ function aiUpload() {
 // ════════════════════════════════════════════════════════════════
 
 var currentCycle = null;     // full cycle object with cycle_days + sessions
-var logbookCache = {};       // cycleDayId_seId -> logbook row
+var logbookCache = {};       // cycleDayId_seId -> logbook row  |  extra_id -> logbook row
+var extrasByDay  = {};       // cycleDayId -> [logbook row, ...]  (is_extra rows only)
 var prCache = {};            // seId -> best previous
 var overrideCache = {};      // cycleDayId -> {session_id, coach_note, sessions}
 var selectedDayNum = null;
@@ -4043,11 +4044,15 @@ function loadLogbookForCycle() {
   sb.from('logbook').select('*').eq('athlete_id',ME.id).eq('cycle_id',currentCycle.id)
     .then(function(r){
       logbookCache={};
+      extrasByDay={};
       (r.data||[]).forEach(function(row){
-        var k = row.is_extra ? 'extra_'+row.id : row.cycle_day_id+'_'+row.session_exercise_id;
-        logbookCache[k]=row;
-        // Also index by cycle_day_id+session_exercise_id for normal lookup
-        if(!row.is_extra) logbookCache[row.cycle_day_id+'_'+row.session_exercise_id]=row;
+        if(row.is_extra){
+          logbookCache['extra_'+row.id]=row;
+          if(!extrasByDay[row.cycle_day_id]) extrasByDay[row.cycle_day_id]=[];
+          extrasByDay[row.cycle_day_id].push(row);
+        } else {
+          logbookCache[row.cycle_day_id+'_'+row.session_exercise_id]=row;
+        }
       });
       return loadPRs();
     }).catch(function(){ renderCycle(); });
@@ -4313,9 +4318,7 @@ function renderDaySession(dayNum) {
   area.appendChild(card);
 
   // Show any extra exercises logged for this day
-  var extraExs = Object.values(logbookCache).filter(function(row){
-    return row.cycle_day_id === dayData.id && row.is_extra && row.extra_exercise_name;
-  });
+  var extraExs = extrasByDay[dayData.id] || [];
   if (extraExs.length) {
     var extraDiv = document.createElement('div');
     extraDiv.style.cssText = 'margin-top:8px;background:var(--rdim);border:1px solid rgba(232,17,42,.2);border-radius:10px;padding:10px 12px';
@@ -7777,6 +7780,11 @@ async function saveExtraExercise() {
     });
     showToast(r2.error ? 'Error: '+r2.error.message : '✓ Extra logged');
   } else {
+    // Update caches so extras survive without a full reload
+    var saved = r.data;
+    logbookCache['extra_'+saved.id] = saved;
+    if (!extrasByDay[saved.cycle_day_id]) extrasByDay[saved.cycle_day_id] = [];
+    extrasByDay[saved.cycle_day_id].push(saved);
     showToast('✓ Extra added: ' + name);
   }
 
