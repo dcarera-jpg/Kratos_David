@@ -1,5 +1,5 @@
 // ── Kratos Training — Service Worker ─────────────────────────
-const CACHE = 'kratos-v4';
+const CACHE = 'kratos-v5';
 const BASE  = '/Kratos_David';
 
 const PRECACHE = [

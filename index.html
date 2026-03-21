@@ -4365,6 +4365,7 @@ function renderProgramDayDetail(dayNum) {
 
   var detail = document.getElementById('program-day-detail');
   if(!detail) return;
+  detail.innerHTML = '';
 
   var days = currentCycle.cycle_days || [];
   var dayMap = {};
@@ -4385,29 +4386,110 @@ function renderProgramDayDetail(dayNum) {
   var statusColor = isDone ? 'var(--grn)' : isCurrent ? 'var(--red)' : 'var(--mu2)';
   var statusLabel = isDone ? '✓ Completed' : isCurrent ? '← Today' : dayNum < currentDay ? 'Missed' : 'Upcoming';
 
-  var sexs = sess.session_exercises || [];
-  var exercises = sexs.map(function(se){
-    var ex = se.exercises || {};
-    var done = dayData && logbookCache[dayData.id+'_'+se.id] && logbookCache[dayData.id+'_'+se.id].done;
-    return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr)">'+
-      '<div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:'+(done?'#10b981':isCurrent?'#e8111a':'#333')+'"></div>'+
-      '<div style="flex:1;font-size:.8rem;color:'+(done?'var(--mu2)':'var(--txt)')+(done?';text-decoration:line-through':'')+'">'+escHtml(ex.name||'?')+'</div>'+
-      '<div style="font-size:.72rem;color:var(--mu2);flex-shrink:0">'+se.sets+'×'+(se.reps||'?')+'</div>'+
-    '</div>';
-  }).join('');
+  var card = document.createElement('div');
+  card.style.cssText = 'background:var(--s2);border:1px solid var(--bdr);border-radius:14px;overflow:hidden';
 
-  detail.innerHTML =
-    '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:14px;overflow:hidden">'+
-      '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bdr)">'+
-        '<span style="font-size:1.1rem">'+ic+'</span>'+
-        '<div style="flex:1">'+
-          '<div style="font-size:.88rem;font-weight:700;color:var(--txt)">Day '+dayNum+' — '+escHtml(sess.name||'Session')+'</div>'+
-          '<div style="font-size:.68rem;color:'+statusColor+';margin-top:2px;font-weight:600">'+statusLabel+'</div>'+
-        '</div>'+
-        (isCurrent ? '<button onclick="vsv(\'cycle\')" style="padding:7px 14px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.74rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent">Start →</button>' : '')+
-      '</div>'+
-      (exercises ? '<div style="padding:2px 14px 8px">'+exercises+'</div>' : '')+
-    '</div>';
+  // Session header
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bdr)';
+  var hdrIcon = document.createElement('span');
+  hdrIcon.style.cssText = 'font-size:1.1rem';
+  hdrIcon.textContent = ic;
+  var hdrInfo = document.createElement('div');
+  hdrInfo.style.cssText = 'flex:1;min-width:0';
+  hdrInfo.innerHTML =
+    '<div style="font-size:.88rem;font-weight:700;color:var(--txt)">Day '+dayNum+' — '+escHtml(sess.name||'Session')+'</div>'+
+    '<div style="font-size:.68rem;color:'+statusColor+';margin-top:2px;font-weight:600">'+statusLabel+'</div>';
+  hdr.appendChild(hdrIcon);
+  hdr.appendChild(hdrInfo);
+  if(isCurrent){
+    var startBtn = document.createElement('button');
+    startBtn.style.cssText = 'padding:7px 14px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.74rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;flex-shrink:0';
+    startBtn.textContent = 'Start →';
+    startBtn.addEventListener('click', function(){ vsv('cycle'); });
+    hdr.appendChild(startBtn);
+  }
+  card.appendChild(hdr);
+
+  // Coach note (override)
+  if(ov && ov.coach_note){
+    var noteEl = document.createElement('div');
+    noteEl.style.cssText = 'padding:8px 14px;background:rgba(139,92,246,.08);border-bottom:1px solid var(--bdr);font-size:.74rem;color:#a78bfa;line-height:1.45';
+    noteEl.textContent = '✏ '+ov.coach_note;
+    card.appendChild(noteEl);
+  }
+
+  // Exercise list
+  var sexs = sess.session_exercises || [];
+  // Group by muscle_group if multiple exercises share a group
+  var listWrap = document.createElement('div');
+  listWrap.style.cssText = 'padding:8px 14px 12px';
+
+  sexs.forEach(function(se){
+    var ex = se.exercises || {};
+    var cacheKey = dayData.id+'_'+se.id;
+    var log = logbookCache[cacheKey]||{};
+    var done = log.done||false;
+    var altName = log.alt_exercise_name || null;
+
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bdr)';
+
+    // Status dot
+    var dot = document.createElement('div');
+    dot.style.cssText = 'width:8px;height:8px;border-radius:50%;flex-shrink:0;background:'+(done?'#10b981':isCurrent?'#e8111a':'#444');
+    row.appendChild(dot);
+
+    // Name + sub-info
+    var info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0';
+    var nameEl = document.createElement('div');
+    nameEl.style.cssText = 'font-size:.82rem;font-weight:700;color:'+(done?'var(--mu2)':'var(--txt)')+(done?';text-decoration:line-through':'')+';cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    nameEl.textContent = altName ? ex.name+' → '+altName : (ex.name||'?');
+    (function(exData,seData){
+      nameEl.addEventListener('click', function(){ openExerciseDemo(exData,seData); });
+      nameEl.addEventListener('touchend', function(e){ e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false});
+    })(ex, se);
+    var sub = document.createElement('div');
+    sub.style.cssText = 'font-size:.68rem;color:var(--mu2);margin-top:2px';
+    sub.textContent = se.sets+'×'+(se.reps||'?')+(se.rest_sec?' · '+fmtSecs(se.rest_sec)+' rest':'')+(ex.notes?' · '+ex.notes:'');
+    info.appendChild(nameEl);
+    info.appendChild(sub);
+    row.appendChild(info);
+
+    // Sets pill
+    var pill = document.createElement('span');
+    pill.style.cssText = 'font-size:.7rem;color:var(--mu2);flex-shrink:0;background:var(--s3);border-radius:6px;padding:2px 7px;border:1px solid var(--bdr)';
+    pill.textContent = se.sets+'×'+(se.reps||'?');
+    row.appendChild(pill);
+
+    // Video / Demo button
+    var videoExId = (log.alt_exercise_id) || ex.id;
+    if(ex.video_url || log.alt_exercise_id){
+      var vidBtn = document.createElement('button');
+      vidBtn.textContent = '🎬';
+      vidBtn.style.cssText = 'background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:8px;padding:5px 8px;font-size:.75rem;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
+      (function(eid){
+        vidBtn.addEventListener('click', function(e){ e.stopPropagation(); openVideoModal(eid); });
+        vidBtn.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openVideoModal(eid); },{passive:false});
+      })(videoExId);
+      row.appendChild(vidBtn);
+    } else {
+      var demoBtn = document.createElement('button');
+      demoBtn.innerHTML = '&#9654;';
+      demoBtn.style.cssText = 'background:none;border:1px solid rgba(99,102,241,.3);color:#818cf8;border-radius:8px;padding:5px 8px;font-size:.7rem;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
+      (function(exData,seData){
+        demoBtn.addEventListener('click', function(e){ e.stopPropagation(); openExerciseDemo(exData,seData); });
+        demoBtn.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false});
+      })(ex, se);
+      row.appendChild(demoBtn);
+    }
+
+    listWrap.appendChild(row);
+  });
+
+  card.appendChild(listWrap);
+  detail.appendChild(card);
 }
 
 // ── CYCLE COMPLETE: ATHLETE SELF-SERVICE ─────────────────────
