@@ -4599,6 +4599,15 @@ function selectCycleDay(n) {
 }
 
 function renderDaySession(dayNum) {
+  // Resolve style ONCE here so every exercise gets the same builder
+  var _exStyle  = (localStorage.getItem('kratos_ex_style')  || 'A').trim();
+  var _viewMode = (localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'pro').trim();
+  console.log('[renderDaySession] viewMode='+_viewMode+' exStyle='+_exStyle);
+  var _buildEx = _viewMode === 'simple' ? buildExItemSimple
+               : _exStyle  === 'F'      ? buildExItemF
+               : _exStyle  === 'I'      ? buildExItemI
+               :                          buildExItemProA;
+
   var area=document.getElementById('day-session-area'); area.innerHTML='';
   var dayMap={};
   currentCycle.cycle_days.forEach(function(d){ dayMap[d.day_number]=d; });
@@ -4704,10 +4713,10 @@ function renderDaySession(dayNum) {
           +'<div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:'+color+'">'+escHtml(mg)+'</div>'
           +'<div style="flex:1;height:1px;background:'+color+'33"></div>';
         card.appendChild(sep);
-        groups[mg].forEach(function(se){ card.appendChild(buildExItem(se, dayData)); });
+        groups[mg].forEach(function(se){ card.appendChild(_buildEx(se, dayData)); });
       });
     } else {
-      sexs.forEach(function(se){ card.appendChild(buildExItem(se, dayData)); });
+      sexs.forEach(function(se){ card.appendChild(_buildEx(se, dayData)); });
     }
   }
   area.appendChild(card);
@@ -4751,15 +4760,18 @@ function buildAltExtraRow(se, dayData, ex, isLight) {
   return row;
 }
 
+// Thin dispatcher — kept for any callers outside renderDaySession
 function buildExItem(se, dayData) {
-  var viewMode = (localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'pro').trim();
-  var exStyle  = (localStorage.getItem('kratos_ex_style')  || 'A').trim();
-  console.log('[buildExItem] viewMode='+viewMode+' exStyle='+exStyle);
-  if (viewMode === 'simple') return buildExItemSimple(se, dayData);
-  // Pro: delegate to style variant
-  if (exStyle === 'F') return buildExItemF(se, dayData);
-  if (exStyle === 'I') return buildExItemI(se, dayData);
-  // Style A (default) — full screen card
+  var vm = (localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'pro').trim();
+  var es = (localStorage.getItem('kratos_ex_style')  || 'A').trim();
+  if (vm === 'simple') return buildExItemSimple(se, dayData);
+  if (es === 'F') return buildExItemF(se, dayData);
+  if (es === 'I') return buildExItemI(se, dayData);
+  return buildExItemProA(se, dayData);
+}
+
+// Style A (Pro/default) — full screen card
+function buildExItemProA(se, dayData) {
   var cacheKey=dayData.id+'_'+se.id;
   var log=logbookCache[cacheKey]||{};
   var pr=prCache[se.id];
