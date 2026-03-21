@@ -4606,8 +4606,8 @@ function selectCycleDay(n) {
 
 function renderDaySession(dayNum) {
   // Resolve style ONCE here so every exercise gets the same builder
+  var _viewMode = 'pro';
   var _exStyle  = (localStorage.getItem('kratos_ex_style')  || 'A').trim();
-  var _viewMode = (localStorage.getItem('kratos_view_mode') || 'pro').trim();
   var _buildEx = _viewMode === 'simple' ? buildExItemSimple
                : _exStyle  === 'F'      ? buildExItemF
                : _exStyle  === 'I'      ? buildExItemI
