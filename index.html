@@ -4366,19 +4366,16 @@ function renderDaySession(dayNum) {
   }
   area.appendChild(card);
 
-  // Show any extra exercises logged for this day
+  // Show extra exercises with same card style as regular exercises
   var extraExs = extrasByDay[dayData.id] || [];
   if (extraExs.length) {
-    var extraDiv = document.createElement('div');
-    extraDiv.style.cssText = 'margin-top:8px;background:var(--rdim);border:1px solid rgba(232,17,42,.2);border-radius:10px;padding:10px 12px';
-    extraDiv.innerHTML = '<div style="font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px">+ Extra</div>'
-      + extraExs.map(function(row){
-        return '<div style="font-size:.78rem;color:var(--mu);padding:3px 0;border-bottom:1px solid var(--bdr)">'
-          + escHtml(row.extra_exercise_name)
-          + (row.set1_reps ? ' <span style="color:var(--mu2)">× '+row.set1_reps+(row.set1_kg?' @'+row.set1_kg+'kg':'')+'</span>' : '')
-          + '</div>';
-      }).join('');
-    area.appendChild(extraDiv);
+    var extraHdr = document.createElement('div');
+    extraHdr.style.cssText = 'font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--red);padding:10px 2px 6px';
+    extraHdr.textContent = '+ Extra';
+    area.appendChild(extraHdr);
+    extraExs.forEach(function(row){
+      area.appendChild(buildExItemExtra(row, dayData));
+    });
   }
 }
 
@@ -7969,25 +7966,134 @@ async function saveExtraExercise() {
   }
 
   if (btn) { btn.disabled = false; btn.textContent = 'Add to Logbook'; }
-  setTimeout(function(){ closeExtraModal(); }, 200);
-  renderExtraInSession(extraModalState.dayDataId, name, sets, reps, kg);
+  closeExtraModal();
+  renderDaySession(myProfile.current_day || 1);
 }
 
-function renderExtraInSession(dayDataId, name, sets, reps, kg) {
-  var card = document.querySelector('.sess-card');
-  if (!card) return;
-  var extraEl = document.getElementById('extra-ex-'+dayDataId);
-  if (!extraEl) {
-    extraEl = document.createElement('div');
-    extraEl.id = 'extra-ex-'+dayDataId;
-    extraEl.style.cssText = 'margin:8px 14px;padding:10px 12px;background:var(--rdim);border:1px solid rgba(232,17,42,.2);border-radius:10px';
-    extraEl.innerHTML = '<div style="font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px">&#43; Extra Exercises</div>';
-    card.appendChild(extraEl);
+function buildExItemExtra(row, dayData) {
+  var viewMode = localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'simple';
+  var isDone = row.done || false;
+  var rid = row.id;
+
+  // ── Simple ────────────────────────────────────────────────
+  if (viewMode === 'simple') {
+    var item = document.createElement('div');
+    item.id = 'exi-extra-'+rid;
+    item.style.cssText = 'display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid '+(isDone?'rgba(16,185,129,.3)':'rgba(232,17,42,.15)')+';border-radius:13px;padding:13px 14px;margin-bottom:8px;transition:border-color .2s,opacity .2s'+(isDone?';opacity:.65':'');
+    var circle = document.createElement('div');
+    circle.id = 'chk-extra-'+rid;
+    circle.style.cssText = 'width:28px;height:28px;border-radius:50%;border:2px solid '+(isDone?'var(--grn)':'var(--bdr)')+';background:'+(isDone?'var(--grn)':'none')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:all .18s';
+    if(isDone) circle.innerHTML='<svg width="13" height="10" viewBox="0 0 13 10"><polyline points="1,5 5,9 12,1" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    (function(r){ circle.addEventListener('click',function(e){ e.stopPropagation(); toggleDoneExtra(r); }); circle.addEventListener('touchend',function(e){ e.preventDefault(); e.stopPropagation(); toggleDoneExtra(r); },{passive:false}); })(rid);
+    var info = document.createElement('div'); info.style.cssText='flex:1;min-width:0';
+    var nameEl = document.createElement('div'); nameEl.style.cssText='font-weight:700;font-size:.88rem;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis'; nameEl.textContent=row.extra_exercise_name||'Extra';
+    var pill = document.createElement('div'); pill.style.cssText='font-size:.7rem;color:var(--red);margin-top:2px';
+    pill.textContent='+ Extra'+(row.set1_reps?' · '+row.set1_reps+' rep'+(row.set1_kg?' @'+row.set1_kg+'kg':''):'');
+    info.appendChild(nameEl); info.appendChild(pill);
+    item.appendChild(circle); item.appendChild(info);
+    return item;
   }
-  var row = document.createElement('div');
-  row.style.cssText = 'font-size:.78rem;color:var(--mu);padding:3px 0;border-bottom:1px solid var(--bdr)';
-  row.innerHTML = escHtml(name)+' <span style="color:var(--mu2)">'+sets+'×'+reps+(kg?' @'+kg+'kg':'')+' </span>';
-  extraEl.appendChild(row);
+
+  // ── Pro ───────────────────────────────────────────────────
+  var _style = localStorage.getItem('kratos_ex_style') || 'A';
+  var numSets = 3;
+
+  // Style I: Clean List
+  if (_style === 'I') {
+    var item = document.createElement('div');
+    item.id = 'exi-extra-'+rid;
+    item.style.cssText = 'background:#fafafa;border:1px solid '+(isDone?'rgba(16,185,129,.3)':'rgba(232,17,42,.15)')+';border-radius:14px;padding:14px;margin-bottom:8px'+(isDone?';opacity:.65':'');
+    var hdr2 = document.createElement('div'); hdr2.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px';
+    var dot2 = document.createElement('div'); dot2.style.cssText='width:9px;height:9px;border-radius:50%;flex-shrink:0;background:'+(isDone?'#10b981':row.set1_kg?'#f59e0b':'#ef4444');
+    var n2 = document.createElement('div'); n2.style.cssText='flex:1;font-weight:700;font-size:.88rem;color:#111;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'; n2.textContent=row.extra_exercise_name||'Extra';
+    var p2 = document.createElement('span'); p2.style.cssText='font-size:.7rem;font-weight:700;color:#ef4444;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:2px 7px;flex-shrink:0'; p2.textContent='+ Extra';
+    hdr2.appendChild(dot2); hdr2.appendChild(n2); hdr2.appendChild(p2); item.appendChild(hdr2);
+    for(var si=1;si<=numSets;si++){
+      var pk=si===1?(row.set1_kg||''):(si===2?(row.set2_kg||''):(row.set3_kg||'')), pr2=si===1?(row.set1_reps||''):(si===2?(row.set2_reps||''):(row.set3_reps||''));
+      var rw=document.createElement('div'); rw.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f3f4f6';
+      rw.innerHTML='<div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:'+(pk?'#10b981':'#e5e7eb')+'"></div><div style="font-size:.7rem;font-weight:700;color:#6b7280;width:20px;flex-shrink:0">S'+si+'</div>'+
+        '<input style="flex:1;border:1px solid #e5e7eb;border-radius:7px;padding:6px 8px;font-size:.78rem;color:#111;background:#fff;font-family:inherit;outline:none;min-width:0" type="number" id="kg'+si+'-extra-'+rid+'" placeholder="kg" value="'+pk+'" inputmode="decimal">'+
+        '<span style="color:#9ca3af;font-size:.72rem;flex-shrink:0">&#215;</span>'+
+        '<input style="flex:1;border:1px solid #e5e7eb;border-radius:7px;padding:6px 8px;font-size:.78rem;color:#111;background:#fff;font-family:inherit;outline:none;min-width:0" type="number" id="rp'+si+'-extra-'+rid+'" placeholder="rep" value="'+pr2+'" inputmode="numeric">';
+      item.appendChild(rw);
+    }
+    var act=document.createElement('div'); act.style.cssText='display:flex;gap:8px;margin-top:10px';
+    var bs=document.createElement('button'); bs.id='sbtn-extra-'+rid; bs.style.cssText='flex:1;padding:9px;border-radius:10px;background:#f9fafb;border:1px solid #e5e7eb;color:#374151;font-family:inherit;font-size:.76rem;cursor:pointer;font-weight:600;-webkit-tap-highlight-color:transparent;touch-action:manipulation'; bs.textContent='Save';
+    (function(r){ bs.onclick=function(){ saveExtraLog(r); }; })(rid);
+    var bd=document.createElement('button'); bd.id='dbtn-extra-'+rid; bd.style.cssText='flex:1;padding:9px;border-radius:10px;background:'+(isDone?'rgba(16,185,129,.1)':'#f9fafb')+';border:1px solid '+(isDone?'rgba(16,185,129,.35)':'#e5e7eb')+';color:'+(isDone?'#10b981':'#374151')+';font-family:inherit;font-size:.76rem;cursor:pointer;font-weight:600;-webkit-tap-highlight-color:transparent;touch-action:manipulation'; bd.innerHTML=isDone?'&#10003; Done':'Mark done';
+    (function(r){ bd.onclick=function(){ toggleDoneExtra(r); }; })(rid);
+    act.appendChild(bs); act.appendChild(bd); item.appendChild(act);
+    return item;
+  }
+
+  // Style A or F: dark card with sets grid
+  var item = document.createElement('div');
+  item.id = 'exi-extra-'+rid;
+  item.style.cssText = 'background:var(--s2);border:1px solid '+(isDone?'rgba(16,185,129,.25)':'rgba(232,17,42,.15)')+';border-radius:14px;padding:0;margin-bottom:10px;overflow:hidden'+(isDone?';opacity:.68':'');
+  // Header
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bdr)';
+  var chk = document.createElement('div'); chk.id='chk-extra-'+rid;
+  chk.style.cssText='width:22px;height:22px;border-radius:50%;border:2px solid '+(isDone?'var(--grn)':'var(--bdr)')+';background:'+(isDone?'var(--grn)':'none')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.72rem;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
+  if(isDone) chk.innerHTML='&#10003;';
+  var nameEl2=document.createElement('div'); nameEl2.style.cssText='flex:1;font-weight:700;font-size:.88rem;color:var(--txt);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'; nameEl2.textContent=row.extra_exercise_name||'Extra';
+  var badge=document.createElement('span'); badge.style.cssText='font-size:.6rem;font-weight:700;color:var(--red);background:var(--rdim);border:1px solid rgba(232,17,42,.2);border-radius:6px;padding:2px 7px;flex-shrink:0'; badge.textContent='+ Extra';
+  (function(r){ chk.addEventListener('click',function(e){ e.stopPropagation(); toggleDoneExtra(r); }); chk.addEventListener('touchend',function(e){ e.preventDefault(); e.stopPropagation(); toggleDoneExtra(r); },{passive:false}); })(rid);
+  hdr.appendChild(chk); hdr.appendChild(nameEl2); hdr.appendChild(badge);
+  item.appendChild(hdr);
+  // Sets grid
+  var body=document.createElement('div'); body.style.cssText='padding:12px 14px';
+  var sGrid=document.createElement('div'); sGrid.style.cssText='display:flex;gap:8px;margin-bottom:10px';
+  for(var si=1;si<=numSets;si++){
+    var pk=si===1?(row.set1_kg||''):(si===2?(row.set2_kg||''):(row.set3_kg||'')), pr2=si===1?(row.set1_reps||''):(si===2?(row.set2_reps||''):(row.set3_reps||''));
+    var sc=document.createElement('div'); sc.style.cssText='flex:1;background:var(--s3);border-radius:10px;padding:8px 6px;text-align:center';
+    sc.innerHTML='<div style="font-size:.6rem;color:var(--mu2);font-weight:700;letter-spacing:.06em;margin-bottom:5px">S'+si+'</div>'+
+      '<input class="set-inp" type="number" id="kg'+si+'-extra-'+rid+'" placeholder="kg" value="'+pk+'" inputmode="decimal">'+
+      '<div style="font-size:.55rem;color:var(--mu2);margin:3px 0">&#215;</div>'+
+      '<input class="set-inp" type="number" id="rp'+si+'-extra-'+rid+'" placeholder="rep" value="'+pr2+'" inputmode="numeric">';
+    sGrid.appendChild(sc);
+  }
+  body.appendChild(sGrid);
+  var actRow=document.createElement('div'); actRow.style.cssText='display:flex;gap:8px';
+  var bSave=document.createElement('button'); bSave.id='sbtn-extra-'+rid; bSave.className='btn-save'; bSave.textContent='Save logbook';
+  (function(r){ bSave.onclick=function(){ saveExtraLog(r); }; })(rid);
+  var bDone=document.createElement('button'); bDone.id='dbtn-extra-'+rid; bDone.className='btn-done'+(isDone?' marked':''); bDone.innerHTML=isDone?'&#10003; Completato':'Mark as done';
+  (function(r){ bDone.onclick=function(){ toggleDoneExtra(r); }; })(rid);
+  actRow.appendChild(bSave); actRow.appendChild(bDone); body.appendChild(actRow);
+  item.appendChild(body);
+  return item;
+}
+
+async function saveExtraLog(rowId) {
+  var btn = document.getElementById('sbtn-extra-'+rowId);
+  if(btn){ btn.textContent='...'; btn.disabled=true; }
+  var data = {};
+  for(var si=1;si<=3;si++){
+    var kEl=document.getElementById('kg'+si+'-extra-'+rowId);
+    var rEl=document.getElementById('rp'+si+'-extra-'+rowId);
+    data['set'+si+'_kg']=kEl&&kEl.value?parseFloat(kEl.value):null;
+    data['set'+si+'_reps']=rEl&&rEl.value?parseInt(rEl.value):null;
+  }
+  var r=await sb.from('logbook').update(data).eq('id',rowId).select().single();
+  if(r.data) logbookCache['extra_'+rowId]=Object.assign(logbookCache['extra_'+rowId]||{},r.data);
+  if(btn){ btn.innerHTML='&#10003; Saved'; setTimeout(function(){ if(btn){ btn.textContent='Save logbook'; btn.disabled=false; }},2000); }
+}
+
+function toggleDoneExtra(rowId) {
+  var cacheKey='extra_'+rowId;
+  var existing=logbookCache[cacheKey];
+  var newDone=!(existing&&existing.done);
+  sb.from('logbook').update({done:newDone}).eq('id',rowId).select().single()
+    .then(function(r){
+      if(!r||r.error) return;
+      logbookCache[cacheKey]=Object.assign(logbookCache[cacheKey]||{},{done:newDone});
+      var item=document.getElementById('exi-extra-'+rowId);
+      var chk=document.getElementById('chk-extra-'+rowId);
+      var dbtn=document.getElementById('dbtn-extra-'+rowId);
+      if(item){ item.style.borderColor=newDone?'rgba(16,185,129,.3)':'rgba(232,17,42,.15)'; item.style.opacity=newDone?'.68':'1'; }
+      if(chk){ chk.style.borderColor=newDone?'var(--grn)':'var(--bdr)'; chk.style.background=newDone?'var(--grn)':'none'; chk.innerHTML=newDone?'&#10003;':''; }
+      if(dbtn){ dbtn.className='btn-done'+(newDone?' marked':''); dbtn.innerHTML=newDone?'&#10003; Completato':'Mark as done'; }
+    }).catch(function(){});
 }
 
 function closeExtraModal() {
