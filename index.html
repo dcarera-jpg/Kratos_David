@@ -902,11 +902,26 @@ select.inp{cursor:pointer}
         <div id="cycle-choice-msg" style="display:none;margin-top:10px;font-size:.74rem;padding:8px 10px;border-radius:9px"></div>
       </div>
 
-      <div class="cycle-header">
-        <div class="cycle-title" id="ath-cycle-title">Cycle</div>
-      </div>
-      <div class="cycle-grid" id="cycle-grid"></div>
       <div id="day-session-area"></div>
+    </div>
+  </div>
+
+  <!-- PROGRAM VIEW -->
+  <div class="view" id="vv-program" style="display:none">
+    <div class="nav-title-area">
+      <div class="nav-title-left">
+        <div class="nav-title-label" id="prog-nav-label">MY PROGRAM</div>
+        <div class="nav-title-main" id="prog-nav-title">Program</div>
+      </div>
+      <div id="prog-pct-badge" style="font-size:.7rem;font-weight:700;color:var(--grn);background:var(--gdim);border:1px solid rgba(16,185,129,.25);padding:3px 10px;border-radius:100px"></div>
+    </div>
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 14px 80px">
+      <!-- 10-day grid -->
+      <div class="cycle-grid" id="program-grid" style="margin-bottom:12px"></div>
+      <!-- Selected day detail (read-only) -->
+      <div id="program-day-detail" style="margin-bottom:16px"></div>
+      <!-- Mesocycle info -->
+      <div id="program-meta" style="background:var(--s2);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px"></div>
     </div>
   </div>
 
@@ -4140,11 +4155,9 @@ function submitJoinCode() {
 }
 
 function vsv(name) {
-  // 'program' shares vv-cycle
-  var viewName = name === 'program' ? 'cycle' : name;
   document.querySelectorAll('[id^="vv-"]').forEach(function(v){ v.classList.remove('on'); v.style.display='none'; });
   document.querySelectorAll('#athlete-nav .ath-tab').forEach(function(b){ b.classList.remove('on'); });
-  var v = document.getElementById('vv-'+viewName);
+  var v = document.getElementById('vv-'+name);
   var b = document.getElementById('vbn-'+name);
   if(v){ v.style.display='flex'; v.classList.add('on'); }
   if(b) b.classList.add('on');
@@ -4152,13 +4165,7 @@ function vsv(name) {
   if(name==='stats') loadPRChart();
   if(name==='settings') initExStyleSettings();
   if(name==='me') renderMeView();
-  // Program tab: scroll cycle-grid into view
-  if(name==='program') {
-    setTimeout(function(){
-      var g = document.getElementById('cycle-grid');
-      if(g) g.scrollIntoView({behavior:'smooth'});
-    }, 120);
-  }
+  if(name==='program') renderProgram();
 }
 
 function renderMeView() {
@@ -4258,48 +4265,149 @@ function renderCycle() {
   var currentDay = myProfile.current_day || 1;
   document.getElementById('ath-cycle-badge').textContent = 'Cycle '+currentCycle.cycle_number;
   document.getElementById('ath-cycle-title').textContent = currentCycle.name + ' · Day '+currentDay+'/10';
-  // Update new title area
+  // Update workout title area
   var labelEl = document.getElementById('cycle-nav-label');
   var titleEl = document.getElementById('cycle-nav-title');
   if(labelEl) labelEl.textContent = 'DAY ' + currentDay + ' OF 10';
   if(titleEl) titleEl.textContent = currentCycle.name || 'Workout';
 
-  var grid=document.getElementById('cycle-grid'); grid.innerHTML='';
-  var dayMap={};
-  currentCycle.cycle_days.forEach(function(d){ dayMap[d.day_number]=d; });
-
-  for(var i=1;i<=10;i++){
-    var d=dayMap[i];
-    var sess=d&&d.sessions;
-    var isPast=i<currentDay;
-    var isCurrent=i===currentDay;
-    var isDone=d&&isSessionDone(d);
-    var cls='cycle-day';
-    if(isDone) cls+=' done';
-    else if(isCurrent) cls+=' current selected';
-    else if(isPast) cls+=' past';
-    else if(sess&&sess.session_type==='cardio') cls+=' has-cardio';
-    else if(sess) cls+=' has-gym';
-
-    var cell=document.createElement('div'); cell.className=cls;
-    var ov=d?overrideCache[d.id]:null;
-    var displaySess=ov&&ov.sessions?ov.sessions:sess;
-    var dotCls=isDone?'done':(displaySess&&displaySess.session_type==='cardio'?'cardio':'');
-    var ovBadge=ov?'<div style="font-size:.44rem;color:var(--pur);line-height:1">✏</div>':'';
-    cell.innerHTML='<div class="cd-num">G'+i+'</div>' +
-      (displaySess?'<div class="cd-dot '+dotCls+'"></div>':'') +
-      (displaySess?'<div class="cd-label">'+escHtml(shortName(displaySess.name))+'</div>':'') +
-      ovBadge;
-    cell.onclick=(function(n){ return function(){ selectCycleDay(n); }; })(i);
-    grid.appendChild(cell);
-  }
-
-  if(!selectedDayNum) selectedDayNum=currentDay;
-  renderDaySession(selectedDayNum);
+  selectedDayNum = currentDay;
+  renderDaySession(currentDay);
 
   // Show cycle-complete banner if athlete is on or past day 10
   var banner = document.getElementById('cycle-complete-banner');
   if (banner) banner.style.display = currentDay >= 10 ? 'block' : 'none';
+}
+
+// ── PROGRAM VIEW ─────────────────────────────────────────────
+function renderProgram() {
+  if (!currentCycle) return;
+  var currentDay = myProfile.current_day || 1;
+
+  // Title area
+  var labelEl = document.getElementById('prog-nav-label');
+  var titleEl = document.getElementById('prog-nav-title');
+  var pctEl   = document.getElementById('prog-pct-badge');
+  if(labelEl) labelEl.textContent = 'CYCLE ' + (currentCycle.cycle_number||1);
+  if(titleEl) titleEl.textContent = currentCycle.name || 'Program';
+
+  // Completion %
+  var days = currentCycle.cycle_days || [];
+  var doneDays = days.filter(function(d){ return d.sessions && isSessionDone(d); }).length;
+  var pct = Math.round(doneDays / 10 * 100);
+  if(pctEl) pctEl.textContent = pct + '% done';
+
+  // Build 10-day grid
+  var grid = document.getElementById('program-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  var dayMap = {};
+  days.forEach(function(d){ dayMap[d.day_number] = d; });
+
+  for(var i=1;i<=10;i++){
+    var d = dayMap[i];
+    var sess = d && d.sessions;
+    var ov = d ? overrideCache[d.id] : null;
+    var displaySess = ov && ov.sessions ? ov.sessions : sess;
+    var isDone = d && isSessionDone(d);
+    var isCurrent = i === currentDay;
+
+    var cls = 'cycle-day';
+    if(isDone) cls += ' done';
+    else if(isCurrent) cls += ' current selected';
+    else if(i < currentDay) cls += ' past';
+    else if(displaySess && displaySess.session_type === 'cardio') cls += ' has-cardio';
+    else if(displaySess) cls += ' has-gym';
+
+    var dotCls = isDone ? 'done' : (displaySess && displaySess.session_type === 'cardio' ? 'cardio' : '');
+    var ovBadge = ov ? '<div style="font-size:.44rem;color:var(--pur);line-height:1">✏</div>' : '';
+    var cell = document.createElement('div'); cell.className = cls;
+    cell.innerHTML =
+      '<div class="cd-num">G'+i+'</div>' +
+      (displaySess ? '<div class="cd-dot '+dotCls+'"></div>' : '') +
+      (displaySess ? '<div class="cd-label">'+escHtml(shortName(displaySess.name))+'</div>' : '') +
+      ovBadge;
+    (function(n){ cell.onclick = function(){ renderProgramDayDetail(n); }; })(i);
+    grid.appendChild(cell);
+  }
+
+  // Auto-show current day detail
+  renderProgramDayDetail(currentDay);
+
+  // Mesocycle meta
+  var metaEl = document.getElementById('program-meta');
+  if(metaEl){
+    var weekNum = Math.ceil(currentDay / 7) || 1;
+    metaEl.innerHTML =
+      '<div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">MESOCYCLE INFO</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        _metaStat('Cycle', '#' + (currentCycle.cycle_number||1))+
+        _metaStat('Week', weekNum+' of '+Math.ceil(10/7))+
+        _metaStat('Days done', doneDays + ' / 10')+
+        _metaStat('Completion', pct + '%')+
+      '</div>'+
+      (currentCycle.notes ? '<div style="margin-top:12px;font-size:.78rem;color:var(--mu2);line-height:1.55;padding-top:10px;border-top:1px solid var(--bdr)">'+escHtml(currentCycle.notes)+'</div>' : '');
+  }
+}
+
+function _metaStat(label, value) {
+  return '<div style="background:var(--s3);border-radius:10px;padding:10px 12px">'+
+    '<div style="font-size:.6rem;color:var(--mu2);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px">'+escHtml(label)+'</div>'+
+    '<div style="font-size:1rem;font-weight:800;color:var(--txt)">'+escHtml(String(value))+'</div>'+
+  '</div>';
+}
+
+function renderProgramDayDetail(dayNum) {
+  // Highlight selected day in grid
+  document.querySelectorAll('#program-grid .cycle-day').forEach(function(c,i){
+    c.classList.toggle('selected', i+1 === dayNum);
+  });
+
+  var detail = document.getElementById('program-day-detail');
+  if(!detail) return;
+
+  var days = currentCycle.cycle_days || [];
+  var dayMap = {};
+  days.forEach(function(d){ dayMap[d.day_number] = d; });
+  var dayData = dayMap[dayNum];
+  var ov = dayData ? overrideCache[dayData.id] : null;
+  var sess = ov && ov.sessions ? ov.sessions : (dayData ? dayData.sessions : null);
+
+  if(!dayData || !sess){
+    detail.innerHTML = '<div style="text-align:center;padding:16px;font-size:.78rem;color:var(--mu2)">No session assigned for day '+dayNum+'</div>';
+    return;
+  }
+
+  var currentDay = myProfile.current_day || 1;
+  var isDone = isSessionDone(dayData);
+  var isCurrent = dayNum === currentDay;
+  var ic = sess.session_type === 'cardio' ? '🚴' : '🏋️';
+  var statusColor = isDone ? 'var(--grn)' : isCurrent ? 'var(--red)' : 'var(--mu2)';
+  var statusLabel = isDone ? '✓ Completed' : isCurrent ? '← Today' : dayNum < currentDay ? 'Missed' : 'Upcoming';
+
+  var sexs = sess.session_exercises || [];
+  var exercises = sexs.map(function(se){
+    var ex = se.exercises || {};
+    var done = dayData && logbookCache[dayData.id+'_'+se.id] && logbookCache[dayData.id+'_'+se.id].done;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr)">'+
+      '<div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:'+(done?'#10b981':isCurrent?'#e8111a':'#333')+'"></div>'+
+      '<div style="flex:1;font-size:.8rem;color:'+(done?'var(--mu2)':'var(--txt)')+(done?';text-decoration:line-through':'')+'">'+escHtml(ex.name||'?')+'</div>'+
+      '<div style="font-size:.72rem;color:var(--mu2);flex-shrink:0">'+se.sets+'×'+(se.reps||'?')+'</div>'+
+    '</div>';
+  }).join('');
+
+  detail.innerHTML =
+    '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:14px;overflow:hidden">'+
+      '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bdr)">'+
+        '<span style="font-size:1.1rem">'+ic+'</span>'+
+        '<div style="flex:1">'+
+          '<div style="font-size:.88rem;font-weight:700;color:var(--txt)">Day '+dayNum+' — '+escHtml(sess.name||'Session')+'</div>'+
+          '<div style="font-size:.68rem;color:'+statusColor+';margin-top:2px;font-weight:600">'+statusLabel+'</div>'+
+        '</div>'+
+        (isCurrent ? '<button onclick="vsv(\'cycle\')" style="padding:7px 14px;border-radius:9px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.74rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent">Start →</button>' : '')+
+      '</div>'+
+      (exercises ? '<div style="padding:2px 14px 8px">'+exercises+'</div>' : '')+
+    '</div>';
 }
 
 // ── CYCLE COMPLETE: ATHLETE SELF-SERVICE ─────────────────────
