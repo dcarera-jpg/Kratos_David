@@ -1,10 +1,9 @@
 // ── Kratos Training — Service Worker ─────────────────────────
-const CACHE = 'kratos-v5';
+const CACHE = 'kratos-v6';
 const BASE  = '/Kratos_David';
 
+// Only cache static assets — NOT index.html (always network-first)
 const PRECACHE = [
-  BASE + '/',
-  BASE + '/index.html',
   BASE + '/manifest.json',
   BASE + '/icons/icon-192.png',
   BASE + '/icons/icon-512.png',
@@ -82,25 +81,40 @@ self.addEventListener('fetch', function(e) {
     return;
   }
 
-  // Cache-first for static assets
-  e.respondWith(
-    caches.match(e.request).then(function(cached) {
-      if (cached) return cached;
-      return fetch(e.request).then(function(response) {
-        // Cache successful GET responses for same-origin assets
-        if (response.ok && e.request.method === 'GET' &&
-            url.startsWith(self.location.origin + BASE)) {
-          const clone = response.clone();
+  // Network-first for HTML navigation (index.html always fresh)
+  if (e.request.mode === 'navigate' ||
+      url === self.location.origin + BASE + '/' ||
+      url === self.location.origin + BASE + '/index.html') {
+    e.respondWith(
+      fetch(e.request).then(function(response) {
+        if (response.ok) {
+          var clone = response.clone();
           caches.open(CACHE).then(function(cache) { cache.put(e.request, clone); });
         }
         return response;
       }).catch(function() {
-        // Offline fallback for navigation requests
-        if (e.request.mode === 'navigate') {
-          return new Response(OFFLINE_HTML, {
+        // Offline: serve cached index.html, then inline fallback
+        return caches.match(e.request).then(function(cached) {
+          return cached || new Response(OFFLINE_HTML, {
             headers: { 'Content-Type': 'text/html' }
           });
+        });
+      })
+    );
+    return;
+  }
+
+  // Cache-first for static assets (icons, manifest)
+  e.respondWith(
+    caches.match(e.request).then(function(cached) {
+      if (cached) return cached;
+      return fetch(e.request).then(function(response) {
+        if (response.ok && e.request.method === 'GET' &&
+            url.startsWith(self.location.origin + BASE)) {
+          var clone = response.clone();
+          caches.open(CACHE).then(function(cache) { cache.put(e.request, clone); });
         }
+        return response;
       });
     })
   );
