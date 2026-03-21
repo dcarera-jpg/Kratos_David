@@ -4607,7 +4607,7 @@ function selectCycleDay(n) {
 
 function renderDaySession(dayNum) {
   // Resolve style ONCE here so every exercise gets the same builder
-  var _viewMode = 'pro';
+  var _viewMode = (localStorage.getItem('kratos_view_mode') || 'pro').trim();
   var _exStyle  = (localStorage.getItem('kratos_ex_style')  || 'A').trim();
   var _buildEx = _viewMode === 'simple' ? buildExItemSimple
                : _exStyle  === 'F'      ? buildExItemF
@@ -6466,7 +6466,6 @@ async function sendAIFormMsg() {
       })
     });
     var data = await r.json();
-    console.log('AI raw response:', JSON.stringify(data));
     if (!r.ok || data.error) {
       var errMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
       throw new Error(errMsg || 'HTTP ' + r.status);
