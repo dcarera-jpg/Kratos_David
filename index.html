@@ -64,6 +64,23 @@ body{font-family:'DM Sans',sans-serif;color:var(--txt);font-size:15px;display:fl
 .bni-lb{font-size:.52rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)}
 .bni.on .bni-lb{color:var(--red)}
 
+/* ── ATHLETE NAV F (iOS tab bar) ── */
+.ath-tab-bar{display:flex;background:#0f0f0f;border-top:1px solid #1e1e1e;padding:6px 0 env(safe-area-inset-bottom,6px);flex-shrink:0;z-index:100}
+.ath-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:44px;padding:5px 2px 4px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;background:none;border:none;font-family:inherit;position:relative}
+.ath-tab svg{display:block;color:#444;transition:color .15s}
+.ath-tab-lb{font-size:.6rem;font-weight:600;margin-top:3px;color:#444;letter-spacing:.01em;transition:color .15s}
+.ath-tab.on svg,.ath-tab.on .ath-tab-lb{color:#e8111a}
+.ath-tab-dot{display:none;position:absolute;top:6px;right:calc(50% - 16px);min-width:16px;height:16px;line-height:16px;padding:0 4px;border-radius:100px;background:#e8111a;color:#fff;font-size:.52rem;font-weight:800;text-align:center}
+/* ── PAGE TITLE AREA ── */
+.nav-title-area{padding:14px 16px 8px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between}
+.nav-title-left{flex:1;min-width:0}
+.nav-title-label{font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#555;margin-bottom:3px}
+.nav-title-main{font-size:1.22rem;font-weight:800;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ── PROGRESS PILLS ── */
+.progress-pills{display:flex;gap:3px;padding:0 16px 10px;flex-shrink:0}
+.ppill{flex:1;height:3px;border-radius:2px;background:#222;transition:background .2s}
+.ppill.done{background:#10b981}
+.ppill.current{background:#e8111a}
 /* ── COMMON COMPONENTS ── */
 .card{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;margin-bottom:10px;overflow:hidden}
 .card-head{padding:13px 14px;display:flex;align-items:center;gap:10px;cursor:pointer}
@@ -850,12 +867,17 @@ select.inp{cursor:pointer}
 
   <!-- ATHLETE: CICLO -->
   <div class="view" id="vv-cycle">
-    <div class="topbar">
-      <div class="topbar-logo">KRATOS</div>
-      <span class="badge badge-red" id="ath-cycle-badge">—</span>
-      <span id="ath-access-badge" style="display:none;font-size:.58rem;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:100px;border:1px solid"></span>
-      <button class="btn-out" onclick="doLogout()">Logout</button>
+    <div class="nav-title-area">
+      <div class="nav-title-left">
+        <div class="nav-title-label" id="cycle-nav-label">WORKOUT</div>
+        <div class="nav-title-main" id="cycle-nav-title">Today</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="ath-access-badge" style="display:none;font-size:.58rem;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:100px;border:1px solid"></span>
+        <span class="badge badge-red" id="ath-cycle-badge" style="display:none">—</span>
+      </div>
     </div>
+    <div class="progress-pills" id="progress-pills"></div>
     <div class="scroll">
       <div id="ath-payment-banner" style="display:none;margin:10px 14px 0;background:var(--rdim);border:1px solid rgba(232,17,42,.2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
         <div>
@@ -892,7 +914,7 @@ select.inp{cursor:pointer}
   <!-- ATHLETE: COACH MESSAGES -->
   <!-- STATS VIEW -->
   <div class="view" id="vv-stats" style="display:none">
-    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">Progress</span></div>
+    <div class="nav-title-area"><div class="nav-title-left"><div class="nav-title-label">OVERVIEW</div><div class="nav-title-main">Stats</div></div></div>
     <div style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px">
       <div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--orn)">MY PROGRESS</div>
 
@@ -970,7 +992,7 @@ select.inp{cursor:pointer}
 
   <!-- ATHLETE: ASSESSMENT -->
   <div class="view" id="vv-assessment" style="display:none">
-    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-orn">Profile</span></div>
+    <div class="nav-title-area"><div class="nav-title-left"><div class="nav-title-label">ATHLETE PROFILE</div><div class="nav-title-main">Assessment</div></div></div>
     <div style="flex:1;overflow-y:auto;padding:14px 14px 80px">
 
       <div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:.1em;color:var(--orn);margin-bottom:4px">MY PROFILE</div>
@@ -1103,7 +1125,7 @@ select.inp{cursor:pointer}
   </div>
 
   <div class="view" id="vv-coach">
-    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">Coach</span></div>
+    <div class="nav-title-area"><div class="nav-title-left"><div class="nav-title-label">MESSAGES</div><div class="nav-title-main">Coach</div></div></div>
     <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
       <!-- Messages -->
       <div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:0">
@@ -1123,9 +1145,54 @@ select.inp{cursor:pointer}
     </div>
   </div>
 
+  <!-- ME VIEW -->
+  <div class="view" id="vv-me" style="display:none">
+    <div class="nav-title-area"><div class="nav-title-left"><div class="nav-title-label">ACCOUNT</div><div class="nav-title-main" id="me-nav-title">Me</div></div></div>
+    <div style="flex:1;overflow-y:auto;padding:0 16px 80px">
+      <!-- Avatar card -->
+      <div style="display:flex;align-items:center;gap:14px;background:var(--s2);border:1px solid var(--bdr);border-radius:16px;padding:18px 16px;margin-bottom:16px">
+        <div id="me-avatar" style="width:52px;height:52px;border-radius:50%;background:var(--rdim);border:2px solid rgba(232,17,42,.3);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;color:var(--red);flex-shrink:0">?</div>
+        <div style="flex:1;min-width:0">
+          <div id="me-name" style="font-size:1rem;font-weight:800;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+          <div id="me-sub" style="font-size:.72rem;color:var(--mu2);margin-top:3px">—</div>
+        </div>
+        <button onclick="doLogout()" style="background:none;border:1px solid rgba(255,255,255,.1);border-radius:10px;color:var(--mu2);font-family:inherit;font-size:.72rem;padding:7px 12px;cursor:pointer;flex-shrink:0">Logout</button>
+      </div>
+      <!-- Quick links -->
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:14px;overflow:hidden;margin-bottom:16px">
+        <div onclick="vsv('assessment');loadAssessmentForm()" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--bdr);cursor:pointer;-webkit-tap-highlight-color:transparent">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:32px;height:32px;border-radius:9px;background:var(--odim);display:flex;align-items:center;justify-content:center;font-size:.9rem">📐</div>
+            <div><div style="font-size:.85rem;font-weight:600;color:var(--txt)">Assessment</div><div style="font-size:.68rem;color:var(--mu2)">Body measurements &amp; goals</div></div>
+          </div>
+          <svg width="16" height="16" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
+        </div>
+        <div onclick="vsv('settings')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--bdr);cursor:pointer;-webkit-tap-highlight-color:transparent">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:32px;height:32px;border-radius:9px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:.9rem">⚙️</div>
+            <div><div style="font-size:.85rem;font-weight:600;color:var(--txt)">Settings</div><div style="font-size:.68rem;color:var(--mu2)">Exercise style, view mode</div></div>
+          </div>
+          <svg width="16" height="16" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
+        </div>
+        <div onclick="vsv('coach')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:32px;height:32px;border-radius:9px;background:var(--pdim);display:flex;align-items:center;justify-content:center;font-size:.9rem">⭐</div>
+            <div><div style="font-size:.85rem;font-weight:600;color:var(--txt)">Review Coach</div><div style="font-size:.68rem;color:var(--mu2)">Rate your coaching experience</div></div>
+          </div>
+          <svg width="16" height="16" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
+        </div>
+      </div>
+      <!-- Access level -->
+      <div id="me-access-card" style="background:var(--s2);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px">ACCESS LEVEL</div>
+        <div id="me-access-info" style="font-size:.82rem;color:var(--mu)">Loading...</div>
+      </div>
+    </div>
+  </div>
+
   <!-- SETTINGS VIEW -->
   <div class="view" id="vv-settings" style="display:none">
-    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">Settings</span></div>
+    <div class="nav-title-area"><div class="nav-title-left"><div class="nav-title-label">PREFERENCES</div><div class="nav-title-main">Settings</div></div></div>
     <div style="overflow-y:auto;flex:1;padding:16px 14px 80px">
 
       <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:12px">DISPLAY</div>
@@ -1261,13 +1328,34 @@ select.inp{cursor:pointer}
     </div>
   </div>
 
-  <!-- ATHLETE NAV -->
-  <nav class="bnav" id="athlete-nav">
-    <button class="bni on" id="vbn-cycle" onclick="vsv('cycle')"><span class="bni-ic">&#128197;</span><span class="bni-lb" data-i18n="nav_cycle">Cycle</span></button>
-    <button class="bni"    id="vbn-coach" onclick="vsv('coach')"><span class="bni-ic">&#128172;</span><span class="bni-lb" data-i18n="nav_coach">Coach</span></button>
-    <button class="bni"    id="vbn-assessment" onclick="vsv('assessment');loadAssessmentForm()"><span class="bni-ic">&#128203;</span><span class="bni-lb" data-i18n="nav_profile">Profile</span></button>
-    <button class="bni"    id="vbn-stats" onclick="vsv('stats')"><span class="bni-ic">&#128200;</span><span class="bni-lb" data-i18n="nav_stats">Stats</span></button>
-    <button class="bni"    id="vbn-settings" onclick="vsv('settings')"><span class="bni-ic">&#9881;&#65039;</span><span class="bni-lb">Settings</span></button>
+  <!-- ATHLETE NAV — iOS tab bar -->
+  <nav class="ath-tab-bar" id="athlete-nav">
+    <!-- Workout -->
+    <button class="ath-tab on" id="vbn-cycle" onclick="vsv('cycle')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <span class="ath-tab-lb">Workout</span>
+    </button>
+    <!-- Program -->
+    <button class="ath-tab" id="vbn-program" onclick="vsv('program')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="ath-tab-lb">Program</span>
+    </button>
+    <!-- Coach -->
+    <button class="ath-tab" id="vbn-coach" onclick="vsv('coach')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span id="coach-msg-badge" class="ath-tab-dot"></span>
+      <span class="ath-tab-lb">Coach</span>
+    </button>
+    <!-- Stats -->
+    <button class="ath-tab" id="vbn-stats" onclick="vsv('stats')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+      <span class="ath-tab-lb">Stats</span>
+    </button>
+    <!-- Me -->
+    <button class="ath-tab" id="vbn-me" onclick="vsv('me')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="ath-tab-lb">Me</span>
+    </button>
   </nav>
 
 </div><!-- end #app -->
@@ -4052,17 +4140,49 @@ function submitJoinCode() {
 }
 
 function vsv(name) {
+  // 'program' shares vv-cycle
+  var viewName = name === 'program' ? 'cycle' : name;
   document.querySelectorAll('[id^="vv-"]').forEach(function(v){ v.classList.remove('on'); v.style.display='none'; });
-  document.querySelectorAll('#athlete-nav .bni').forEach(function(b){ b.classList.remove('on'); });
-  var v=document.getElementById('vv-'+name);
-  var b=document.getElementById('vbn-'+name);
+  document.querySelectorAll('#athlete-nav .ath-tab').forEach(function(b){ b.classList.remove('on'); });
+  var v = document.getElementById('vv-'+viewName);
+  var b = document.getElementById('vbn-'+name);
   if(v){ v.style.display='flex'; v.classList.add('on'); }
   if(b) b.classList.add('on');
-  if(name==='coach') athLoadMessages();
-  if(name==='timer') _updateAllDisplays(); // sync timer display on tab open
+  if(name==='coach') { athLoadMessages(); loadAthleteReview(); }
   if(name==='stats') loadPRChart();
-  if(name==='coach') loadAthleteReview();
   if(name==='settings') initExStyleSettings();
+  if(name==='me') renderMeView();
+  // Program tab: scroll cycle-grid into view
+  if(name==='program') {
+    setTimeout(function(){
+      var g = document.getElementById('cycle-grid');
+      if(g) g.scrollIntoView({behavior:'smooth'});
+    }, 120);
+  }
+}
+
+function renderMeView() {
+  if(!myProfile) return;
+  var name = myProfile.full_name || myProfile.email || 'Athlete';
+  var initials = name.split(' ').map(function(w){ return w[0]||''; }).slice(0,2).join('').toUpperCase() || '?';
+  var avatar = document.getElementById('me-avatar');
+  var nameEl = document.getElementById('me-name');
+  var subEl  = document.getElementById('me-sub');
+  var title  = document.getElementById('me-nav-title');
+  if(avatar) avatar.textContent = initials;
+  if(nameEl) nameEl.textContent = name;
+  if(title)  title.textContent  = name.split(' ')[0] || 'Me';
+  // Access level sub-label
+  var level = localStorage.getItem('kratos_view_mode') || myProfile.view_mode || 'simple';
+  var accessEl = document.getElementById('me-access-info');
+  if(subEl) subEl.textContent = myProfile.coach_id ? 'Assigned coach · View: '+level : 'No coach assigned';
+  if(accessEl){
+    var aLevel = getAthleteAccessLevel ? getAthleteAccessLevel(myProfile, athletePremiumSub) : 'free';
+    var colors = {pilot:'#10b981',trial:'#f59e0b',premium:'#a855f7',free:'#555'};
+    accessEl.innerHTML = '<span style="font-weight:700;color:'+(colors[aLevel]||'#555')+';text-transform:uppercase;font-size:.78rem;letter-spacing:.06em">'+aLevel+'</span>'
+      + (aLevel==='trial'&&myProfile.trial_ends_at ? ' <span style="color:var(--mu2);font-size:.72rem">· expires '+new Date(myProfile.trial_ends_at).toLocaleDateString()+'</span>' : '')
+      + (aLevel==='free' ? ' <span style="color:var(--mu2);font-size:.72rem">— ask your coach for trial access</span>' : '');
+  }
 }
 
 function renderNoProg(reason) {
@@ -4138,6 +4258,11 @@ function renderCycle() {
   var currentDay = myProfile.current_day || 1;
   document.getElementById('ath-cycle-badge').textContent = 'Cycle '+currentCycle.cycle_number;
   document.getElementById('ath-cycle-title').textContent = currentCycle.name + ' · Day '+currentDay+'/10';
+  // Update new title area
+  var labelEl = document.getElementById('cycle-nav-label');
+  var titleEl = document.getElementById('cycle-nav-title');
+  if(labelEl) labelEl.textContent = 'DAY ' + currentDay + ' OF 10';
+  if(titleEl) titleEl.textContent = currentCycle.name || 'Workout';
 
   var grid=document.getElementById('cycle-grid'); grid.innerHTML='';
   var dayMap={};
@@ -4284,6 +4409,15 @@ function renderDaySession(dayNum) {
   currentCycle.cycle_days.forEach(function(d){ dayMap[d.day_number]=d; });
   var dayData=dayMap[dayNum];
 
+  // Update nav title area
+  var labelEl=document.getElementById('cycle-nav-label');
+  var titleEl=document.getElementById('cycle-nav-title');
+  if(labelEl) labelEl.textContent='DAY '+dayNum+' OF 10';
+
+  // Progress pills
+  var pillsEl=document.getElementById('progress-pills');
+  if(pillsEl){ pillsEl.innerHTML=''; }
+
   // Check for override on this day
   var ov = dayData ? overrideCache[dayData.id] : null;
   var sess = ov && ov.sessions ? ov.sessions : (dayData ? dayData.sessions : null);
@@ -4305,6 +4439,19 @@ function renderDaySession(dayNum) {
   var sexs=sess.session_exercises||[];
   var doneCount=sexs.filter(function(se){ return logbookCache[dayData.id+'_'+se.id]&&logbookCache[dayData.id+'_'+se.id].done; }).length;
   var ic=sess.session_type==='cardio'?'&#128693;':'&#127947;';
+
+  // Update title + progress pills
+  if(titleEl) titleEl.textContent = sess.name || 'Workout';
+  if(pillsEl && sexs.length){
+    var firstNotDone = true;
+    sexs.forEach(function(se){
+      var done=logbookCache[dayData.id+'_'+se.id]&&logbookCache[dayData.id+'_'+se.id].done;
+      var pill=document.createElement('div');
+      pill.className='ppill'+(done?' done':(firstNotDone?' current':''));
+      if(!done && firstNotDone) firstNotDone=false;
+      pillsEl.appendChild(pill);
+    });
+  }
 
   // Coach note banner (above card)
   if(ov && ov.coach_note){
@@ -8258,19 +8405,35 @@ function loadCoachReviews() {
 }
 
 // ── ATHLETE MESSAGES ─────────────────────────────────────────
+var _lastReadMsgTs = null;
+
 function athLoadMessages() {
   var area=document.getElementById('ath-msg-area'); if(!area) return;
   sb.from('messages').select('*').eq('athlete_id',ME.id).order('created_at',{ascending:true})
     .then(function(r){
       area.innerHTML='';
-      (r.data||[]).forEach(function(m){
+      var msgs = r.data||[];
+      msgs.forEach(function(m){
         var b=document.createElement('div');
         b.className='ath-msg-bub '+(m.sender_role==='admin'?'coach':'mine');
         b.innerHTML='<div class="ath-msg-meta">'+(m.sender_role==='admin'?'&#128100; Coach':'Tu')+' &middot; '+fmtDate(m.created_at)+'</div>'+escHtml(m.text);
         area.appendChild(b);
       });
       area.scrollTop=area.scrollHeight;
+      // Update unread badge: coach messages newer than last read
+      var lastRead = localStorage.getItem('kratos_msg_last_read') || '0';
+      var unread = msgs.filter(function(m){ return m.sender_role==='admin' && m.created_at > lastRead; }).length;
+      _updateCoachBadge(unread);
+      // Mark as read when coach view is open
+      if(msgs.length) localStorage.setItem('kratos_msg_last_read', msgs[msgs.length-1].created_at);
     }).catch(function(){});
+}
+
+function _updateCoachBadge(n) {
+  var badge = document.getElementById('coach-msg-badge');
+  if(!badge) return;
+  if(n > 0){ badge.textContent = n > 9 ? '9+' : String(n); badge.style.display='block'; }
+  else { badge.style.display='none'; }
 }
 function athSendMsg() {
   var inp=document.getElementById('ath-msg-inp'); if(!inp||!inp.value.trim()) return;
