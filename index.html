@@ -4638,6 +4638,32 @@ function renderDaySession(dayNum) {
   }
 }
 
+function buildAltExtraRow(se, dayData, ex, isLight) {
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;margin-top:8px';
+  var btnAlt = document.createElement('button');
+  btnAlt.style.cssText = isLight
+    ? 'flex:1;padding:8px;border-radius:9px;background:none;border:1px solid #d1d5db;color:#6b7280;font-family:inherit;font-size:.75rem;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation'
+    : 'flex:1;padding:8px;border-radius:9px;background:none;border:1px solid rgba(255,255,255,.12);color:var(--mu);font-family:inherit;font-size:.75rem;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
+  btnAlt.innerHTML = '&#8635; Alternative';
+  (function(seid, ddid, exObj, seObj){
+    btnAlt.addEventListener('click', function(e){ e.stopPropagation(); openAlternativeModal(seid, ddid, exObj, seObj); });
+    btnAlt.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openAlternativeModal(seid, ddid, exObj, seObj); }, {passive:false});
+  })(se.id, dayData.id, ex, se);
+  var btnExtra = document.createElement('button');
+  btnExtra.style.cssText = isLight
+    ? 'flex:1;padding:8px;border-radius:9px;background:none;border:1px solid rgba(232,17,42,.25);color:var(--red);font-family:inherit;font-size:.75rem;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation'
+    : 'flex:1;padding:8px;border-radius:9px;background:none;border:1px solid rgba(232,17,42,.2);color:var(--red);font-family:inherit;font-size:.75rem;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
+  btnExtra.innerHTML = '&#43; Extra';
+  (function(ddid, exObj){
+    btnExtra.addEventListener('click', function(e){ e.stopPropagation(); openExtraModal(ddid, exObj); });
+    btnExtra.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openExtraModal(ddid, exObj); }, {passive:false});
+  })(dayData.id, ex);
+  row.appendChild(btnAlt);
+  row.appendChild(btnExtra);
+  return row;
+}
+
 function buildExItem(se, dayData) {
   var viewMode = localStorage.getItem('kratos_view_mode') || (myProfile&&myProfile.view_mode) || 'simple';
   if (viewMode === 'simple') return buildExItemSimple(se, dayData);
@@ -4737,20 +4763,8 @@ function buildExItem(se, dayData) {
   btnDone.innerHTML=isDone?'&#10003; Completato':'Mark as done';
   btnDone.onclick=(function(seid,ddid,ddobj){ return function(){ toggleDone(seid,ddid,ddobj); }; })(se.id,dayData.id,dayData);
 
-  // Alternative + Extra buttons row (declared BEFORE use)
-  var altRow = document.createElement('div');
-  altRow.style.cssText = 'display:flex;gap:6px;margin-top:6px';
-  var btnAlt = document.createElement('button');
-  btnAlt.style.cssText = 'flex:1;padding:7px;border-radius:9px;background:none;border:1px solid rgba(255,255,255,.12);color:var(--mu);font-family:inherit;font-size:.72rem;cursor:pointer';
-  btnAlt.innerHTML = '&#8635; Alternative';
-  btnAlt.onclick = (function(seid, ddid, exObj, seObj){ return function(e){ e.stopPropagation(); openAlternativeModal(seid, ddid, exObj, seObj); }; })(se.id, dayData.id, ex, se);
-  var btnExtra = document.createElement('button');
-  btnExtra.style.cssText = 'flex:1;padding:7px;border-radius:9px;background:none;border:1px solid rgba(232,17,42,.2);color:var(--red);font-family:inherit;font-size:.72rem;cursor:pointer';
-  btnExtra.innerHTML = '&#43; Extra';
-  btnExtra.onclick = (function(ddid, exObj){ return function(e){ e.stopPropagation(); openExtraModal(ddid, exObj); }; })(dayData.id, ex);
-  altRow.appendChild(btnAlt);
-  altRow.appendChild(btnExtra);
-  body.appendChild(altRow);
+  // Alternative + Extra buttons row
+  body.appendChild(buildAltExtraRow(se, dayData, ex, false));
 
   // Inline timer recupero
   if (se.rest_sec) {
@@ -4801,7 +4815,11 @@ function buildExItemSimple(se, dayData) {
 
   var item = document.createElement('div');
   item.id = 'exi-'+dayData.id+'-'+se.id;
-  item.style.cssText = 'display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid '+(isDone?'rgba(16,185,129,.3)':'var(--bdr)')+';border-radius:13px;padding:13px 14px;margin-bottom:8px;transition:border-color .2s,opacity .2s'+(isDone?';opacity:.65':'');
+  item.style.cssText = 'background:var(--s2);border:1px solid '+(isDone?'rgba(16,185,129,.3)':'var(--bdr)')+';border-radius:13px;padding:13px 14px;margin-bottom:8px;transition:border-color .2s,opacity .2s'+(isDone?';opacity:.65':'');
+
+  // Top row: circle + info + demo button
+  var topRow = document.createElement('div');
+  topRow.style.cssText = 'display:flex;align-items:center;gap:12px';
 
   // Done circle
   var circle = document.createElement('div');
@@ -4825,15 +4843,15 @@ function buildExItemSimple(se, dayData) {
   info.appendChild(nameEl);
   info.appendChild(pill);
 
-  // Wire done toggle on circle and row tap on circle only
+  // Wire done toggle on circle only
   (function(seid,ddid,ddobj){
     function tap(e){ e.stopPropagation(); toggleDoneSimple(seid,ddid,ddobj); }
     circle.addEventListener('click', tap);
     circle.addEventListener('touchend', function(e){ e.preventDefault(); tap(e); },{passive:false});
   })(se.id, dayData.id, dayData);
 
-  item.appendChild(circle);
-  item.appendChild(info);
+  topRow.appendChild(circle);
+  topRow.appendChild(info);
 
   // Demo button (compact)
   if (!ex.video_url) {
@@ -4844,9 +4862,11 @@ function buildExItemSimple(se, dayData) {
       demoBtn.addEventListener('click', function(e){ e.stopPropagation(); openExerciseDemo(exData,seData); });
       demoBtn.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false});
     })(ex, se);
-    item.appendChild(demoBtn);
+    topRow.appendChild(demoBtn);
   }
 
+  item.appendChild(topRow);
+  item.appendChild(buildAltExtraRow(se, dayData, ex, false));
   return item;
 }
 
@@ -4950,10 +4970,13 @@ function buildExItemF(se, dayData) {
   }
   item.appendChild(sGrid);
 
+  // Alternative + Extra buttons
+  item.appendChild(buildAltExtraRow(se, dayData, ex, false));
+
   // Save button
   var btnSave=document.createElement('button');
   btnSave.id='sbtn-'+dayData.id+'-'+se.id;
-  btnSave.style.cssText='width:100%;padding:10px;border-radius:10px;background:var(--s3);border:1px solid var(--bdr);color:var(--txt);font-family:inherit;font-size:.78rem;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
+  btnSave.style.cssText='width:100%;padding:10px;border-radius:10px;background:var(--s3);border:1px solid var(--bdr);color:var(--txt);font-family:inherit;font-size:.78rem;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;margin-top:8px';
   btnSave.textContent='Save logbook';
   btnSave.onclick=(function(seid,ddid,ddobj){ return function(){ saveLog(seid,ddid,ddobj); }; })(se.id,dayData.id,dayData);
   item.appendChild(btnSave);
@@ -5002,9 +5025,12 @@ function buildExItemI(se, dayData) {
     item.appendChild(row);
   }
 
+  // Alternative + Extra buttons (light theme)
+  item.appendChild(buildAltExtraRow(se, dayData, ex, true));
+
   // Actions
   var actRow = document.createElement('div');
-  actRow.style.cssText = 'display:flex;gap:8px;margin-top:10px';
+  actRow.style.cssText = 'display:flex;gap:8px;margin-top:8px';
   var btnSave = document.createElement('button');
   btnSave.id = 'sbtn-'+dayData.id+'-'+se.id;
   btnSave.style.cssText = 'flex:1;padding:9px;border-radius:10px;background:#f9fafb;border:1px solid #e5e7eb;color:#374151;font-family:inherit;font-size:.76rem;cursor:pointer;font-weight:600;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
