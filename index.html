@@ -4785,7 +4785,7 @@ function buildExItemProA(se, dayData) {
   var numSets=parseInt(se.sets)||3;
 
   var item=document.createElement('div');
-  item.className='ex-item'+(isDone?' done':''); item.id='exi-'+dayData.id+'-'+se.id;
+  item.className='ex-item open'+(isDone?' done':''); item.id='exi-'+dayData.id+'-'+se.id;
 
   var hdr=document.createElement('div'); hdr.className='ex-header';
   var hasMedia = ex.video_url || ex.gif_url;
