@@ -1140,6 +1140,95 @@ select.inp{cursor:pointer}
     </div>
   </div>
 
+  <!-- SETTINGS VIEW -->
+  <div class="view" id="vv-settings" style="display:none">
+    <div class="topbar"><div class="topbar-logo">KRATOS</div><span class="badge badge-pur">Settings</span></div>
+    <div style="overflow-y:auto;flex:1;padding:16px 14px 80px">
+
+      <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:12px">DISPLAY</div>
+      <div style="font-size:.8rem;font-weight:600;color:var(--txt);margin-bottom:10px">Exercise view style</div>
+
+      <div style="display:flex;gap:10px;margin-bottom:28px">
+        <!-- Style A -->
+        <div id="exstyle-A" onclick="setExStyle('A')" style="flex:1;background:var(--s2);border:2px solid var(--bdr);border-radius:14px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+          <div style="background:var(--s3);border-radius:8px;padding:8px;margin-bottom:8px;min-height:82px">
+            <div style="background:var(--s4);border-radius:5px;height:28px;margin-bottom:5px"></div>
+            <div style="display:flex;gap:4px;margin-bottom:5px">
+              <div style="flex:1;background:var(--s1);border-radius:4px;height:18px"></div>
+              <div style="flex:1;background:var(--s1);border-radius:4px;height:18px"></div>
+              <div style="flex:1;background:var(--s1);border-radius:4px;height:18px"></div>
+            </div>
+            <div style="background:var(--orn);opacity:.4;border-radius:4px;height:10px"></div>
+          </div>
+          <div style="font-size:.72rem;font-weight:800;color:var(--txt);text-align:center;letter-spacing:.04em">A</div>
+          <div style="font-size:.6rem;color:var(--mu2);text-align:center;margin-top:2px">Full Screen</div>
+        </div>
+
+        <!-- Style F -->
+        <div id="exstyle-F" onclick="setExStyle('F')" style="flex:1;background:var(--s2);border:2px solid var(--bdr);border-radius:14px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+          <div style="background:var(--s3);border-radius:8px;padding:8px;margin-bottom:8px;min-height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+            <svg width="42" height="42" viewBox="0 0 42 42">
+              <circle cx="21" cy="21" r="16" fill="none" stroke="var(--s4)" stroke-width="3.5"/>
+              <circle cx="21" cy="21" r="16" fill="none" stroke="var(--red)" stroke-width="3.5" stroke-dasharray="100.5" stroke-dashoffset="28" stroke-linecap="round" transform="rotate(-90 21 21)"/>
+            </svg>
+            <div style="display:flex;gap:4px">
+              <div style="width:19px;background:var(--s4);border-radius:3px;height:11px"></div>
+              <div style="width:19px;background:var(--s4);border-radius:3px;height:11px"></div>
+              <div style="width:19px;background:var(--s4);border-radius:3px;height:11px"></div>
+            </div>
+          </div>
+          <div style="font-size:.72rem;font-weight:800;color:var(--txt);text-align:center;letter-spacing:.04em">F</div>
+          <div style="font-size:.6rem;color:var(--mu2);text-align:center;margin-top:2px">Timer Focus</div>
+        </div>
+
+        <!-- Style I -->
+        <div id="exstyle-I" onclick="setExStyle('I')" style="flex:1;background:#f9fafb;border:2px solid #e5e7eb;border-radius:14px;padding:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+          <div style="background:#fff;border-radius:8px;padding:8px;margin-bottom:8px;min-height:82px;border:1px solid #f3f4f6">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
+              <div style="width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0"></div>
+              <div style="height:7px;background:#e5e7eb;border-radius:3px;flex:1"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+              <div style="width:5px;height:5px;border-radius:50%;background:#10b981;flex-shrink:0"></div>
+              <div style="height:6px;background:#f3f4f6;border-radius:2px;flex:1"></div>
+              <div style="height:6px;background:#f3f4f6;border-radius:2px;flex:1"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+              <div style="width:5px;height:5px;border-radius:50%;background:#f59e0b;flex-shrink:0"></div>
+              <div style="height:6px;background:#f3f4f6;border-radius:2px;flex:1"></div>
+              <div style="height:6px;background:#f3f4f6;border-radius:2px;flex:1"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="width:5px;height:5px;border-radius:50%;background:#e5e7eb;flex-shrink:0"></div>
+              <div style="height:6px;background:#f3f4f6;border-radius:2px;flex:1"></div>
+              <div style="height:6px;background:#f3f4f6;border-radius:2px;flex:1"></div>
+            </div>
+          </div>
+          <div style="font-size:.72rem;font-weight:800;color:#111;text-align:center;letter-spacing:.04em">I</div>
+          <div style="font-size:.6rem;color:#6b7280;text-align:center;margin-top:2px">Clean List</div>
+        </div>
+      </div>
+
+      <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">PREFERENCES</div>
+      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;overflow:hidden">
+        <div style="padding:13px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:.8rem;font-weight:600;color:var(--txt)">Language</div>
+            <div style="font-size:.68rem;color:var(--mu2)">Multi-language support</div>
+          </div>
+          <span style="font-size:.6rem;color:var(--mu2);background:var(--s3);padding:3px 8px;border-radius:100px;border:1px solid var(--bdr)">Coming soon</span>
+        </div>
+        <div style="padding:13px 14px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:.8rem;font-weight:600;color:var(--txt)">Notifications</div>
+            <div style="font-size:.68rem;color:var(--mu2)">Push & reminders</div>
+          </div>
+          <span style="font-size:.6rem;color:var(--mu2);background:var(--s3);padding:3px 8px;border-radius:100px;border:1px solid var(--bdr)">Coming soon</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ATHLETE NAV -->
   <nav class="bnav" id="athlete-nav">
     <button class="bni on" id="vbn-cycle" onclick="vsv('cycle')"><span class="bni-ic">&#128197;</span><span class="bni-lb" data-i18n="nav_cycle">Cycle</span></button>
@@ -1147,6 +1236,7 @@ select.inp{cursor:pointer}
     <button class="bni"    id="vbn-coach" onclick="vsv('coach')"><span class="bni-ic">&#128172;</span><span class="bni-lb" data-i18n="nav_coach">Coach</span></button>
     <button class="bni"    id="vbn-assessment" onclick="vsv('assessment');loadAssessmentForm()"><span class="bni-ic">&#128203;</span><span class="bni-lb" data-i18n="nav_profile">Profile</span></button>
     <button class="bni"    id="vbn-stats" onclick="vsv('stats')"><span class="bni-ic">&#128200;</span><span class="bni-lb" data-i18n="nav_stats">Stats</span></button>
+    <button class="bni"    id="vbn-settings" onclick="vsv('settings')"><span class="bni-ic">&#9881;&#65039;</span><span class="bni-lb">Settings</span></button>
   </nav>
 
 </div><!-- end #app -->
@@ -3940,6 +4030,7 @@ function vsv(name) {
   if(name==='timer') _updateAllDisplays(); // sync timer display on tab open
   if(name==='stats') loadPRChart();
   if(name==='coach') loadAthleteReview();
+  if(name==='settings') initExStyleSettings();
 }
 
 function renderNoProg(reason) {
@@ -4262,6 +4353,10 @@ function renderDaySession(dayNum) {
 }
 
 function buildExItem(se, dayData) {
+  var _style = localStorage.getItem('kratos_ex_style') || 'A';
+  if (_style === 'F') return buildExItemF(se, dayData);
+  if (_style === 'I') return buildExItemI(se, dayData);
+  // Style A (default) — full screen card
   var cacheKey=dayData.id+'_'+se.id;
   var log=logbookCache[cacheKey]||{};
   var pr=prCache[se.id];
@@ -4406,6 +4501,162 @@ function buildExItem(se, dayData) {
   body.appendChild(btnSave); body.appendChild(btnDone);
   item.appendChild(hdr); item.appendChild(body);
   return item;
+}
+
+// ── STYLE F: Timer Focus ──────────────────────────────────────
+function buildExItemF(se, dayData) {
+  var cacheKey = dayData.id+'_'+se.id;
+  var log = logbookCache[cacheKey]||{};
+  var ex = se.exercises||{};
+  var isDone = log.done||false;
+  var numSets = parseInt(se.sets)||3;
+
+  var item = document.createElement('div');
+  item.id = 'exi-'+dayData.id+'-'+se.id;
+  item.style.cssText = 'background:var(--s2);border:1px solid var(--bdr);border-radius:16px;padding:14px;margin-bottom:10px'+(isDone?';opacity:.68':'');
+
+  // Header: name + pill + done circle
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:14px';
+  var nameEl = document.createElement('div');
+  nameEl.style.cssText = 'flex:1;font-weight:700;font-size:.88rem;color:var(--txt);cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.18);text-underline-offset:3px';
+  nameEl.textContent = ex.name||'?';
+  (function(exData,seData){ nameEl.addEventListener('click',function(){ openExerciseDemo(exData,seData); }); nameEl.addEventListener('touchend',function(e){ e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false}); })(ex,se);
+  var pillEl = document.createElement('span');
+  pillEl.style.cssText = 'font-family:"Bebas Neue",sans-serif;font-size:.9rem;letter-spacing:.06em;color:var(--orn);flex-shrink:0';
+  pillEl.textContent = se.sets+'×'+(se.reps||'8-10');
+  var doneCircle = document.createElement('div');
+  doneCircle.id = 'dbtn-'+dayData.id+'-'+se.id;
+  doneCircle.style.cssText = 'width:26px;height:26px;border-radius:50%;border:2px solid '+(isDone?'var(--grn)':'var(--bdr)')+';background:'+(isDone?'var(--grn)':'none')+';display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
+  if(isDone) doneCircle.innerHTML='&#10003;';
+  (function(seid,ddid,ddobj){ doneCircle.addEventListener('click',function(){ toggleDone(seid,ddid,ddobj); }); doneCircle.addEventListener('touchend',function(e){ e.preventDefault(); toggleDone(seid,ddid,ddobj); },{passive:false}); })(se.id,dayData.id,dayData);
+  hdr.appendChild(nameEl); hdr.appendChild(pillEl); hdr.appendChild(doneCircle);
+  item.appendChild(hdr);
+
+  // SVG Ring (tap to start rest timer)
+  var ringSize=80, radius=30, circ=2*Math.PI*radius;
+  var ringDiv = document.createElement('div');
+  ringDiv.style.cssText = 'display:flex;justify-content:center;margin-bottom:14px';
+  var restLabel = se.rest_sec ? fmtSecs(se.rest_sec) : '—';
+  var timerId = 'ex-'+dayData.id+'-'+se.id;
+  ringDiv.innerHTML =
+    '<div style="position:relative;width:'+ringSize+'px;height:'+ringSize+'px;cursor:'+(se.rest_sec?'pointer':'default')+'" '+(se.rest_sec?'title="Tap to start rest timer"':'')+' id="ring-wrap-'+dayData.id+'-'+se.id+'">'+
+    '<svg width="'+ringSize+'" height="'+ringSize+'" viewBox="0 0 '+ringSize+' '+ringSize+'">'+
+    '<circle cx="'+(ringSize/2)+'" cy="'+(ringSize/2)+'" r="'+radius+'" fill="none" stroke="var(--s4)" stroke-width="4"/>'+
+    '<circle cx="'+(ringSize/2)+'" cy="'+(ringSize/2)+'" r="'+radius+'" fill="none" stroke="var(--red)" stroke-width="4" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+(circ*0.25).toFixed(1)+'" stroke-linecap="round" transform="rotate(-90 '+(ringSize/2)+' '+(ringSize/2)+')"/>'+
+    '</svg>'+
+    '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">'+
+    '<div style="font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2)">REST</div>'+
+    '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.15rem;color:var(--red);letter-spacing:.05em">'+restLabel+'</div>'+
+    '</div>'+
+    '</div>';
+  if (se.rest_sec) {
+    (function(tid,rsec){
+      var rw = ringDiv.querySelector('#ring-wrap-'+dayData.id+'-'+se.id);
+      if(rw){ rw.addEventListener('click',function(){ startInlineTimer(tid,rsec); }); rw.addEventListener('touchend',function(e){ e.preventDefault(); startInlineTimer(tid,rsec); },{passive:false}); }
+    })(timerId, se.rest_sec);
+  }
+  item.appendChild(ringDiv);
+
+  // Compact sets (3 cols)
+  var sGrid = document.createElement('div');
+  sGrid.style.cssText = 'display:flex;gap:8px;margin-bottom:10px';
+  for(var si=1;si<=numSets;si++){
+    var sc=document.createElement('div');
+    sc.style.cssText='flex:1;background:var(--s3);border-radius:10px;padding:8px 5px;text-align:center';
+    var pk=log['set'+si+'_kg']||''; var pr2=log['set'+si+'_reps']||'';
+    sc.innerHTML='<div style="font-size:.58rem;color:var(--mu2);font-weight:700;letter-spacing:.06em;margin-bottom:5px">S'+si+'</div>'+
+      '<input style="width:100%;background:none;border:none;border-bottom:1px solid var(--bdr);color:var(--txt);font-size:.8rem;text-align:center;padding:2px 0;font-family:inherit;outline:none;-webkit-tap-highlight-color:transparent" type="number" id="kg'+si+'-'+dayData.id+'-'+se.id+'" placeholder="kg" value="'+pk+'" inputmode="decimal">'+
+      '<div style="font-size:.55rem;color:var(--mu2);margin:3px 0">&#215;</div>'+
+      '<input style="width:100%;background:none;border:none;border-bottom:1px solid var(--bdr);color:var(--txt);font-size:.8rem;text-align:center;padding:2px 0;font-family:inherit;outline:none;-webkit-tap-highlight-color:transparent" type="number" id="rp'+si+'-'+dayData.id+'-'+se.id+'" placeholder="rep" value="'+pr2+'" inputmode="numeric">';
+    sGrid.appendChild(sc);
+  }
+  item.appendChild(sGrid);
+
+  // Save button
+  var btnSave=document.createElement('button');
+  btnSave.id='sbtn-'+dayData.id+'-'+se.id;
+  btnSave.style.cssText='width:100%;padding:10px;border-radius:10px;background:var(--s3);border:1px solid var(--bdr);color:var(--txt);font-family:inherit;font-size:.78rem;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
+  btnSave.textContent='Save logbook';
+  btnSave.onclick=(function(seid,ddid,ddobj){ return function(){ saveLog(seid,ddid,ddobj); }; })(se.id,dayData.id,dayData);
+  item.appendChild(btnSave);
+  return item;
+}
+
+// ── STYLE I: Clean List ───────────────────────────────────────
+function buildExItemI(se, dayData) {
+  var cacheKey = dayData.id+'_'+se.id;
+  var log = logbookCache[cacheKey]||{};
+  var ex = se.exercises||{};
+  var isDone = log.done||false;
+  var numSets = parseInt(se.sets)||3;
+
+  var item = document.createElement('div');
+  item.id = 'exi-'+dayData.id+'-'+se.id;
+  item.style.cssText = 'background:#fafafa;border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin-bottom:8px'+(isDone?';opacity:.62':'');
+
+  // Header
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:10px';
+  var dot = document.createElement('div');
+  dot.style.cssText = 'width:9px;height:9px;border-radius:50%;flex-shrink:0;background:'+(isDone?'#10b981':log.set1_kg?'#f59e0b':'#cbd5e1');
+  var nameEl = document.createElement('div');
+  nameEl.style.cssText = 'flex:1;font-weight:700;font-size:.88rem;color:#111;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(0,0,0,.12);text-underline-offset:3px';
+  nameEl.textContent = ex.name||'?';
+  (function(exData,seData){ nameEl.addEventListener('click',function(){ openExerciseDemo(exData,seData); }); nameEl.addEventListener('touchend',function(e){ e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false}); })(ex,se);
+  var pill = document.createElement('span');
+  pill.style.cssText = 'font-size:.7rem;font-weight:700;color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:2px 7px;flex-shrink:0';
+  pill.textContent = se.sets+'×'+(se.reps||'8-10');
+  hdr.appendChild(dot); hdr.appendChild(nameEl); hdr.appendChild(pill);
+  item.appendChild(hdr);
+
+  // Set rows
+  for(var si=1;si<=numSets;si++){
+    var pk=log['set'+si+'_kg']||''; var pr2=log['set'+si+'_reps']||'';
+    var hasDat = pk||pr2;
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f3f4f6';
+    row.innerHTML =
+      '<div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:'+(hasDat?'#10b981':'#e5e7eb')+'"></div>'+
+      '<div style="font-size:.7rem;font-weight:700;color:#6b7280;width:20px;flex-shrink:0">S'+si+'</div>'+
+      '<input style="flex:1;border:1px solid #e5e7eb;border-radius:7px;padding:6px 8px;font-size:.78rem;color:#111;background:#fff;font-family:inherit;outline:none;-webkit-tap-highlight-color:transparent;min-width:0" type="number" id="kg'+si+'-'+dayData.id+'-'+se.id+'" placeholder="kg" value="'+pk+'" inputmode="decimal">'+
+      '<span style="color:#9ca3af;font-size:.72rem;flex-shrink:0">&#215;</span>'+
+      '<input style="flex:1;border:1px solid #e5e7eb;border-radius:7px;padding:6px 8px;font-size:.78rem;color:#111;background:#fff;font-family:inherit;outline:none;-webkit-tap-highlight-color:transparent;min-width:0" type="number" id="rp'+si+'-'+dayData.id+'-'+se.id+'" placeholder="rep" value="'+pr2+'" inputmode="numeric">';
+    item.appendChild(row);
+  }
+
+  // Actions
+  var actRow = document.createElement('div');
+  actRow.style.cssText = 'display:flex;gap:8px;margin-top:10px';
+  var btnSave = document.createElement('button');
+  btnSave.id = 'sbtn-'+dayData.id+'-'+se.id;
+  btnSave.style.cssText = 'flex:1;padding:9px;border-radius:10px;background:#f9fafb;border:1px solid #e5e7eb;color:#374151;font-family:inherit;font-size:.76rem;cursor:pointer;font-weight:600;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
+  btnSave.textContent = 'Save';
+  btnSave.onclick = (function(seid,ddid,ddobj){ return function(){ saveLog(seid,ddid,ddobj); }; })(se.id,dayData.id,dayData);
+  var btnDone = document.createElement('button');
+  btnDone.id = 'dbtn-'+dayData.id+'-'+se.id;
+  btnDone.style.cssText = 'flex:1;padding:9px;border-radius:10px;background:'+(isDone?'rgba(16,185,129,.1)':'#f9fafb')+';border:1px solid '+(isDone?'rgba(16,185,129,.35)':'#e5e7eb')+';color:'+(isDone?'#10b981':'#374151')+';font-family:inherit;font-size:.76rem;cursor:pointer;font-weight:600;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
+  btnDone.innerHTML = isDone?'&#10003; Done':'Mark done';
+  btnDone.onclick = (function(seid,ddid,ddobj){ return function(){ toggleDone(seid,ddid,ddobj); }; })(se.id,dayData.id,dayData);
+  actRow.appendChild(btnSave); actRow.appendChild(btnDone);
+  item.appendChild(actRow);
+  return item;
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────
+function setExStyle(s) {
+  localStorage.setItem('kratos_ex_style', s);
+  ['A','F','I'].forEach(function(x){
+    var el = document.getElementById('exstyle-'+x);
+    if(!el) return;
+    var isI = x === 'I';
+    el.style.borderColor = x===s ? 'var(--orn)' : (isI?'#e5e7eb':'var(--bdr)');
+    el.style.boxShadow   = x===s ? '0 0 0 3px rgba(245,158,11,.18)' : 'none';
+  });
+}
+
+function initExStyleSettings() {
+  setExStyle(localStorage.getItem('kratos_ex_style')||'A');
 }
 
 function toggleEx(dayDataId,seId) {
