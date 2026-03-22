@@ -295,6 +295,20 @@ select.inp{cursor:pointer}
 .tl-skip-banner{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:10px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.3);border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .tl-skip-banner:active{opacity:.7}
 .tl-skip-text{font-size:.74rem;color:#f59e0b;font-weight:600;line-height:1.4}
+/* ── COACH TAB SEGMENTS & AI CHAT ────────────────────────────── */
+.seg-btn{flex:1;padding:9px 6px;border:1px solid var(--bdr);background:var(--s2);color:var(--mu2);font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;touch-action:manipulation}
+.seg-btn:first-child{border-radius:10px 0 0 10px}
+.seg-btn:last-child{border-radius:0 10px 10px 0;margin-left:-1px}
+.seg-btn.seg-on{background:var(--red);border-color:var(--red);color:#fff;z-index:1;position:relative}
+.ai-bubble-wrap{display:flex;margin-bottom:4px}
+.ai-bubble-wrap.user{justify-content:flex-end}
+.ai-bubble-wrap.assistant{justify-content:flex-start;align-items:flex-end;gap:7px}
+.ai-bubble{padding:9px 13px;font-size:.83rem;line-height:1.5;max-width:82%;word-break:break-word;white-space:pre-wrap}
+.ai-bubble.user{background:var(--rdim);color:var(--txt);border-radius:18px 18px 5px 18px}
+.ai-bubble.assistant{background:var(--s3);color:var(--txt);border-radius:18px 18px 18px 5px}
+.ai-avatar{width:26px;height:26px;border-radius:50%;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.25);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0}
+/* ── ME REVIEW SECTION ───────────────────────────────────────── */
+#me-review-card{background:var(--s2);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;margin-bottom:16px}
 </style>
 </head>
 <body>
@@ -1059,7 +1073,7 @@ select.inp{cursor:pointer}
             <button onclick="vsv('body-tracker')" style="width:100%;padding:10px;border-radius:9px;background:var(--s3);border:1px solid var(--bdr);color:var(--white);font-family:inherit;font-size:.8rem;cursor:pointer">
               &#128208; Body Measurements Tracker
             </button>
-            <button onclick="vsv('ai-form')" style="width:100%;padding:10px;border-radius:9px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.25);color:#a855f7;font-family:inherit;font-size:.8rem;cursor:pointer">
+            <button onclick="vsv('coach');switchCoachPanel('ai')" style="width:100%;padding:10px;border-radius:9px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.25);color:#a855f7;font-family:inherit;font-size:.8rem;cursor:pointer">
               &#129504; Ask AI about form & technique
             </button>
             <button onclick="cancelAthletePremium()" style="padding:7px;border-radius:8px;background:none;border:1px solid rgba(232,17,42,.2);color:var(--red);font-family:inherit;font-size:.7rem;cursor:pointer;margin-top:4px">
@@ -1238,22 +1252,28 @@ select.inp{cursor:pointer}
   </div>
 
   <div class="view" id="vv-coach">
-    <div class="nav-title-area"><div class="nav-title-left"><div class="nav-title-label">MESSAGES</div><div class="nav-title-main">Coach</div></div></div>
-    <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
-      <!-- Messages -->
-      <div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:0">
+    <div class="nav-title-area"><div class="nav-title-left"><div class="nav-title-label">COACH</div><div class="nav-title-main" id="coach-tab-title">Messages</div></div></div>
+    <!-- Segment control -->
+    <div style="display:flex;padding:0 14px 10px;flex-shrink:0">
+      <button id="seg-msgs" class="seg-btn seg-on" onclick="switchCoachPanel('msgs')">💬 Coach</button>
+      <button id="seg-ai"   class="seg-btn"        onclick="switchCoachPanel('ai')">🤖 AI Coach</button>
+    </div>
+    <!-- Panel A: Real coach messages -->
+    <div id="coach-msgs-panel" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
+      <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px;display:flex;flex-direction:column">
         <div class="ath-msg-area" id="ath-msg-area"></div>
-        <div class="msg-row" style="flex-shrink:0;padding-top:8px">
-          <input class="msg-inp" id="ath-msg-inp" placeholder="Message your coach...">
-          <button class="msg-send" onclick="athSendMsg()">Send</button>
-        </div>
       </div>
-      <!-- Review section -->
-      <div style="flex-shrink:0;padding:12px 12px 20px;border-top:1px solid var(--bdr);background:var(--s1)">
-        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">RATE YOUR COACH</div>
-        <div id="ath-review-area">
-          <div style="font-size:.75rem;color:var(--mu2)">Loading...</div>
-        </div>
+      <div class="msg-row" style="flex-shrink:0;padding:8px 12px 20px;border-top:1px solid var(--bdr)">
+        <input class="msg-inp" id="ath-msg-inp" placeholder="Message your coach...">
+        <button class="msg-send" onclick="athSendMsg()">Send</button>
+      </div>
+    </div>
+    <!-- Panel B: AI Coach chat -->
+    <div id="coach-ai-panel" style="display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0">
+      <div id="ai-coach-msgs" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:12px 14px;display:flex;flex-direction:column;gap:4px"></div>
+      <div class="msg-row" style="flex-shrink:0;padding:8px 12px 20px;border-top:1px solid var(--bdr)">
+        <input class="msg-inp" id="ai-coach-inp" placeholder="Chiedimi qualsiasi cosa..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAICoachMsg();}">
+        <button class="msg-send" onclick="sendAICoachMsg()">Invia</button>
       </div>
     </div>
   </div>
@@ -1287,18 +1307,16 @@ select.inp{cursor:pointer}
           </div>
           <svg width="16" height="16" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
         </div>
-        <div onclick="vsv('coach')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:32px;height:32px;border-radius:9px;background:var(--pdim);display:flex;align-items:center;justify-content:center;font-size:.9rem">⭐</div>
-            <div><div style="font-size:.85rem;font-weight:600;color:var(--txt)">Review Coach</div><div style="font-size:.68rem;color:var(--mu2)">Rate your coaching experience</div></div>
-          </div>
-          <svg width="16" height="16" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="9,18 15,12 9,6"/></svg>
-        </div>
       </div>
       <!-- Access level -->
-      <div id="me-access-card" style="background:var(--s2);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px">
+      <div id="me-access-card" style="background:var(--s2);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;margin-bottom:16px">
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:8px">ACCESS LEVEL</div>
         <div id="me-access-info" style="font-size:.82rem;color:var(--mu)">Loading...</div>
+      </div>
+      <!-- Coach review -->
+      <div id="me-review-card">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu2);margin-bottom:10px">⭐ VALUTA IL TUO COACH</div>
+        <div id="ath-review-area"><div style="font-size:.75rem;color:var(--mu2)">Loading...</div></div>
       </div>
     </div>
   </div>
@@ -4436,10 +4454,10 @@ function vsv(name) {
   var b = document.getElementById('vbn-'+name);
   if(v){ v.style.display='flex'; v.classList.add('on'); }
   if(b) b.classList.add('on');
-  if(name==='coach') { athLoadMessages(); loadAthleteReview(); }
+  if(name==='coach') { athLoadMessages(); switchCoachPanel('msgs'); }
   if(name==='stats') loadPRChart();
   if(name==='settings') initExStyleSettings();
-  if(name==='me') renderMeView();
+  if(name==='me') { renderMeView(); loadAthleteReview(); }
   if(name==='program') renderProgram();
   // Always re-render workout with current settings when navigating to it
   if(name==='cycle' && currentCycle) {
@@ -4469,6 +4487,9 @@ function renderMeView() {
       + (aLevel==='trial'&&myProfile.trial_ends_at ? ' <span style="color:var(--mu2);font-size:.72rem">· expires '+new Date(myProfile.trial_ends_at).toLocaleDateString()+'</span>' : '')
       + (aLevel==='free' ? ' <span style="color:var(--mu2);font-size:.72rem">— ask your coach for trial access</span>' : '');
   }
+  // Show review card only if athlete has a coach
+  var reviewCard = document.getElementById('me-review-card');
+  if (reviewCard) reviewCard.style.display = myProfile.coach_id ? 'block' : 'none';
 }
 
 function renderNoProg(reason) {
@@ -6924,6 +6945,163 @@ async function sendAIFormMsg() {
     document.getElementById('ai-form-typing').remove();
     msgsEl.innerHTML += '<div style="font-size:.72rem;color:var(--red)">Error: ' + escHtml(e.message) + '</div>';
   }
+}
+
+// ── AI COACH CHAT ─────────────────────────────────────────────
+var aiCoachHistory = [];
+
+function switchCoachPanel(panel) {
+  var msgsPanel = document.getElementById('coach-msgs-panel');
+  var aiPanel   = document.getElementById('coach-ai-panel');
+  var segMsgs   = document.getElementById('seg-msgs');
+  var segAI     = document.getElementById('seg-ai');
+  var titleEl   = document.getElementById('coach-tab-title');
+  if (panel === 'msgs') {
+    if (msgsPanel) msgsPanel.style.display = 'flex';
+    if (aiPanel)   aiPanel.style.display   = 'none';
+    if (segMsgs)   segMsgs.classList.add('seg-on');
+    if (segAI)     segAI.classList.remove('seg-on');
+    if (titleEl)   titleEl.textContent = 'Messages';
+  } else {
+    if (msgsPanel) msgsPanel.style.display = 'none';
+    if (aiPanel)   { aiPanel.style.display = 'flex'; }
+    if (segMsgs)   segMsgs.classList.remove('seg-on');
+    if (segAI)     segAI.classList.add('seg-on');
+    if (titleEl)   titleEl.textContent = 'AI Coach';
+    var msgsEl = document.getElementById('ai-coach-msgs');
+    if (msgsEl && !msgsEl.children.length) initAICoachChat();
+  }
+}
+
+function initAICoachChat() {
+  aiCoachHistory = [];
+  var msgsEl = document.getElementById('ai-coach-msgs');
+  if (!msgsEl) return;
+  msgsEl.innerHTML = '';
+  var name = myProfile ? (myProfile.full_name || myProfile.email || 'atleta').split(' ')[0] : 'atleta';
+  var greeting = 'Ciao ' + escHtml(name) + '! Sono il tuo AI coach personale 💪\n' +
+    'Posso aiutarti con tecnica degli esercizi, form, gestione degli infortuni, o qualsiasi domanda sul tuo allenamento.\nCosa ti serve oggi?';
+  msgsEl.appendChild(_aiMsgBubble(greeting, 'assistant'));
+}
+
+function buildAICoachContext() {
+  var lines = [];
+  lines.push('Sei un personal trainer professionista e AI coach. Rispondi nella stessa lingua dell\'atleta (italiano o inglese). Sii diretto, motivante e specifico per il suo programma.');
+  lines.push('Comportati come se fossi fisicamente presente con l\'atleta, come un coach reale che lo segue.');
+  if (myProfile) {
+    var name = myProfile.full_name || myProfile.email || 'Athlete';
+    lines.push('Nome atleta: ' + name);
+    if (myProfile.age)              lines.push('Età: ' + myProfile.age + ' anni');
+    if (myProfile.weight_kg)        lines.push('Peso: ' + myProfile.weight_kg + ' kg');
+    if (myProfile.height_cm)        lines.push('Altezza: ' + myProfile.height_cm + ' cm');
+    if (myProfile.fitness_goal)     lines.push('Obiettivo: ' + myProfile.fitness_goal);
+    if (myProfile.experience_level) lines.push('Livello esperienza: ' + myProfile.experience_level);
+    if (myProfile.injuries)         lines.push('Infortuni/limitazioni: ' + myProfile.injuries);
+    if (myProfile.sport)            lines.push('Sport: ' + myProfile.sport);
+  }
+  if (currentCycle) {
+    var cd = myProfile ? (myProfile.current_day || 1) : 1;
+    lines.push('Programma attuale: Ciclo "' + currentCycle.name + '" — Giorno ' + cd + '/10');
+    var dayMap = {};
+    if (currentCycle.cycle_days) currentCycle.cycle_days.forEach(function(d){ dayMap[d.day_number] = d; });
+    var today = dayMap[cd];
+    if (today) {
+      var ov = overrideCache[today.id];
+      var sess = ov && ov.sessions ? ov.sessions : today.sessions;
+      if (sess) {
+        lines.push('Sessione di oggi: ' + sess.name);
+        var sexs = sess.session_exercises || [];
+        if (sexs.length) {
+          var exLines = sexs.slice(0, 8).map(function(se){
+            var ex = se.exercises || {};
+            var s = ex.name || 'esercizio';
+            if (se.sets)  s += ' — ' + se.sets + ' serie';
+            if (se.reps)  s += ' x ' + se.reps + ' reps';
+            if (se.load_kg) s += ' @ ' + se.load_kg + 'kg';
+            if (ex.muscle_group) s += ' [' + ex.muscle_group + ']';
+            return s;
+          });
+          lines.push('Esercizi:\n' + exLines.join('\n'));
+        }
+      }
+    }
+  }
+  return lines.join('\n');
+}
+
+function _aiMsgBubble(text, role) {
+  var wrap = document.createElement('div');
+  wrap.className = 'ai-bubble-wrap ' + role;
+  if (role === 'assistant') {
+    var av = document.createElement('div');
+    av.className = 'ai-avatar';
+    av.textContent = '🤖';
+    wrap.appendChild(av);
+  }
+  var bubble = document.createElement('div');
+  bubble.className = 'ai-bubble ' + role;
+  bubble.textContent = text;
+  wrap.appendChild(bubble);
+  return wrap;
+}
+
+async function sendAICoachMsg() {
+  var inp    = document.getElementById('ai-coach-inp');
+  var msgsEl = document.getElementById('ai-coach-msgs');
+  var msg    = inp ? inp.value.trim() : '';
+  if (!msg || !msgsEl) return;
+  inp.value = '';
+  inp.disabled = true;
+
+  if (!msgsEl.children.length) initAICoachChat();
+
+  msgsEl.appendChild(_aiMsgBubble(msg, 'user'));
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+
+  aiCoachHistory.push({ role: 'user', content: msg });
+
+  // Typing indicator
+  var typingWrap = document.createElement('div');
+  typingWrap.id = 'ai-coach-typing';
+  typingWrap.className = 'ai-bubble-wrap assistant';
+  typingWrap.innerHTML = '<div class="ai-avatar">🤖</div><div class="ai-bubble assistant" style="color:var(--mu2);font-size:.75rem">sta scrivendo…</div>';
+  msgsEl.appendChild(typingWrap);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+
+  try {
+    var sys = buildAICoachContext();
+    // Keep history bounded to last 10 turns to avoid token overflow
+    var historyToSend = aiCoachHistory.slice(-10);
+    var r = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model:    'claude-haiku-4-5-20251001',
+        max_tokens: 500,
+        system:   sys,
+        messages: historyToSend
+      })
+    });
+    var data = await r.json();
+    var reply = (data.content && data.content[0] && data.content[0].text)
+      ? data.content[0].text.trim()
+      : (data.error ? ('Errore: ' + JSON.stringify(data.error)) : 'Nessuna risposta.');
+
+    var tEl = document.getElementById('ai-coach-typing');
+    if (tEl) tEl.remove();
+
+    aiCoachHistory.push({ role: 'assistant', content: reply });
+    msgsEl.appendChild(_aiMsgBubble(reply, 'assistant'));
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  } catch(e) {
+    var tEl = document.getElementById('ai-coach-typing');
+    if (tEl) tEl.remove();
+    msgsEl.appendChild(_aiMsgBubble('Errore di connessione: ' + e.message, 'assistant'));
+    // Remove failed message from history
+    aiCoachHistory.pop();
+  }
+  inp.disabled = false;
+  inp.focus();
 }
 
 // ── COACH PROFILE ────────────────────────────────────────────
