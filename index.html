@@ -4721,7 +4721,7 @@ function renderCycleTimeline() {
       var sb = document.createElement('button');
       sb.className = 'tl-start-btn';
       sb.textContent = 'Start →';
-      (function(num){ sb.addEventListener('click', function(e){ e.stopPropagation(); openDayFromTimeline(num); }); })(n);
+      (function(num){ sb.addEventListener('click', function(e){ e.stopPropagation(); startDayWithBrief(num); }); })(n);
       top.appendChild(sb);
     }
     card.appendChild(top);
@@ -4774,6 +4774,50 @@ function openDayFromTimeline(dayNum) {
   if (tlScroll) tlScroll.style.display = 'none';
   if (sessWrap) sessWrap.style.display = 'flex';
   renderDaySession(dayNum);
+}
+
+async function startDayWithBrief(dayNum) {
+  // Show session immediately — don't block on AI
+  openDayFromTimeline(dayNum);
+
+  // Build session context for the brief
+  var sessName = 'allenamento';
+  var exList = '';
+  if (currentCycle && currentCycle.cycle_days) {
+    var _dm = {};
+    currentCycle.cycle_days.forEach(function(d){ _dm[d.day_number] = d; });
+    var _d = _dm[dayNum];
+    if (_d) {
+      var _ov = overrideCache[_d.id];
+      var _sess = _ov && _ov.sessions ? _ov.sessions : _d.sessions;
+      if (_sess) {
+        sessName = _sess.name || 'allenamento';
+        var _sexs = _sess.session_exercises || [];
+        exList = _sexs.slice(0, 5).map(function(se){ return (se.exercises || {}).name || ''; }).filter(Boolean).join(', ');
+      }
+    }
+  }
+  var firstName = (myProfile && myProfile.full_name) ? myProfile.full_name.split(' ')[0] : '';
+
+  // Generate and play brief in background
+  try {
+    var prompt = (firstName ? firstName + ', ' : '') +
+      'sessione di oggi: ' + sessName +
+      (exList ? '. Esercizi principali: ' + exList : '') +
+      '. Genera un pre-workout brief motivazionale: max 2 frasi, 25 parole, energico e diretto. Solo il testo, niente altro.';
+    var r = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 80,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    var data = await r.json();
+    var brief = data.content && data.content[0] && data.content[0].text ? data.content[0].text.trim() : '';
+    if (brief) kratosSpeech(brief);
+  } catch(e) { /* silent — session already shown */ }
 }
 
 function showCycleTimeline() {
