@@ -3548,9 +3548,22 @@ function openExerciseDemo(ex, se) {
   notesEl.textContent = notesStr;
   notesEl.style.display = notesStr ? 'block' : 'none';
 
-  // Video / Demo area — ExerciseDB GIF if key set, else YouTube
+  // Video / Demo area: 1) YouTube embed  2) direct GIF from DB  3) live exercisedb.dev search
   var videoArea = document.getElementById('exdemo-video');
   var savedVidId = ytVideoId(ex.video_url || '');
+  var isDirectGif = ex.gif_url && ex.gif_url.indexOf('static.exercisedb.dev') !== -1;
+
+  function _renderGifCard(gifUrl, gifAlt) {
+    var gifWrap = document.createElement('div');
+    gifWrap.style.cssText = 'border-radius:12px;overflow:hidden;background:#111;text-align:center;margin-bottom:10px';
+    var gifImg = document.createElement('img');
+    gifImg.src = gifUrl;
+    gifImg.alt = gifAlt || '';
+    gifImg.style.cssText = 'max-width:100%;height:auto;display:block;margin:0 auto';
+    gifWrap.appendChild(gifImg);
+    videoArea.insertBefore(gifWrap, videoArea.firstChild);
+  }
+
   if (savedVidId) {
     // Saved direct YouTube embed
     videoArea.innerHTML =
@@ -3560,22 +3573,19 @@ function openExerciseDemo(ex, se) {
           'allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>' +
       '</div>' +
       '<div style="text-align:center;font-size:.65rem;color:var(--mu2);margin-top:6px">Tocca ▶ per riprodurre</div>';
+  } else if (isDirectGif) {
+    // Direct GIF already stored in DB — show immediately, no network call
+    _showExDemoMedia(videoArea, ex.name || '', null, null);
+    _renderGifCard(ex.gif_url, ex.name);
+    _demoMediaShown = true;
   } else {
+    // Live search fallback for exercises without a cached GIF
     var exName = ex.name || '';
     _showExDemoMedia(videoArea, exName, null, null);
-    // exercisedb.dev — free, no key, animated GIFs for 1300+ exercises
     _fetchExerciseDB(exName, function(gifUrl, exInfo) {
       if (!videoArea.isConnected || !gifUrl) return;
       _demoMediaShown = true;
-      // GIF card
-      var gifWrap = document.createElement('div');
-      gifWrap.style.cssText = 'border-radius:12px;overflow:hidden;background:#111;text-align:center;margin-bottom:10px';
-      var gifImg = document.createElement('img');
-      gifImg.src = gifUrl;
-      gifImg.alt = exName;
-      gifImg.style.cssText = 'max-width:100%;height:auto;display:block;margin:0 auto';
-      gifWrap.appendChild(gifImg);
-      videoArea.insertBefore(gifWrap, videoArea.firstChild);
+      _renderGifCard(gifUrl, exName);
       // Badges
       if (exInfo && (exInfo.bodyPart || exInfo.target)) {
         var bRow = document.createElement('div');
