@@ -1,0 +1,28 @@
+{
+  "name": "kratos",
+  "version": "1.0.0",
+  "description": "Kratos Training — AI-powered fitness coaching PWA",
+  "main": "sw.js",
+  "scripts": {
+    "sync": "npx cap sync",
+    "open:ios": "npx cap open ios"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dcarera-jpg/Kratos_David.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dcarera-jpg/Kratos_David/issues"
+  },
+  "homepage": "https://github.com/dcarera-jpg/Kratos_David#readme",
+  "dependencies": {
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/ios": "^8.2.0",
+    "@capacitor/splash-screen": "^8.0.1",
+    "canvas": "^3.2.2"
+  }
+}

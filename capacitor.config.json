@@ -1,0 +1,24 @@
+{
+  "appId": "com.kratos.training",
+  "appName": "Kratos Training",
+  "webDir": "www",
+  "server": {
+    "url": "https://dcarera-jpg.github.io/Kratos_David/",
+    "cleartext": true
+  },
+  "ios": {
+    "backgroundColor": "#0a0a0a",
+    "contentInset": "always",
+    "preferredContentMode": "mobile"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": true,
+      "backgroundColor": "#0a0a0a",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    }
+  }
+}
