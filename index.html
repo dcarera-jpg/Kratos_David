@@ -327,13 +327,21 @@ select.inp{cursor:pointer}
 
   <!-- ADMIN: ATLETI -->
   <div class="view" id="av-athletes">
-    <div class="topbar">
-      <div class="topbar-logo">KRATOS</div>
-      <span class="badge badge-pur">COACH</span>
-      <button class="btn-out" onclick="doLogout()">Logout</button>
+    <div class="coach-title">
+      <div>
+        <div class="coach-title-label" id="dash-date-label">DASHBOARD</div>
+        <div class="coach-title-main">My Athletes</div>
+      </div>
+      <button class="btn-out" onclick="doLogout()" style="margin-bottom:2px;flex-shrink:0">Logout</button>
     </div>
     <div class="scroll">
-      <!-- COACH INFO BANNER -->
+      <!-- KPI STRIP -->
+      <div class="kpi-strip">
+        <div class="kpi-card"><div class="kpi-val" id="kpi-total">—</div><div class="kpi-lbl">Athletes</div></div>
+        <div class="kpi-card"><div class="kpi-val" id="kpi-active" style="color:var(--grn)">—</div><div class="kpi-lbl">Trained Today</div></div>
+        <div class="kpi-card"><div class="kpi-val" id="kpi-msgs" style="color:var(--red)">—</div><div class="kpi-lbl">Unread Msgs</div></div>
+      </div>
+      <!-- COACH JOIN CODE -->
       <div id="coach-banner" style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
         <div style="flex:1">
           <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);margin-bottom:2px">YOUR JOIN CODE</div>
@@ -347,15 +355,10 @@ select.inp{cursor:pointer}
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--orn);margin-bottom:8px">🔔 PENDING REQUESTS</div>
         <div id="pending-requests-list"></div>
       </div>
-      <!-- DASHBOARD COMPLIANCE -->
-      <div id="dashboard-wrap" style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div class="sec-label" style="margin:0">Dashboard</div>
-          <button onclick="loadDashboard()" style="background:none;border:none;color:var(--mu2);font-size:.7rem;cursor:pointer;font-family:inherit">↻ Refresh</button>
-        </div>
-        <div id="dashboard-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
-      </div>
-      <div class="sec-label">Athlete Details</div>
+      <!-- ATHLETE ROWS (compact list) -->
+      <div id="ath-rows" style="margin-bottom:14px"></div>
+      <!-- ATHLETE CARDS (full expandable detail) -->
+      <div class="sec-label" style="margin-top:4px">Athlete Details</div>
       <div id="ath-list"></div>
     </div>
   </div>
@@ -903,7 +906,7 @@ select.inp{cursor:pointer}
     <button class="bni"    id="abn-new"      onclick="asv('new')"><span class="bni-ic">&#10133;</span><span class="bni-lb" data-i18n="nav_new">New</span></button>
     <button class="bni"    id="abn-prog"     onclick="asv('prog')"><span class="bni-ic">&#128203;</span><span class="bni-lb" data-i18n="nav_programs">Programs</span></button>
     <button class="bni"    id="abn-ai"       onclick="asv('ai')"><span class="bni-ic">&#129504;</span><span class="bni-lb" data-i18n="nav_ai">AI</span></button>
-    <button class="bni"    id="abn-msgs"     onclick="asv('msgs')"><span class="bni-ic">&#128172;</span><span class="bni-lb" data-i18n="nav_messages">Messages</span></button>
+    <button class="bni"    id="abn-msgs"     onclick="asv('msgs')"><span class="bni-badge" id="abn-msg-badge"></span><span class="bni-ic">&#128172;</span><span class="bni-lb" data-i18n="nav_messages">Messages</span></button>
     <button class="bni"    id="abn-analytics" onclick="asv('analytics');loadAnalytics()"><span class="bni-ic">&#128200;</span><span class="bni-lb" data-i18n="nav_stats">Stats</span></button>
     <button class="bni"    id="abn-profile"  onclick="asv('profile');loadCoachProfileForm()"><span class="bni-ic">&#127775;</span><span class="bni-lb" data-i18n="nav_profile">Profile</span></button>
   </nav>
@@ -1417,6 +1420,23 @@ select.inp{cursor:pointer}
       <span class="ath-tab-lb">Me</span>
     </button>
   </nav>
+
+  <!-- ADMIN: ATHLETE DETAIL -->
+  <div class="view" id="av-athlete-detail" style="display:none">
+    <div class="detail-header">
+      <button class="detail-back-btn" onclick="asv('athletes')" aria-label="Back">&#8592;</button>
+      <div class="detail-avatar" id="detail-av">?</div>
+      <div style="flex:1;min-width:0">
+        <div id="detail-name" style="font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Athlete</div>
+        <div id="detail-sub" style="font-size:.7rem;color:var(--mu2);margin-top:2px"></div>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="kpi-strip" id="detail-kpi"></div>
+      <div id="detail-actions"></div>
+      <div id="detail-body"></div>
+    </div>
+  </div>
 
 </div><!-- end #app -->
 
@@ -8835,5 +8855,38 @@ function pwaDismiss() {
   }
 })();
 </script>
+
+<!-- ── COACH SIDEBAR (desktop) ── -->
+<div id="coach-sidebar">
+  <div class="csb-logo">KRATOS</div>
+  <div class="csb-items">
+    <button class="csb-item on" id="csb-athletes" onclick="asv('athletes')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="csb-item" id="csb-prog" onclick="asv('prog')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Programs</span>
+    </button>
+    <button class="csb-item" id="csb-msgs" onclick="asv('msgs')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>Messages</span>
+      <span class="nav-badge" id="csb-msg-badge" style="display:none"></span>
+    </button>
+    <button class="csb-item" id="csb-analytics" onclick="asv('analytics');loadAnalytics()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+      <span>Analytics</span>
+    </button>
+    <button class="csb-item" id="csb-ai" onclick="asv('ai')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <span>AI Coach</span>
+    </button>
+    <button class="csb-item" id="csb-profile" onclick="asv('profile');loadCoachProfileForm()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Profile</span>
+    </button>
+  </div>
+  <div class="csb-footer" id="csb-footer"></div>
+</div>
 </body>
 </html>
