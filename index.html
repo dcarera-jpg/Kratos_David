@@ -3553,7 +3553,19 @@ function openExerciseDemo(ex, se) {
   var savedVidId = ytVideoId(ex.video_url || '');
   var isDirectGif = ex.gif_url && ex.gif_url.indexOf('static.exercisedb.dev') !== -1;
 
+  // Generation token — invalidates stale async callbacks from a previous openExerciseDemo call
+  var myGen = String(Date.now() + Math.random());
+  videoArea.dataset.gen = myGen;
+  function _genOk() { return videoArea.isConnected && videoArea.dataset.gen === myGen; }
+
+  // Declare before if/else so isDirectGif branch can set _demoMediaShown = true
+  var descEl = document.getElementById('exdemo-desc');
+  descEl.textContent = '';
+  descEl.style.display = 'none';
+  var _demoMediaShown = false;
+
   function _renderGifCard(gifUrl, gifAlt) {
+    if (!_genOk()) return;
     var gifWrap = document.createElement('div');
     gifWrap.style.cssText = 'border-radius:12px;overflow:hidden;background:#111;text-align:center;margin-bottom:10px';
     var gifImg = document.createElement('img');
@@ -3573,6 +3585,7 @@ function openExerciseDemo(ex, se) {
           'allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>' +
       '</div>' +
       '<div style="text-align:center;font-size:.65rem;color:var(--mu2);margin-top:6px">Tocca ▶ per riprodurre</div>';
+    _demoMediaShown = true;
   } else if (isDirectGif) {
     // Direct GIF already stored in DB — show immediately, no network call
     _showExDemoMedia(videoArea, ex.name || '', null, null);
@@ -3583,7 +3596,7 @@ function openExerciseDemo(ex, se) {
     var exName = ex.name || '';
     _showExDemoMedia(videoArea, exName, null, null);
     _fetchExerciseDB(exName, function(gifUrl, exInfo) {
-      if (!videoArea.isConnected || !gifUrl) return;
+      if (!_genOk() || !gifUrl) return;
       _demoMediaShown = true;
       _renderGifCard(gifUrl, exName);
       // Badges
@@ -3612,14 +3625,8 @@ function openExerciseDemo(ex, se) {
     });
   }
 
-  // Fetch wger.de: description + video/images (free, no key)
-  var descEl = document.getElementById('exdemo-desc');
-  descEl.textContent = '';
-  descEl.style.display = 'none';
-  var _demoMediaShown = false;
-
   function _injectExMedia(type, urlOrArr) {
-    if (!videoArea.isConnected || _demoMediaShown) return;
+    if (!_genOk() || _demoMediaShown) return;
     _demoMediaShown = true;
     var wrap = document.createElement('div');
     wrap.style.cssText = 'margin-bottom:12px';
@@ -3646,7 +3653,7 @@ function openExerciseDemo(ex, se) {
 
   // 1. Try wger.de video/images
   _fetchWgerExInfo(ex.name || '', _injectExMedia, function(desc) {
-    if (!descEl.isConnected || descEl.textContent.trim()) return;
+    if (!_genOk() || descEl.textContent.trim()) return;
     descEl.textContent = desc;
     descEl.style.display = 'block';
   });
@@ -4933,12 +4940,8 @@ function renderProgramDayDetail(dayNum) {
     var info = document.createElement('div');
     info.style.cssText = 'flex:1;min-width:0';
     var nameEl = document.createElement('div');
-    nameEl.style.cssText = 'font-size:.82rem;font-weight:700;color:'+(done?'var(--mu2)':'var(--txt)')+(done?';text-decoration:line-through':'')+';cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    nameEl.style.cssText = 'font-size:.82rem;font-weight:700;color:'+(done?'var(--mu2)':'var(--txt)')+(done?';text-decoration:line-through':'')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
     nameEl.textContent = altName ? ex.name+' → '+altName : (ex.name||'?');
-    (function(exData,seData){
-      nameEl.addEventListener('click', function(){ openExerciseDemo(exData,seData); });
-      nameEl.addEventListener('touchend', function(e){ e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false});
-    })(ex, se);
     var sub = document.createElement('div');
     sub.style.cssText = 'font-size:.68rem;color:var(--mu2);margin-top:2px';
     sub.textContent = se.sets+'×'+(se.reps||'?')+(se.rest_sec?' · '+fmtSecs(se.rest_sec)+' rest':'')+(ex.notes?' · '+ex.notes:'');
@@ -5278,15 +5281,7 @@ function buildExItemProA(se, dayData) {
     '<span class="ex-tag t-'+(ex.tag||'mec')+'">'+escHtml(ex.tag_label||'Mec')+'</span></div>' +
     '<div class="ex-sets-pill">'+se.sets+'&#215;'+(se.reps||'8-10')+'</div>';
   hdr.insertBefore(getExerciseIconEl(ex.muscle_group, ex.tag), hdr.firstChild);
-  // Tap exercise name → open demo modal
   var exNameEl = hdr.querySelector('.ex-name');
-  if (exNameEl) {
-    exNameEl.style.cssText += ';cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.2);text-underline-offset:3px';
-    (function(exData, seData){
-      exNameEl.addEventListener('click', function(e){ e.stopPropagation(); openExerciseDemo(exData, seData); });
-      exNameEl.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openExerciseDemo(exData, seData); }, {passive:false});
-    })(ex, se);
-  }
   var videoExId = altExId || ex.id;
   if (ex.video_url || altExId) {
     // Has a saved video or alt exercise — show 🎬 (opens video modal)
@@ -5414,12 +5409,8 @@ function buildExItemSimple(se, dayData) {
   var info = document.createElement('div');
   info.style.cssText = 'flex:1;min-width:0';
   var nameEl = document.createElement('div');
-  nameEl.style.cssText = 'font-weight:700;font-size:.88rem;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer';
+  nameEl.style.cssText = 'font-weight:700;font-size:.88rem;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
   nameEl.textContent = ex.name||'?';
-  (function(exData,seData){
-    nameEl.addEventListener('click', function(){ openExerciseDemo(exData,seData); });
-    nameEl.addEventListener('touchend', function(e){ e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false});
-  })(ex, se);
   var pill = document.createElement('div');
   pill.style.cssText = 'font-size:.72rem;color:var(--mu2);margin-top:2px';
   pill.textContent = se.sets+'×'+(se.reps||'8-10')+(se.rest_sec?' · rest '+fmtSecs(se.rest_sec):'');
@@ -5499,9 +5490,8 @@ function buildExItemF(se, dayData) {
   var hdr = document.createElement('div');
   hdr.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:14px';
   var nameEl = document.createElement('div');
-  nameEl.style.cssText = 'flex:1;font-weight:700;font-size:.88rem;color:var(--txt);cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.18);text-underline-offset:3px';
+  nameEl.style.cssText = 'flex:1;font-weight:700;font-size:.88rem;color:var(--txt)';
   nameEl.textContent = ex.name||'?';
-  (function(exData,seData){ nameEl.addEventListener('click',function(){ openExerciseDemo(exData,seData); }); nameEl.addEventListener('touchend',function(e){ e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false}); })(ex,se);
   var pillEl = document.createElement('span');
   pillEl.style.cssText = 'font-family:"Bebas Neue",sans-serif;font-size:.9rem;letter-spacing:.06em;color:var(--orn);flex-shrink:0';
   pillEl.textContent = se.sets+'×'+(se.reps||'8-10');
@@ -5584,9 +5574,8 @@ function buildExItemI(se, dayData) {
   var dot = document.createElement('div');
   dot.style.cssText = 'width:9px;height:9px;border-radius:50%;flex-shrink:0;background:'+(isDone?'#10b981':log.set1_kg?'#f59e0b':'#cbd5e1');
   var nameEl = document.createElement('div');
-  nameEl.style.cssText = 'flex:1;font-weight:700;font-size:.88rem;color:#111;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(0,0,0,.12);text-underline-offset:3px';
+  nameEl.style.cssText = 'flex:1;font-weight:700;font-size:.88rem;color:#111';
   nameEl.textContent = ex.name||'?';
-  (function(exData,seData){ nameEl.addEventListener('click',function(){ openExerciseDemo(exData,seData); }); nameEl.addEventListener('touchend',function(e){ e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false}); })(ex,se);
   var pill = document.createElement('span');
   pill.style.cssText = 'font-size:.7rem;font-weight:700;color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:2px 7px;flex-shrink:0';
   pill.textContent = se.sets+'×'+(se.reps||'8-10');
