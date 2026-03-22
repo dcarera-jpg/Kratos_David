@@ -255,15 +255,9 @@ select.inp{cursor:pointer}
 .detail-action-card{background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:13px 15px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .detail-action-card.primary{background:var(--rdim);border-color:rgba(232,17,42,.3)}
 /* ── RESPONSIVE ── */
+/* Sidebar/nav visibility is controlled by JS only (no !important fights with inline styles) */
 @media (min-width:768px){
-  #admin-nav{display:none!important}
-  #coach-sidebar{display:flex!important}
-  .view{margin-left:180px}
-}
-@media (max-width:767px){
-  #coach-sidebar{display:none!important}
-  #admin-nav{display:flex!important}
-  .view{margin-left:0}
+  [id^="av-"].on{margin-left:180px}
 }
 </style>
 </head>
@@ -1974,15 +1968,20 @@ var assignTargetAth = null;
 var resetTargetAth = null;
 var aiGeneratedPlan = null;
 
+function _applyCoachNav() {
+  var sidebar  = document.getElementById('coach-sidebar');
+  var adminNav = document.getElementById('admin-nav');
+  if (sidebar)  sidebar.style.display  = isDesktop ? 'flex' : 'none';
+  if (adminNav) adminNav.style.display = isDesktop ? 'none' : 'flex';
+}
+
 function startAdmin() {
   // Hide all athlete UI first
   var athNav = document.getElementById('athlete-nav'); if (athNav) athNav.style.display = 'none';
-  var sidebar = document.getElementById('coach-sidebar'); if (sidebar) sidebar.style.display = '';
   document.querySelectorAll('[id^="vv-"]').forEach(function(v){ v.style.display='none'; v.classList.remove('on'); });
   document.body.style.overflow = '';
   document.getElementById('app').style.display = 'flex';
-  // Bottom nav: visible on mobile, hidden on desktop (via CSS media query)
-  document.getElementById('admin-nav').style.display = '';
+  _applyCoachNav();
   asv('athletes');
   loadAthletes();
   loadEx();
@@ -2062,7 +2061,14 @@ function handleRequest(reqId, athleteId, status) {
 // ── ADMIN VIEW SWITCH ─────────────────────────────────────────
 // ── COACH NAV ─────────────────────────────────────────────────
 var isDesktop = window.innerWidth >= 768;
-window.addEventListener('resize', function(){ isDesktop = window.innerWidth >= 768; });
+window.addEventListener('resize', function(){
+  isDesktop = window.innerWidth >= 768;
+  // Only update nav if coach is active (athlete-nav not visible)
+  var athNav = document.getElementById('athlete-nav');
+  if (!athNav || athNav.style.display === 'none' || athNav.style.display === '') {
+    _applyCoachNav();
+  }
+});
 
 function asv(name) {
   document.querySelectorAll('[id^="av-"]').forEach(function(v){ v.classList.remove('on'); v.style.display='none'; });
@@ -4301,9 +4307,9 @@ var today = new Date();
 
 
 function startAthlete() {
-  // Hide all coach UI first
+  // Hide all coach UI — force inline style so no CSS can override
   var adminNav = document.getElementById('admin-nav'); if (adminNav) adminNav.style.display = 'none';
-  var sidebar = document.getElementById('coach-sidebar'); if (sidebar) sidebar.style.display = 'none';
+  var sidebar  = document.getElementById('coach-sidebar'); if (sidebar) sidebar.style.display = 'none';
   document.querySelectorAll('[id^="av-"]').forEach(function(v){ v.style.display='none'; v.classList.remove('on'); });
   document.body.style.overflow = '';
   document.getElementById('app').style.display='flex';
