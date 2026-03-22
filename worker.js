@@ -57,6 +57,9 @@ export default {
     // ── NOTIFICATIONS ────────────────────────────────────────
     if (path === '/notify/telegram') return handleNotifyTelegram(request, env);
 
+    // ── VOICE SYNTHESIS ──────────────────────────────────────
+    if (path === '/voice/synthesize') return handleVoiceSynthesize(request, env);
+
     return err('Not found', 404);
   },
 };
@@ -446,6 +449,57 @@ async function handleStripeWebhook(request, env) {
   }
 
   return json({ received: true });
+}
+
+// ── VOICE SYNTHESIS ──────────────────────────────────────────
+async function handleVoiceSynthesize(request, env) {
+  const { text, voice_id } = await request.json().catch(() => ({}));
+  if (!text) return err('text required');
+
+  const apiKey = env.ELEVENLABS_API_KEY;
+  const voiceId = voice_id || 'ODKG5CTroUtegAvJKs9h';
+
+  if (!apiKey) return json({ fallback: true, reason: 'no_api_key' });
+
+  try {
+    const res = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'audio/mpeg',
+        },
+        body: JSON.stringify({
+          text,
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      return json({ fallback: true, reason: `elevenlabs_${res.status}: ${errText}` });
+    }
+
+    const buf = await res.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    const chunk = 8192;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    const base64 = btoa(binary);
+
+    return new Response(JSON.stringify({ audio: base64, mimeType: 'audio/mpeg' }), {
+      status: 200,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  } catch (e) {
+    return json({ fallback: true, reason: e.message });
+  }
 }
 
 // ── HELPERS ──────────────────────────────────────────────────

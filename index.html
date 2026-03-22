@@ -780,6 +780,18 @@ select.inp{cursor:pointer}
         </div>
       </div>
 
+      <!-- AI Voice -->
+      <div class="iform">
+        <div class="iform-title">&#127897; AI VOICE</div>
+        <div class="field">
+          <label>ElevenLabs Voice ID <span style="color:var(--mu2);font-weight:400;text-transform:none;font-size:.65rem">— la tua voce clonata per il coaching audio</span></label>
+          <input class="inp" id="prof-voice-id" placeholder="es. ODKG5CTroUtegAvJKs9h">
+          <div style="font-size:.65rem;color:var(--mu2);margin-top:4px;line-height:1.5">Vai su <span style="color:var(--orn)">elevenlabs.io</span> → Voices → clona la tua voce → copia l'ID dalla voice card.</div>
+        </div>
+        <button onclick="testCoachVoice()" style="width:100%;padding:10px;border-radius:9px;background:var(--s3);border:1px solid var(--bdr);color:var(--white);font-family:inherit;font-size:.8rem;cursor:pointer;margin-top:4px">&#128266; Test Voice</button>
+        <div id="prof-voice-msg" style="display:none;margin-top:6px;font-size:.72rem;padding:7px 10px;border-radius:8px;background:var(--s3)"></div>
+      </div>
+
       <button class="btn-red" style="width:100%;padding:14px;font-size:.9rem" onclick="saveCoachProfile()">&#128190; Save Profile</button>
       <div id="prof-msg" style="display:none;padding:10px;border-radius:10px;font-size:.78rem;text-align:center"></div>
 
@@ -4403,6 +4415,10 @@ function startAthlete() {
   document.getElementById('athlete-nav').style.display='flex';
   vsv('cycle');
   if (!myProfile.coach_id) { renderNoCoach(); return; }
+  // Load coach's ElevenLabs voice ID for audio coaching
+  sb.from('coach_profiles').select('elevenlabs_voice_id').eq('id', myProfile.coach_id).single()
+    .then(function(r){ if (r.data && r.data.elevenlabs_voice_id) _coachVoiceId = r.data.elevenlabs_voice_id; })
+    .catch(function(){});
   checkPaymentReturn();
   if(!myProfile.current_cycle_id){ renderNoProg(); return; }
   loadCycle();
@@ -5755,6 +5771,7 @@ function _timerTick() {
     clearInterval(timerInterval); timerRunning = false;
     _timerSetBtnState('START', 'var(--grn)');
     if ('vibrate' in navigator) navigator.vibrate([200,100,200]);
+    kratosSpeech('Recupero completato. Pronti per il prossimo esercizio!');
   } else if (timerSecsLeft <= 5) {
     _timerSetBtnState('STOP', 'var(--red)');
   }
@@ -7110,6 +7127,75 @@ var SPECIALIZATIONS = [
 ];
 var selectedSpecs = [];
 var coachProfileData = null;
+var _coachVoiceId = null;
+var _lastSpeechTime = 0;
+
+// ── VOICE SYNTHESIS ──────────────────────────────────────────
+async function kratosSpeech(text) {
+  if (!text) return;
+  var now = Date.now();
+  if (now - _lastSpeechTime < 2000) return; // debounce
+  _lastSpeechTime = now;
+
+  if (_coachVoiceId) {
+    try {
+      var r = await fetch(WORKER_URL + '/voice/synthesize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, voice_id: _coachVoiceId }),
+      });
+      var d = await r.json();
+      if (d.audio) {
+        var audio = new Audio('data:' + (d.mimeType || 'audio/mpeg') + ';base64,' + d.audio);
+        audio.play().catch(function(){});
+        return;
+      }
+    } catch(e) {}
+  }
+  // Fallback: Web Speech API
+  if (window.speechSynthesis) {
+    var utt = new SpeechSynthesisUtterance(text);
+    utt.lang = (myProfile && myProfile.preferred_language === 'en') ? 'en-US' : 'it-IT';
+    utt.rate = 0.9;
+    window.speechSynthesis.speak(utt);
+  }
+}
+
+async function testCoachVoice() {
+  var vidEl = document.getElementById('prof-voice-id');
+  var msgEl = document.getElementById('prof-voice-msg');
+  if (!vidEl || !msgEl) return;
+  var voiceId = vidEl.value.trim();
+  if (!voiceId) {
+    msgEl.textContent = 'Inserisci un Voice ID prima di testare.';
+    msgEl.style.color = 'var(--orn)'; msgEl.style.display = 'block'; return;
+  }
+  msgEl.textContent = '⏳ Generando audio...';
+  msgEl.style.color = 'var(--mu2)'; msgEl.style.display = 'block';
+  try {
+    var r = await fetch(WORKER_URL + '/voice/synthesize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: 'Ottimo lavoro! Sei sulla strada giusta per raggiungere i tuoi obiettivi.',
+        voice_id: voiceId,
+      }),
+    });
+    var d = await r.json();
+    if (d.audio) {
+      new Audio('data:' + (d.mimeType || 'audio/mpeg') + ';base64,' + d.audio).play().catch(function(){});
+      msgEl.textContent = '✓ Voce riprodotta con successo!';
+      msgEl.style.color = 'var(--grn)';
+    } else {
+      msgEl.textContent = 'ElevenLabs non disponibile: ' + (d.reason || 'errore');
+      msgEl.style.color = 'var(--red)';
+    }
+  } catch(e) {
+    msgEl.textContent = 'Errore: ' + e.message;
+    msgEl.style.color = 'var(--red)';
+  }
+  setTimeout(function(){ msgEl.style.display = 'none'; }, 6000);
+}
 
 function loadCoachProfileForm() {
   // Build specs grid
@@ -7142,7 +7228,8 @@ function loadCoachProfileForm() {
       if (d.years_exp)       { var el=document.getElementById('prof-exp');      if(el) el.value=d.years_exp; }
       if (d.price_per_month)   { var el=document.getElementById('prof-price');    if(el) el.value=d.price_per_month; }
       if (d.avatar_url)        { var el=document.getElementById('prof-avatar');   if(el) el.value=d.avatar_url; previewAvatar(d.avatar_url); }
-      if (d.telegram_chat_id)  { var el=document.getElementById('prof-telegram'); if(el) el.value=d.telegram_chat_id; }
+      if (d.telegram_chat_id)    { var el=document.getElementById('prof-telegram');  if(el) el.value=d.telegram_chat_id; }
+      if (d.elevenlabs_voice_id) { var el=document.getElementById('prof-voice-id'); if(el) el.value=d.elevenlabs_voice_id; _coachVoiceId=d.elevenlabs_voice_id; }
 
       // Public toggle
       var tog = document.getElementById('prof-public');
@@ -7306,7 +7393,8 @@ function saveCoachProfile() {
     tiktok_url:       tiktok    || null,
     youtube_url:      youtube   || null,
     website_url:      website   || null,
-    telegram_chat_id: telegram  || null
+    telegram_chat_id:    telegram || null,
+    elevenlabs_voice_id: ((document.getElementById('prof-voice-id')||{}).value||'').trim() || null,
   };
 
   // Also update full_name in profiles
