@@ -1,0 +1,10 @@
+name = "kratos-ai"
+main = "worker.js"
+compatibility_date = "2026-03-22"
+preview_urls = false
+
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
