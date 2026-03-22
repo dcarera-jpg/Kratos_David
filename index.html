@@ -259,6 +259,42 @@ select.inp{cursor:pointer}
 @media (min-width:768px){
   [id^="av-"].on{margin-left:180px}
 }
+
+/* ── CYCLE TIMELINE ──────────────────────────────────────── */
+#cycle-progress-bar{height:3px;background:var(--s3);margin:0 14px 4px;border-radius:2px;overflow:hidden;flex-shrink:0}
+#cycle-progress-bar-fill{height:100%;background:var(--grn);border-radius:2px;transition:width .4s}
+#cycle-timeline-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 14px 80px}
+#cycle-session-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+#back-to-schedule-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#back-to-schedule-bar:active{opacity:.7}
+.btsb-arrow{font-size:1.1rem;color:var(--mu2)}
+.btsb-lbl{font-size:.75rem;font-weight:700;color:var(--mu2);letter-spacing:.06em;text-transform:uppercase}
+#day-session-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 0 80px;min-height:0}
+.tl-row{display:flex;align-items:stretch;min-height:72px}
+.tl-spine{width:30px;display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-top:12px}
+.tl-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;position:relative;z-index:1}
+.tl-dot.done{background:var(--grn)}
+.tl-dot.current{background:var(--red);animation:tl-pulse 1.8s infinite}
+.tl-dot.rest{background:var(--mu);border:2px solid var(--bdr)}
+.tl-dot.future{background:none;border:2px dashed var(--bdr)}
+@keyframes tl-pulse{0%,100%{box-shadow:0 0 0 3px rgba(232,17,42,.2)}50%{box-shadow:0 0 0 6px rgba(232,17,42,.07)}}
+.tl-line{width:2px;flex:1;background:var(--bdr);margin-top:4px}
+.tl-card{flex:1;padding:9px 11px 11px;margin:4px 0 4px 8px;border-radius:12px;border:1px solid var(--bdr);background:var(--s2);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .15s}
+.tl-card:active{opacity:.7}
+.tl-card.done{border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.05)}
+.tl-card.current{border-color:rgba(232,17,42,.3);background:rgba(232,17,42,.04)}
+.tl-card.rest{opacity:.4;cursor:default}
+.tl-card.rest:active{opacity:.4}
+.tl-card.future{opacity:.52}
+.tl-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.tl-day-lbl{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2)}
+.tl-card-title{font-size:.84rem;font-weight:700;line-height:1.25}
+.tl-card-sub{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.tl-chip{font-size:.58rem;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:100px;background:var(--s3);color:var(--mu2)}
+.tl-start-btn{padding:4px 11px;border-radius:8px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.7rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.tl-skip-banner{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:10px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.3);border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tl-skip-banner:active{opacity:.7}
+.tl-skip-text{font-size:.74rem;color:#f59e0b;font-weight:600;line-height:1.4}
 </style>
 </head>
 <body>
@@ -916,26 +952,32 @@ select.inp{cursor:pointer}
     <div class="nav-title-area">
       <div class="nav-title-left">
         <div class="nav-title-label" id="cycle-nav-label">WORKOUT</div>
-        <div class="nav-title-main" id="cycle-nav-title">Today</div>
+        <div class="nav-title-main" id="cycle-nav-title">Schedule</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span id="ath-access-badge" style="display:none;font-size:.58rem;font-weight:800;letter-spacing:.1em;padding:3px 8px;border-radius:100px;border:1px solid"></span>
         <span class="badge badge-red" id="ath-cycle-badge" style="display:none">—</span>
       </div>
     </div>
-    <div class="progress-pills" id="progress-pills"></div>
-    <div class="scroll">
-      <div id="ath-payment-banner" style="display:none;margin:10px 14px 0;background:var(--rdim);border:1px solid rgba(232,17,42,.2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+    <!-- Cycle progress bar -->
+    <div id="cycle-progress-bar"><div id="cycle-progress-bar-fill" style="width:0%"></div></div>
+
+    <!-- STATE 1: Timeline scroll -->
+    <div id="cycle-timeline-scroll">
+      <div id="ath-payment-banner" style="display:none;margin-bottom:10px;background:var(--rdim);border:1px solid rgba(232,17,42,.2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
         <div>
           <div style="font-size:.8rem;font-weight:600;color:var(--red)">Subscription required</div>
           <div id="ath-payment-banner-text" style="font-size:.7rem;color:var(--mu2);margin-top:2px">Subscribe to access your full program</div>
         </div>
         <button id="ath-payment-banner-btn" style="flex-shrink:0;padding:7px 14px;border-radius:8px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer">Subscribe</button>
       </div>
-      <div id="ath-sub-status" style="display:none;margin:10px 14px 0"></div>
-
-      <!-- CYCLE COMPLETE BANNER -->
-      <div id="cycle-complete-banner" style="display:none;margin:12px 14px 0;background:var(--s2);border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:16px">
+      <div id="ath-sub-status" style="display:none;margin-bottom:10px"></div>
+      <!-- Skip banner (day not logged) -->
+      <div id="cycle-skip-banner"></div>
+      <!-- Vertical timeline -->
+      <div id="cycle-timeline"></div>
+      <!-- Cycle complete banner -->
+      <div id="cycle-complete-banner" style="display:none;margin-top:8px;background:var(--s2);border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:16px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <span style="font-size:1.2rem">🏆</span>
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.08em;color:var(--grn)">Ciclo completato!</div>
@@ -947,8 +989,18 @@ select.inp{cursor:pointer}
         </div>
         <div id="cycle-choice-msg" style="display:none;margin-top:10px;font-size:.74rem;padding:8px 10px;border-radius:9px"></div>
       </div>
+    </div>
 
-      <div id="day-session-area"></div>
+    <!-- STATE 2: Single-day session view -->
+    <div id="cycle-session-wrap" style="display:none">
+      <div id="back-to-schedule-bar" onclick="showCycleTimeline()">
+        <span class="btsb-arrow">←</span>
+        <span class="btsb-lbl">Back to schedule</span>
+      </div>
+      <div class="progress-pills" id="progress-pills"></div>
+      <div id="day-session-scroll">
+        <div id="day-session-area"></div>
+      </div>
     </div>
   </div>
 
@@ -4390,9 +4442,8 @@ function vsv(name) {
   if(name==='me') renderMeView();
   if(name==='program') renderProgram();
   // Always re-render workout with current settings when navigating to it
-  if(name==='cycle' && typeof renderDaySession === 'function' && currentCycle) {
-    var cd = myProfile ? (myProfile.current_day||1) : 1;
-    renderDaySession(cd);
+  if(name==='cycle' && currentCycle) {
+    showCycleTimeline();
   }
 }
 
@@ -4489,22 +4540,201 @@ function loadOverrides() {
     }).catch(function(){ renderCycle(); });
 }
 
-function renderCycle() {
-  var currentDay = myProfile.current_day || 1;
-  var _b3=document.getElementById('ath-cycle-badge'); if(_b3) _b3.textContent='Cycle '+currentCycle.cycle_number;
-  var _t3=document.getElementById('ath-cycle-title'); if(_t3) _t3.textContent=currentCycle.name+' · Day '+currentDay+'/10';
-  // Update workout title area
+function getSmartCurrentDay() {
+  if (!currentCycle || !currentCycle.cycle_days) return myProfile ? (myProfile.current_day || 1) : 1;
+  var currentDay = myProfile ? (myProfile.current_day || 1) : 1;
+  var days = currentCycle.cycle_days.slice().sort(function(a,b){ return a.day_number - b.day_number; });
+  for (var i = 0; i < days.length; i++) {
+    var d = days[i];
+    if (d.day_number > currentDay) break;
+    var ov = overrideCache[d.id];
+    var sess = ov && ov.sessions ? ov.sessions : d.sessions;
+    if (!sess) continue;
+    var sexs = sess.session_exercises || [];
+    if (!sexs.length) continue;
+    var allDone = sexs.every(function(se){ var log = logbookCache[d.id+'_'+se.id]; return log && log.done; });
+    if (!allDone) return d.day_number;
+  }
+  return currentDay;
+}
+
+function renderCycleTimeline() {
+  if (!currentCycle) return;
+  var currentDay = myProfile ? (myProfile.current_day || 1) : 1;
+  var smartDay = getSmartCurrentDay();
+
   var labelEl = document.getElementById('cycle-nav-label');
   var titleEl = document.getElementById('cycle-nav-title');
-  if(labelEl) labelEl.textContent = 'DAY ' + currentDay + ' OF 10';
-  if(titleEl) titleEl.textContent = currentCycle.name || 'Workout';
+  if (labelEl) labelEl.textContent = 'CYCLE ' + (currentCycle.cycle_number || 1);
+  if (titleEl) titleEl.textContent = currentCycle.name || 'Schedule';
 
-  selectedDayNum = currentDay;
-  renderDaySession(currentDay);
+  var _b = document.getElementById('ath-cycle-badge');
+  if (_b) _b.textContent = 'Cycle ' + currentCycle.cycle_number;
 
-  // Show cycle-complete banner if athlete is on or past day 10
+  // Progress bar
+  var days = currentCycle.cycle_days || [];
+  var dayMap = {};
+  days.forEach(function(d){ dayMap[d.day_number] = d; });
+  var totalWithSess = 0, doneCount = 0;
+  days.forEach(function(d) {
+    var ov = overrideCache[d.id];
+    var sess = ov && ov.sessions ? ov.sessions : d.sessions;
+    if (!sess) return;
+    var sexs = sess.session_exercises || [];
+    if (!sexs.length) return;
+    totalWithSess++;
+    var allDone = sexs.every(function(se){ var log = logbookCache[d.id+'_'+se.id]; return log && log.done; });
+    if (allDone) doneCount++;
+  });
+  var pct = totalWithSess ? Math.round(doneCount / totalWithSess * 100) : 0;
+  var fill = document.getElementById('cycle-progress-bar-fill');
+  if (fill) fill.style.width = pct + '%';
+
+  // Skip banner: first past day with session not fully done
+  var skipEl = document.getElementById('cycle-skip-banner');
+  if (skipEl) {
+    var firstSkip = 0;
+    for (var n = 1; n < currentDay; n++) {
+      var dd = dayMap[n]; if (!dd) continue;
+      var ov2 = overrideCache[dd.id];
+      var sess2 = ov2 && ov2.sessions ? ov2.sessions : dd.sessions;
+      if (!sess2) continue;
+      var sexs2 = sess2.session_exercises || [];
+      if (!sexs2.length) continue;
+      var allDone2 = sexs2.every(function(se){ var log = logbookCache[dd.id+'_'+se.id]; return log && log.done; });
+      if (!allDone2) { firstSkip = n; break; }
+    }
+    if (firstSkip) {
+      skipEl.innerHTML = '<div class="tl-skip-banner" onclick="openDayFromTimeline('+firstSkip+')">' +
+        '<span style="font-size:1rem;flex-shrink:0">⚠</span>' +
+        '<span class="tl-skip-text">Day ' + firstSkip + ' not logged — tap to complete retroactively</span>' +
+        '</div>';
+    } else {
+      skipEl.innerHTML = '';
+    }
+  }
+
+  // Build timeline rows
+  var tlEl = document.getElementById('cycle-timeline');
+  if (!tlEl) return;
+  tlEl.innerHTML = '';
+
+  var maxDay = 10;
+  if (days.length) maxDay = Math.max(maxDay, Math.max.apply(null, days.map(function(d){ return d.day_number; })));
+
+  for (var n = 1; n <= maxDay; n++) {
+    var d = dayMap[n];
+    var ov = d ? overrideCache[d.id] : null;
+    var sess = ov && ov.sessions ? ov.sessions : (d ? d.sessions : null);
+    var isRest = !sess;
+    var sexs = sess ? (sess.session_exercises || []) : [];
+    var allDone = !isRest && sexs.length > 0 && sexs.every(function(se){ var log = logbookCache[d.id+'_'+se.id]; return log && log.done; });
+    var isCurrent = (n === smartDay) && !allDone && !isRest;
+    var isFuture = n > currentDay;
+
+    var dotState = isRest ? 'rest' : allDone ? 'done' : isCurrent ? 'current' : 'future';
+    var cardState = isRest ? 'rest' : allDone ? 'done' : isCurrent ? 'current' : 'future';
+
+    var row = document.createElement('div');
+    row.className = 'tl-row';
+
+    // Spine: dot + connector line
+    var spine = document.createElement('div');
+    spine.className = 'tl-spine';
+    var dot = document.createElement('div');
+    dot.className = 'tl-dot ' + dotState;
+    var line = document.createElement('div');
+    line.className = 'tl-line';
+    spine.appendChild(dot);
+    spine.appendChild(line);
+
+    // Card
+    var card = document.createElement('div');
+    card.className = 'tl-card ' + cardState;
+
+    var top = document.createElement('div');
+    top.className = 'tl-card-top';
+    var dayLbl = document.createElement('div');
+    dayLbl.className = 'tl-day-lbl';
+    dayLbl.textContent = 'DAY ' + n;
+    top.appendChild(dayLbl);
+    if (allDone) {
+      var ck = document.createElement('span');
+      ck.style.cssText = 'font-size:.85rem;color:var(--grn);font-weight:700';
+      ck.textContent = '✓';
+      top.appendChild(ck);
+    } else if (isCurrent) {
+      var sb = document.createElement('button');
+      sb.className = 'tl-start-btn';
+      sb.textContent = 'Start →';
+      (function(num){ sb.addEventListener('click', function(e){ e.stopPropagation(); openDayFromTimeline(num); }); })(n);
+      top.appendChild(sb);
+    }
+    card.appendChild(top);
+
+    var titleDiv = document.createElement('div');
+    titleDiv.className = 'tl-card-title';
+    titleDiv.textContent = isRest ? 'Rest Day' : (sess.name || 'Workout');
+    card.appendChild(titleDiv);
+
+    if (!isRest && sexs.length) {
+      var sub = document.createElement('div');
+      sub.className = 'tl-card-sub';
+      var muscles = [];
+      sexs.slice(0, 4).forEach(function(se){
+        var mg = (se.exercises || {}).muscle_group;
+        if (mg && muscles.indexOf(mg) === -1) muscles.push(mg);
+      });
+      if (muscles.length) {
+        muscles.forEach(function(m){
+          var chip = document.createElement('span');
+          chip.className = 'tl-chip';
+          chip.textContent = m;
+          sub.appendChild(chip);
+        });
+      } else {
+        sub.style.cssText = 'font-size:.7rem;color:var(--mu2);margin-top:3px';
+        sub.textContent = sexs.length + (sexs.length === 1 ? ' exercise' : ' exercises');
+      }
+      card.appendChild(sub);
+    }
+
+    if (!isRest) {
+      (function(num){ card.addEventListener('click', function(){ openDayFromTimeline(num); }); })(n);
+    }
+
+    row.appendChild(spine);
+    row.appendChild(card);
+    tlEl.appendChild(row);
+  }
+
+  // Cycle complete banner
   var banner = document.getElementById('cycle-complete-banner');
-  if (banner) banner.style.display = currentDay >= 10 ? 'block' : 'none';
+  if (banner) banner.style.display = currentDay >= maxDay ? 'block' : 'none';
+}
+
+function openDayFromTimeline(dayNum) {
+  selectedDayNum = dayNum;
+  var tlScroll = document.getElementById('cycle-timeline-scroll');
+  var sessWrap = document.getElementById('cycle-session-wrap');
+  if (tlScroll) tlScroll.style.display = 'none';
+  if (sessWrap) sessWrap.style.display = 'flex';
+  renderDaySession(dayNum);
+}
+
+function showCycleTimeline() {
+  var tlScroll = document.getElementById('cycle-timeline-scroll');
+  var sessWrap = document.getElementById('cycle-session-wrap');
+  if (tlScroll) tlScroll.style.display = 'block';
+  if (sessWrap) sessWrap.style.display = 'none';
+  renderCycleTimeline();
+}
+
+function renderCycle() {
+  var currentDay = myProfile.current_day || 1;
+  var _t3 = document.getElementById('ath-cycle-title');
+  if (_t3) _t3.textContent = currentCycle.name + ' · Day ' + currentDay + '/10';
+  showCycleTimeline();
 }
 
 // ── PROGRAM VIEW ─────────────────────────────────────────────
