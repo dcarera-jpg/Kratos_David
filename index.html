@@ -1972,15 +1972,11 @@ var aiGeneratedPlan = null;
 
 function startAdmin() {
   document.getElementById('app').style.display = 'flex';
-  document.getElementById('admin-nav').style.display = 'flex';
+  // Bottom nav: visible on mobile, hidden on desktop (via CSS media query)
+  document.getElementById('admin-nav').style.display = '';
   document.getElementById('athlete-nav').style.display = 'none';
-  // Hide all athlete views and overlays completely
-  document.querySelectorAll('[id^="vv-"]').forEach(function(v){
-    v.classList.remove('on');
-    v.style.display = 'none';
-  });
-  // Hide athlete nav
-  document.getElementById('athlete-nav').style.display = 'none';
+  // Hide all athlete views
+  document.querySelectorAll('[id^="vv-"]').forEach(function(v){ v.classList.remove('on'); v.style.display='none'; });
   // Reset body overflow
   document.body.style.overflow = '';
   asv('athletes');
@@ -2060,18 +2056,128 @@ function handleRequest(reqId, athleteId, status) {
 }
 
 // ── ADMIN VIEW SWITCH ─────────────────────────────────────────
+// ── COACH NAV ─────────────────────────────────────────────────
+var isDesktop = window.innerWidth >= 768;
+window.addEventListener('resize', function(){ isDesktop = window.innerWidth >= 768; });
+
 function asv(name) {
   document.querySelectorAll('[id^="av-"]').forEach(function(v){ v.classList.remove('on'); v.style.display='none'; });
   document.querySelectorAll('#admin-nav .bni').forEach(function(b){ b.classList.remove('on'); });
+  document.querySelectorAll('#coach-sidebar .csb-item').forEach(function(b){ b.classList.remove('on'); });
   var v = document.getElementById('av-' + name);
   var b = document.getElementById('abn-' + name);
+  var s = document.getElementById('csb-' + name);
   if (v){ v.style.display='flex'; v.classList.add('on'); }
   if (b) b.classList.add('on');
-  if (name === 'msgs') renderAdminMsgs();
+  if (s) s.classList.add('on');
+  if (name === 'msgs') {
+    renderAdminMsgs();
+    localStorage.setItem('kratos_msgs_checked', new Date().toISOString());
+    updateCoachMsgBadge(0);
+  }
   if (name === 'prog' && allEx.length === 0) loadEx();
   if (name === 'prog') loadMyExercises();
   if (name === 'ai') aiPopulateAthleteSelector();
   if (name === 'profile') loadCoachReviews();
+  // Update dashboard date label
+  if (name === 'athletes') {
+    var lbl = document.getElementById('dash-date-label');
+    if (lbl) {
+      var days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+      lbl.textContent = days[new Date().getDay()] + (athletes.length ? ' · ' + athletes.length + ' ATHLETES' : '');
+    }
+  }
+}
+
+function updateCoachMsgBadge(count) {
+  var els = [document.getElementById('csb-msg-badge'), document.getElementById('abn-msg-badge')];
+  els.forEach(function(el){ if (!el) return; el.textContent = count > 9 ? '9+' : count; el.style.display = count > 0 ? 'inline-flex' : 'none'; });
+}
+
+function loadCoachUnreadMsgs() {
+  if (!ME || !athletes || !athletes.length) return;
+  var lastChecked = localStorage.getItem('kratos_msgs_checked') || new Date(0).toISOString();
+  var athIds = athletes.map(function(a){ return a.id; });
+  sb.from('messages').select('id', {count:'exact', head:true})
+    .in('athlete_id', athIds).eq('sender_role', 'athlete').gt('created_at', lastChecked)
+    .then(function(r){ updateCoachMsgBadge(r.count || 0); var el = document.getElementById('kpi-msgs'); if (el) el.textContent = r.count || 0; })
+    .catch(function(){});
+}
+
+function loadCoachKPI() {
+  var totalEl = document.getElementById('kpi-total');
+  if (totalEl) totalEl.textContent = athletes.length;
+  // Count athletes who trained today
+  var todayStr = new Date().toISOString().split('T')[0];
+  var athIds = athletes.map(function(a){ return a.id; });
+  if (!athIds.length) return;
+  sb.from('logbook').select('athlete_id').in('athlete_id', athIds).eq('logged_date', todayStr).eq('done', true)
+    .then(function(r){
+      var trainedToday = new Set((r.data||[]).map(function(x){ return x.athlete_id; })).size;
+      var el = document.getElementById('kpi-active'); if (el) el.textContent = trainedToday;
+    }).catch(function(){});
+  loadCoachUnreadMsgs();
+}
+
+// ── ATHLETE DETAIL VIEW ───────────────────────────────────────
+var _detailAthlete = null;
+
+function openAthleteDetail(ath) {
+  _detailAthlete = ath;
+  asv('athlete-detail');
+  var avEl = document.getElementById('detail-av');
+  var nameEl = document.getElementById('detail-name');
+  var subEl = document.getElementById('detail-sub');
+  var init = (ath.full_name || ath.email || '?').charAt(0).toUpperCase();
+  if (avEl) avEl.textContent = init;
+  if (nameEl) nameEl.textContent = ath.full_name || ath.email || 'Athlete';
+  if (subEl) subEl.textContent = ath.email || '';
+  // KPI
+  var kpiEl = document.getElementById('detail-kpi');
+  if (kpiEl) {
+    kpiEl.innerHTML =
+      '<div class="kpi-card"><div class="kpi-val" id="dk-comp" style="color:var(--grn)">—</div><div class="kpi-lbl">Compliance</div></div>' +
+      '<div class="kpi-card"><div class="kpi-val">D'+(ath.current_day||'—')+'</div><div class="kpi-lbl">Current Day</div></div>' +
+      '<div class="kpi-card"><div class="kpi-val" id="dk-prs" style="color:var(--orn)">—</div><div class="kpi-lbl">PRs Week</div></div>';
+  }
+  // Action cards
+  var actEl = document.getElementById('detail-actions');
+  if (actEl) {
+    var acts = [
+      { label: '&#9998; Edit Program', sub: 'Assign or modify mesocycle', cls: 'primary', fn: function(){ openAssignModal(ath); } },
+      { label: '&#128172; Send Message', sub: 'Direct message to athlete', cls: '', fn: function(){ asv('msgs'); setTimeout(function(){ var c=document.querySelector('#amsg-list .card-head'); if(c) c.click(); },300); } },
+      { label: '&#128065; View Progress', sub: 'Logbook & PRs', cls: '', fn: function(){ openAthleteVista(ath); } },
+      { label: '&#128197; Override Day', sub: "Change today's session", cls: '', fn: function(){ openOverridePanel(ath); } },
+    ];
+    actEl.innerHTML = '';
+    acts.forEach(function(act){
+      var card = document.createElement('div');
+      card.className = 'detail-action-card' + (act.cls ? ' '+act.cls : '');
+      card.innerHTML = '<div style="flex:1"><div style="font-weight:700;font-size:.88rem">'+act.label+'</div><div style="font-size:.7rem;color:var(--mu2);margin-top:3px">'+act.sub+'</div></div><span style="color:var(--mu2);font-size:1rem">&#8250;</span>';
+      card.addEventListener('click', act.fn);
+      card.addEventListener('touchend', function(e){ e.preventDefault(); act.fn(); }, {passive:false});
+      actEl.appendChild(card);
+    });
+  }
+  // Load compliance KPI
+  if (ath.current_cycle_id) {
+    sb.from('logbook').select('id',{count:'exact',head:true}).eq('athlete_id',ath.id).eq('cycle_id',ath.current_cycle_id).eq('done',true)
+      .then(function(done){
+        sb.from('cycle_days').select('sessions(session_exercises(id))').eq('cycle_id',ath.current_cycle_id)
+          .then(function(r2){
+            var total=0; (r2.data||[]).forEach(function(d){ if(d.sessions) total+=(d.sessions.session_exercises||[]).length; });
+            var pct=total>0?Math.min(Math.round((done.count||0)/Math.round(total*Math.min((ath.current_day||1)/10,1))*100),100):0;
+            var el=document.getElementById('dk-comp'); if(el) el.textContent=pct+'%';
+          }).catch(function(){});
+      }).catch(function(){});
+    // PRs this week
+    var weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
+    sb.from('logbook').select('id',{count:'exact',head:true}).eq('athlete_id',ath.id).gte('logged_date',weekAgo.toISOString().split('T')[0]).eq('done',true)
+      .then(function(r){ var el=document.getElementById('dk-prs'); if(el) el.textContent=r.count||0; }).catch(function(){});
+  }
+  // Update sidebar footer
+  var footer = document.getElementById('csb-footer');
+  if (footer) footer.innerHTML = '<div style="color:var(--red);font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em">'+escHtml(ath.full_name||ath.email||'Athlete')+'</div><div>Athlete Detail</div>';
 }
 
 function toggleEl(id) {
@@ -2097,11 +2203,49 @@ function loadAthletes() {
 
 function renderAthletes() {
   var c = document.getElementById('ath-list'); c.innerHTML = '';
+  var rows = document.getElementById('ath-rows'); if (rows) rows.innerHTML = '';
   if (!athletes.length) {
     c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--mu2)">Nessun atleta. Aggiungine uno.</div>'; return;
   }
-  athletes.forEach(function(a){ c.appendChild(buildAthCard(a)); });
+  athletes.forEach(function(a){
+    c.appendChild(buildAthCard(a));
+    if (rows) rows.appendChild(buildAthRow(a));
+  });
   loadDashboard();
+  loadCoachKPI();
+  // Update sidebar footer with athlete count
+  var footer = document.getElementById('csb-footer');
+  if (footer) footer.innerHTML = '<div id="csb-plan-label" style="color:#e8111a;font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Coach</div><div>'+athletes.length+' athlete'+(athletes.length!==1?'s':'')+'</div>';
+  // Update dashboard label
+  var lbl = document.getElementById('dash-date-label');
+  if (lbl) { var days=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY']; lbl.textContent=days[new Date().getDay()]+' · '+athletes.length+' ATHLETES'; }
+}
+
+function buildAthRow(a) {
+  var row = document.createElement('div'); row.className = 'ath-row'; row.id = 'ar-'+a.id;
+  var dot = document.createElement('div'); dot.className = 'ath-status-dot'; dot.id = 'ard-'+a.id; dot.style.background = '#555';
+  var info = document.createElement('div'); info.className = 'ath-row-info';
+  var name = document.createElement('div'); name.className = 'ath-row-name'; name.textContent = a.full_name || a.email || '?';
+  var sub = document.createElement('div'); sub.className = 'ath-row-sub'; sub.id = 'ars-'+a.id; sub.textContent = 'D'+(a.current_day||'—')+'/10';
+  info.appendChild(name); info.appendChild(sub);
+  var arrow = document.createElement('span'); arrow.style.cssText = 'color:var(--mu2);font-size:.9rem;flex-shrink:0'; arrow.textContent = '›';
+  row.appendChild(dot); row.appendChild(info); row.appendChild(arrow);
+  (function(ath){ row.addEventListener('click', function(){ openAthleteDetail(ath); }); row.addEventListener('touchend', function(e){ e.preventDefault(); openAthleteDetail(ath); }, {passive:false}); })(a);
+  // Async: load last workout to set dot color
+  var todayStr = new Date().toISOString().split('T')[0];
+  sb.from('logbook').select('logged_date,done').eq('athlete_id',a.id).eq('done',true)
+    .order('logged_date',{ascending:false}).limit(1)
+    .then(function(r){
+      var dotEl = document.getElementById('ard-'+a.id);
+      var subEl = document.getElementById('ars-'+a.id);
+      if (!dotEl) return;
+      if (!r.data||!r.data.length){ dotEl.style.background='#555'; return; }
+      var lastDate = r.data[0].logged_date;
+      var daysDiff = Math.floor((new Date()-new Date(lastDate))/86400000);
+      dotEl.style.background = daysDiff===0?'#10b981':daysDiff<=3?'#f59e0b':'#e8111a';
+      if (subEl) subEl.textContent = 'D'+(a.current_day||'—')+'/10 · '+(daysDiff===0?'Today':daysDiff===1?'Yesterday':daysDiff+'d ago');
+    }).catch(function(){});
+  return row;
 }
 
 function loadDashboard() {
