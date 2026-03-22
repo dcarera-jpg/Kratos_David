@@ -50,6 +50,10 @@ body{font-family:'DM Sans',sans-serif;color:var(--txt);font-size:15px;display:fl
 #app{display:none;flex-direction:column;flex:1;overflow:hidden;height:100dvh}
 .view{display:none;flex-direction:column;flex:1;overflow:hidden}
 .view.on{display:flex}
+[id^="vv-"]{display:none}
+[id^="av-"]{display:none}
+[id^="vv-"].on{display:flex}
+[id^="av-"].on{display:flex}
 .topbar{padding:13px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--bdr)}
 .topbar-logo{font-family:Bebas Neue,sans-serif;font-size:1.4rem;letter-spacing:.1em;color:var(--red)}
 .badge{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:20px}
@@ -1971,14 +1975,14 @@ var resetTargetAth = null;
 var aiGeneratedPlan = null;
 
 function startAdmin() {
+  // Hide all athlete UI first
+  var athNav = document.getElementById('athlete-nav'); if (athNav) athNav.style.display = 'none';
+  var sidebar = document.getElementById('coach-sidebar'); if (sidebar) sidebar.style.display = '';
+  document.querySelectorAll('[id^="vv-"]').forEach(function(v){ v.style.display='none'; v.classList.remove('on'); });
+  document.body.style.overflow = '';
   document.getElementById('app').style.display = 'flex';
   // Bottom nav: visible on mobile, hidden on desktop (via CSS media query)
   document.getElementById('admin-nav').style.display = '';
-  document.getElementById('athlete-nav').style.display = 'none';
-  // Hide all athlete views
-  document.querySelectorAll('[id^="vv-"]').forEach(function(v){ v.classList.remove('on'); v.style.display='none'; });
-  // Reset body overflow
-  document.body.style.overflow = '';
   asv('athletes');
   loadAthletes();
   loadEx();
@@ -4297,15 +4301,13 @@ var today = new Date();
 
 
 function startAthlete() {
+  // Hide all coach UI first
+  var adminNav = document.getElementById('admin-nav'); if (adminNav) adminNav.style.display = 'none';
+  var sidebar = document.getElementById('coach-sidebar'); if (sidebar) sidebar.style.display = 'none';
+  document.querySelectorAll('[id^="av-"]').forEach(function(v){ v.style.display='none'; v.classList.remove('on'); });
+  document.body.style.overflow = '';
   document.getElementById('app').style.display='flex';
   document.getElementById('athlete-nav').style.display='flex';
-  document.getElementById('admin-nav').style.display='none';
-  // Hide all admin views completely
-  document.querySelectorAll('[id^="av-"]').forEach(function(v){
-    v.classList.remove('on');
-    v.style.display = 'none';
-  });
-  document.getElementById('admin-nav').style.display = 'none';
   vsv('cycle');
   if (!myProfile.coach_id) { renderNoCoach(); return; }
   checkPaymentReturn();
