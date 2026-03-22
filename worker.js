@@ -36,7 +36,12 @@ export default {
     const url  = new URL(request.url);
     const path = url.pathname;
 
-    // ── AI PROXY ─────────────────────────────────────────────
+    // ── ANTHROPIC PROXY (root) ───────────────────────────────
+    if (path === '/') {
+      return handleAnthropicProxy(request, env);
+    }
+
+    // ── AI PROXY (Cloudflare AI) ──────────────────────────────
     if (path === '/ai/chat') {
       return handleAIChat(request, env);
     }
@@ -122,6 +127,35 @@ async function handleNotifyTelegram(request, env) {
   } catch (e) {
     return json({ sent: false, reason: e.message });
   }
+}
+
+// ── ANTHROPIC PROXY (root POST /) ────────────────────────────
+async function handleAnthropicProxy(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const apiKey = env.ANTHROPIC_KEY;
+  if (!apiKey) return err('ANTHROPIC_KEY not configured', 503);
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model:      body.model      || 'claude-haiku-4-5-20251001',
+      max_tokens: body.max_tokens || 1024,
+      system:     body.system,
+      messages:   body.messages   || [],
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) return err(data?.error?.message || 'Anthropic error', res.status);
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { ...CORS, 'Content-Type': 'application/json' },
+  });
 }
 
 // ── AI CHAT ──────────────────────────────────────────────────
