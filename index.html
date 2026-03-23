@@ -6205,12 +6205,11 @@ async function uploadProgressPhoto(position, imageFile) {
   var blurred = await blurFaceInImage(imageFile);
   var thumb   = await _ppGenThumb(blurred, 300);
   var r1 = await sb.storage.from('progress-photos').upload(photoPath, blurred, {contentType:'image/jpeg',upsert:true});
-  if (r1.error) throw r1.error;
+  if (r1.error) throw new Error('storage:photo: ' + r1.error.message);
   var r2 = await sb.storage.from('progress-photos').upload(thumbPath, thumb, {contentType:'image/jpeg',upsert:true});
-  if (r2.error) throw r2.error;
+  if (r2.error) throw new Error('storage:thumb: ' + r2.error.message);
   var wt = parseFloat((document.getElementById('pp-weight')||{}).value)||null;
   var nt = ((document.getElementById('pp-notes')||{}).value||'').trim()||null;
-  // Delete existing row for same athlete+position+date before inserting (no unique constraint)
   await sb.from('progress_photos').delete()
     .eq('athlete_id', ME.id).eq('position', position).eq('taken_at', takenAt);
   var r3 = await sb.from('progress_photos').insert({
@@ -6218,7 +6217,7 @@ async function uploadProgressPhoto(position, imageFile) {
     position: position, photo_url: photoPath, thumb_url: thumbPath,
     taken_at: takenAt, weight_kg: wt, notes: nt
   }).select().single();
-  if (r3.error) throw r3.error;
+  if (r3.error) throw new Error('table:insert: ' + r3.error.message);
   return {id: r3.data.id, photo_path: photoPath, thumb_path: thumbPath, taken_at: takenAt};
 }
 
