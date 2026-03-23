@@ -4598,9 +4598,10 @@ function getSmartCurrentDay() {
   if (!currentCycle || !currentCycle.cycle_days) return myProfile ? (myProfile.current_day || 1) : 1;
   var currentDay = myProfile ? (myProfile.current_day || 1) : 1;
   var days = currentCycle.cycle_days.slice().sort(function(a,b){ return a.day_number - b.day_number; });
+  // Search entire cycle for first incomplete training day (no break at currentDay —
+  // if current_day points to a rest day or all prior days are done, still find the next one)
   for (var i = 0; i < days.length; i++) {
     var d = days[i];
-    if (d.day_number > currentDay) break;
     var ov = overrideCache[d.id];
     var sess = ov && ov.sessions ? ov.sessions : d.sessions;
     if (!sess) continue;
@@ -4721,7 +4722,10 @@ function renderCycleTimeline() {
       var sb = document.createElement('button');
       sb.className = 'tl-start-btn';
       sb.textContent = 'Start →';
-      (function(num){ sb.addEventListener('click', function(e){ e.stopPropagation(); startDayWithBrief(num); }); })(n);
+      (function(num){
+        sb.addEventListener('click', function(e){ e.stopPropagation(); startDayWithBrief(num); });
+        sb.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); startDayWithBrief(num); }, {passive:false});
+      })(n);
       top.appendChild(sb);
     }
     card.appendChild(top);
