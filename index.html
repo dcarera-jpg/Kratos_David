@@ -1615,6 +1615,24 @@ select.inp{cursor:pointer}
   </div>
 </div>
 
+<!-- ── PROGRESS PHOTOS: CAMERA SOURCE SHEET ── -->
+<div id="pp-source-sheet" style="display:none;position:fixed;inset:0;z-index:400;align-items:flex-end;justify-content:center" onclick="ppCloseSourceSheet()">
+  <div onclick="event.stopPropagation()" style="background:#1c1c1e;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:12px 16px 34px">
+    <div style="width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 18px"></div>
+    <div style="font-size:.65rem;font-weight:700;letter-spacing:.12em;color:var(--mu2);text-align:center;margin-bottom:14px;text-transform:uppercase">Scegli sorgente</div>
+    <button onclick="ppPickSource('environment')" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(255,255,255,.06);border:none;border-radius:13px;padding:15px 18px;margin-bottom:10px;color:var(--txt);font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+      <span style="font-size:1.4rem">📷</span><div style="text-align:left"><div>Fotocamera</div><div style="font-size:.72rem;color:var(--mu2);font-weight:400">Camera posteriore</div></div>
+    </button>
+    <button onclick="ppPickSource('user')" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(255,255,255,.06);border:none;border-radius:13px;padding:15px 18px;margin-bottom:10px;color:var(--txt);font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+      <span style="font-size:1.4rem">🤳</span><div style="text-align:left"><div>Autoscatto</div><div style="font-size:.72rem;color:var(--mu2);font-weight:400">Camera anteriore</div></div>
+    </button>
+    <button onclick="ppPickSource('')" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(255,255,255,.06);border:none;border-radius:13px;padding:15px 18px;margin-bottom:18px;color:var(--txt);font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation">
+      <span style="font-size:1.4rem">🖼️</span><div style="text-align:left"><div>Libreria foto</div><div style="font-size:.72rem;color:var(--mu2);font-weight:400">Scegli dalla galleria</div></div>
+    </button>
+    <button onclick="ppCloseSourceSheet()" style="width:100%;padding:14px;border-radius:13px;background:rgba(255,255,255,.1);border:none;color:var(--mu2);font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent">Annulla</button>
+  </div>
+</div>
+
 <!-- ── PROGRESS PHOTOS: PRIVACY BANNER ── -->
 <div id="pp-privacy-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;align-items:center;justify-content:center;padding:20px">
   <div style="background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:20px;max-width:360px;width:100%;padding:24px 20px">
@@ -6239,8 +6257,33 @@ function ppTapCard(pos) {
     if (m) { m.style.display='flex'; m._pendingPos=pos; }
     return;
   }
+  ppOpenSourceSheet(pos);
+}
+
+function ppOpenSourceSheet(pos) {
+  var sh = document.getElementById('pp-source-sheet');
+  if (!sh) return;
+  sh._pendingPos = pos;
+  sh.style.display = 'flex';
+}
+
+function ppCloseSourceSheet() {
+  var sh = document.getElementById('pp-source-sheet');
+  if (sh) sh.style.display = 'none';
+}
+
+function ppPickSource(captureVal) {
+  var sh = document.getElementById('pp-source-sheet');
+  var pos = sh && sh._pendingPos;
+  ppCloseSourceSheet();
+  if (!pos) return;
   var inp = document.getElementById('pp-file-'+pos);
-  if (inp) inp.click();
+  if (!inp) return;
+  // Set or remove the capture attribute before triggering
+  if (captureVal) { inp.setAttribute('capture', captureVal); }
+  else { inp.removeAttribute('capture'); }
+  inp.value = ''; // reset so same file can be re-selected
+  inp.click();
 }
 
 function ppAcceptPrivacy() {
@@ -6248,7 +6291,7 @@ function ppAcceptPrivacy() {
   var m = document.getElementById('pp-privacy-modal');
   var pos = m && m._pendingPos;
   if (m) m.style.display='none';
-  if (pos) { var inp=document.getElementById('pp-file-'+pos); if(inp) inp.click(); }
+  if (pos) ppOpenSourceSheet(pos);
 }
 
 function ppFileSelected(pos, input) {
