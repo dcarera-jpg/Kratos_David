@@ -12,7 +12,6 @@
 <link rel="apple-touch-icon" href="/Kratos_David/icons/icon-192.png">
 <title>KRATOS</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
 :root{
   --red:#E8112A;--rdim:rgba(232,17,42,.12);
@@ -6167,40 +6166,27 @@ function loadCompliance(ath) {
 }
 
 // ── PROGRESS PHOTOS ──────────────────────────────────────────
-var _ppFaceApiLoaded = false;
 var _ppState = { files:{}, blobs:{}, previews:{}, today:{} };
 var POSITIONS = ['front','back','left','right'];
 
 async function blurFaceInImage(imageFile) {
-  var bitmap;
-  try { bitmap = await createImageBitmap(imageFile); }
-  catch(e) { return imageFile; }
-  var canvas = document.createElement('canvas');
-  canvas.width = bitmap.width; canvas.height = bitmap.height;
-  var ctx = canvas.getContext('2d');
-  ctx.drawImage(bitmap, 0, 0);
-  if (!_ppFaceApiLoaded) {
-    try {
-      await faceapi.nets.tinyFaceDetector.loadFromUri(
-        'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights');
-      _ppFaceApiLoaded = true;
-    } catch(e) {
-      return new Promise(function(res){ canvas.toBlob(res,'image/jpeg',.85); });
-    }
-  }
-  var detections = [];
-  try { detections = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions()); } catch(e){}
-  detections.forEach(function(det) {
-    var b = det.box, mg = .3;
-    var x = Math.max(0, Math.floor(b.x - b.width*mg));
-    var y = Math.max(0, Math.floor(b.y - b.height*mg));
-    var w = Math.min(canvas.width-x,  Math.ceil(b.width*(1+2*mg)));
-    var h = Math.min(canvas.height-y, Math.ceil(b.height*(1+2*mg)));
-    ctx.save(); ctx.filter='blur(25px)';
-    ctx.drawImage(canvas, x, y, w, h, x, y, w, h);
-    ctx.restore();
-  });
-  return new Promise(function(res){ canvas.toBlob(res,'image/jpeg',.85); });
+  try {
+    var bitmap = await createImageBitmap(imageFile);
+    var canvas = document.createElement('canvas');
+    canvas.width = bitmap.width; canvas.height = bitmap.height;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0);
+    // Blur top 22% of image (where the face is in a standing body photo)
+    // Use a separate canvas to avoid reading/writing the same pixels
+    var faceH = Math.ceil(bitmap.height * 0.22);
+    var tmp = document.createElement('canvas');
+    tmp.width = bitmap.width; tmp.height = faceH;
+    var tc = tmp.getContext('2d');
+    tc.filter = 'blur(18px)';
+    tc.drawImage(bitmap, 0, 0, bitmap.width, faceH, 0, 0, bitmap.width, faceH);
+    ctx.drawImage(tmp, 0, 0);
+    return await new Promise(function(res){ canvas.toBlob(res,'image/jpeg',.85); });
+  } catch(e) { return imageFile; }
 }
 
 async function _ppGenThumb(blob, size) {
