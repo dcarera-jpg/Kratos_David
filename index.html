@@ -6277,13 +6277,16 @@ function ppPickSource(captureVal) {
   var pos = sh && sh._pendingPos;
   ppCloseSourceSheet();
   if (!pos) return;
-  var inp = document.getElementById('pp-file-'+pos);
-  if (!inp) return;
-  // Set or remove the capture attribute before triggering
-  if (captureVal) { inp.setAttribute('capture', captureVal); }
-  else { inp.removeAttribute('capture'); }
-  inp.value = ''; // reset so same file can be re-selected
-  inp.click();
+  // Small delay: let the sheet close animation finish and let iOS
+  // process the DOM attribute change before .click()
+  setTimeout(function() {
+    var inp = document.getElementById('pp-file-'+pos);
+    if (!inp) return;
+    if (captureVal) { inp.setAttribute('capture', captureVal); }
+    else { inp.removeAttribute('capture'); }
+    inp.value = '';
+    inp.click();
+  }, 80);
 }
 
 function ppAcceptPrivacy() {
