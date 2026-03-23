@@ -1162,10 +1162,10 @@ select.inp{cursor:pointer}
           <div class="pp-pos-card" id="pp-card-right" onclick="ppTapCard('right')"><span class="pp-pos-icon">📷</span><span class="pp-pos-lbl">Right</span></div>
         </div>
         <!-- Hidden file inputs -->
-        <input type="file" id="pp-file-front" accept="image/*" capture="environment" style="display:none" onchange="ppFileSelected('front',this)">
-        <input type="file" id="pp-file-back"  accept="image/*" capture="environment" style="display:none" onchange="ppFileSelected('back',this)">
-        <input type="file" id="pp-file-left"  accept="image/*" capture="environment" style="display:none" onchange="ppFileSelected('left',this)">
-        <input type="file" id="pp-file-right" accept="image/*" capture="environment" style="display:none" onchange="ppFileSelected('right',this)">
+        <input type="file" id="pp-file-front" accept="image/*" style="display:none" onchange="ppFileSelected('front',this)">
+        <input type="file" id="pp-file-back"  accept="image/*" style="display:none" onchange="ppFileSelected('back',this)">
+        <input type="file" id="pp-file-left"  accept="image/*" style="display:none" onchange="ppFileSelected('left',this)">
+        <input type="file" id="pp-file-right" accept="image/*" style="display:none" onchange="ppFileSelected('right',this)">
         <!-- Weight + Notes -->
         <div style="display:flex;gap:8px;margin-bottom:10px">
           <input class="inp" id="pp-weight" type="number" step=".1" placeholder="Weight kg" inputmode="decimal" style="width:110px;flex-shrink:0">
