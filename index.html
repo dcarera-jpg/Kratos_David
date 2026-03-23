@@ -2353,6 +2353,7 @@ function openAthleteDetail(ath) {
       { label: '&#9998; Edit Program', sub: 'Assign or modify mesocycle', cls: 'primary', fn: function(){ openAssignModal(ath); } },
       { label: '&#128172; Send Message', sub: 'Direct message to athlete', cls: '', fn: function(){ asv('msgs'); setTimeout(function(){ var c=document.querySelector('#amsg-list .card-head'); if(c) c.click(); },300); } },
       { label: '&#128065; View Progress', sub: 'Logbook & PRs', cls: '', fn: function(){ openAthleteVista(ath); } },
+      { label: '&#128247; Progress Photos', sub: 'View & comment on photos', cls: '', fn: function(){ openAthletePhotos(ath); } },
       { label: '&#128197; Override Day', sub: "Change today's session", cls: '', fn: function(){ openOverridePanel(ath); } },
     ];
     actEl.innerHTML = '';
@@ -3227,6 +3228,89 @@ function showResetMsg(text,ok) {
 
 // ── CREATE ATHLETE ────────────────────────────────────────────
 // ── VISTA ATLETA (coach) ─────────────────────────────────────
+async function openAthletePhotos(ath) {
+  // Reuse the vista overlay for coach photo view
+  var titleEl = document.getElementById('vista-title');
+  var contentEl = document.getElementById('vista-content');
+  var overlay = document.getElementById('vista-overlay');
+  if (!overlay) return;
+  if (titleEl) titleEl.textContent = '📷 ' + (ath.full_name || ath.email || 'Atleta').toUpperCase();
+  if (contentEl) contentEl.innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2)">Caricamento foto…</div>';
+  overlay.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+
+  // Load athlete's photos
+  var r = await sb.from('progress_photos').select('*').eq('athlete_id',ath.id).order('taken_at',{ascending:false}).order('position').catch(function(){ return {data:[]}; });
+  var photos = (r&&r.data)||[];
+  if (!photos.length) {
+    if (contentEl) contentEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--mu2);font-size:.82rem">Nessuna foto caricata ancora.</div>';
+    return;
+  }
+  // Group by date
+  var byDate = {};
+  photos.forEach(function(row){ if(!byDate[row.taken_at]) byDate[row.taken_at]=[]; byDate[row.taken_at].push(row); });
+  var dates = Object.keys(byDate).sort(function(a,b){ return b.localeCompare(a); });
+
+  var html = '<div style="padding:0 14px 20px;display:flex;flex-direction:column;gap:12px">';
+  for (var di=0;di<Math.min(dates.length,10);di++) {
+    var dt = dates[di];
+    var rows = byDate[dt];
+    var wt = rows.find(function(r){ return r.weight_kg; });
+    html += '<div style="background:var(--s2);border:1px solid var(--bdr);border-radius:12px;padding:12px">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+    html += '<span style="font-size:.78rem;font-weight:700">'+dt+'</span>';
+    if (wt) html += '<span style="font-size:.7rem;color:var(--orn)">'+wt.weight_kg+' kg</span>';
+    html += '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px" id="coach-pp-grid-'+di+'">';
+    rows.forEach(function(row){
+      html += '<div style="aspect-ratio:1;border-radius:8px;background:var(--s3);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:var(--mu2);text-transform:uppercase" id="cppt-'+row.id+'">'+row.position+'</div>';
+    });
+    html += '</div>';
+    if (rows[0]&&rows[0].ai_analysis) {
+      html += '<div style="font-size:.68rem;color:#a855f7;background:rgba(168,85,247,.08);border-radius:8px;padding:7px 9px;line-height:1.5;margin-bottom:8px">✨ '+escHtml(rows[0].ai_analysis)+'</div>';
+    }
+    if (rows[0]&&rows[0].notes) {
+      html += '<div style="font-size:.68rem;color:var(--mu2);margin-bottom:8px">'+escHtml(rows[0].notes)+'</div>';
+    }
+    // Comment input for coach
+    html += '<div style="display:flex;gap:6px">';
+    html += '<input class="inp" id="coach-pp-note-'+di+'" placeholder="Aggiungi commento…" style="flex:1;font-size:.72rem">';
+    html += '<button onclick="coachSavePPNote(\''+ath.id+'\',\''+dt+'\','+di+')" style="padding:6px 12px;border-radius:8px;background:var(--s3);border:1px solid var(--bdr);color:var(--txt);font-size:.7rem;cursor:pointer;font-family:inherit;flex-shrink:0">Save</button>';
+    html += '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  if (contentEl) contentEl.innerHTML = html;
+
+  // Load thumbnails async
+  photos.forEach(function(row){
+    if (!row.thumb_url) return;
+    sb.storage.from('progress-photos').createSignedUrl(row.thumb_url, 3600)
+      .then(function(res){
+        var url = res&&res.data&&res.data.signedUrl;
+        var el = document.getElementById('cppt-'+row.id);
+        if (url && el) el.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover">';
+      }).catch(function(){});
+  });
+}
+
+async function coachSavePPNote(athleteId, takenAt, idx) {
+  var inp = document.getElementById('coach-pp-note-'+idx);
+  var note = inp && inp.value.trim();
+  if (!note) return;
+  // Save note as a message to the athlete
+  var ath = athletes && athletes.find(function(a){ return a.id===athleteId; });
+  if (!ath) return;
+  try {
+    await sb.from('messages').insert({
+      sender_id: ME.id, receiver_id: athleteId,
+      content: '📸 Feedback foto '+takenAt+':\n'+note, read: false
+    });
+    inp.value=''; inp.placeholder='✓ Commento inviato!';
+    setTimeout(function(){ inp.placeholder='Aggiungi commento…'; },2000);
+  } catch(e) { inp.placeholder='Errore invio'; }
+}
+
 function openAthleteVista(ath) {
   document.getElementById('vista-title').textContent = '👁 ' + (ath.full_name || ath.email).toUpperCase();
   document.getElementById('vista-content').innerHTML = '<div style="text-align:center;padding:30px;color:var(--mu2)">Loading...</div>';
