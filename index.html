@@ -1148,6 +1148,38 @@ select.inp{cursor:pointer}
         </select>
         <div id="pr-chart-canvas"></div>
       </div>
+
+      <!-- Progress Photos -->
+      <div id="progress-photos-card" style="background:var(--s2);border:1px solid var(--bdr);border-radius:14px;padding:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2)">PROGRESS PHOTOS</div>
+          <button id="pp-compare-btn" onclick="openPhotoComparison()" style="display:none;background:none;border:1px solid rgba(99,102,241,.3);color:#818cf8;border-radius:8px;padding:4px 11px;font-size:.68rem;font-weight:700;cursor:pointer;font-family:inherit">⚖ Compare</button>
+        </div>
+        <!-- 2×2 upload grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div class="pp-pos-card" id="pp-card-front" onclick="ppTapCard('front')"><span class="pp-pos-icon">📷</span><span class="pp-pos-lbl">Front</span></div>
+          <div class="pp-pos-card" id="pp-card-back"  onclick="ppTapCard('back')"><span class="pp-pos-icon">📷</span><span class="pp-pos-lbl">Back</span></div>
+          <div class="pp-pos-card" id="pp-card-left"  onclick="ppTapCard('left')"><span class="pp-pos-icon">📷</span><span class="pp-pos-lbl">Left</span></div>
+          <div class="pp-pos-card" id="pp-card-right" onclick="ppTapCard('right')"><span class="pp-pos-icon">📷</span><span class="pp-pos-lbl">Right</span></div>
+        </div>
+        <!-- Hidden file inputs -->
+        <input type="file" id="pp-file-front" accept="image/*" capture="environment" style="display:none" onchange="ppFileSelected('front',this)">
+        <input type="file" id="pp-file-back"  accept="image/*" capture="environment" style="display:none" onchange="ppFileSelected('back',this)">
+        <input type="file" id="pp-file-left"  accept="image/*" capture="environment" style="display:none" onchange="ppFileSelected('left',this)">
+        <input type="file" id="pp-file-right" accept="image/*" capture="environment" style="display:none" onchange="ppFileSelected('right',this)">
+        <!-- Weight + Notes -->
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input class="inp" id="pp-weight" type="number" step=".1" placeholder="Weight kg" inputmode="decimal" style="width:110px;flex-shrink:0">
+          <input class="inp" id="pp-notes" placeholder="Notes (optional)" style="flex:1">
+        </div>
+        <!-- Status / Upload button -->
+        <div id="pp-status" style="display:none;font-size:.72rem;padding:7px 10px;border-radius:8px;background:var(--s3);margin-bottom:8px"></div>
+        <button id="pp-upload-btn" onclick="ppUploadAll()" style="display:none;width:100%;padding:11px;border-radius:10px;background:var(--orn);border:none;color:#000;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent">Upload photos</button>
+        <button id="pp-ai-btn" onclick="analyzeProgressPhotos()" style="display:none;width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;color:#fff;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;margin-top:8px">✨ Get AI Analysis</button>
+        <!-- Timeline -->
+        <div id="pp-timeline" style="margin-top:14px"></div>
+      </div>
+
     </div>
   </div>
 
@@ -1581,6 +1613,66 @@ select.inp{cursor:pointer}
       &#128465; Reset completo<br><span style="font-size:.68rem;font-weight:400;opacity:.8">Rimuove programma + cancella tutto il logbook</span>
     </button>
     <div id="reset-msg" style="display:none;font-size:.76rem;padding:8px 12px;border-radius:8px;margin-top:10px"></div>
+  </div>
+</div>
+
+<!-- ── PROGRESS PHOTOS: PRIVACY BANNER ── -->
+<div id="pp-privacy-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#1a1a1a;border:1px solid rgba(255,255,255,.1);border-radius:20px;max-width:360px;width:100%;padding:24px 20px">
+    <div style="font-size:2rem;text-align:center;margin-bottom:12px">🔒</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.08em;text-align:center;margin-bottom:12px">PRIVACY FOTO</div>
+    <div style="font-size:.78rem;color:var(--mu2);line-height:1.6;margin-bottom:20px;text-align:center">
+      Le tue foto sono <strong style="color:var(--txt)">private</strong> e accessibili solo a te e al tuo coach.<br>
+      Non vengono mai condivise con terzi.<br>
+      Il viso viene <strong style="color:var(--orn)">automaticamente oscurato</strong> prima del caricamento.
+    </div>
+    <button onclick="ppAcceptPrivacy()" style="width:100%;padding:13px;border-radius:11px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer">Ho capito, procedi</button>
+  </div>
+</div>
+
+<!-- ── PROGRESS PHOTOS: COMPARISON MODAL ── -->
+<div id="pp-compare-modal" style="display:none;position:fixed;inset:0;background:#0d0d0d;z-index:300;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--bdr);flex-shrink:0">
+    <button onclick="closePPCompare()" style="background:none;border:none;color:var(--mu);font-size:1.2rem;cursor:pointer;padding:4px">&#8592;</button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.08em;flex:1">BEFORE / AFTER</div>
+  </div>
+  <!-- Controls -->
+  <div style="padding:10px 16px;display:flex;gap:8px;flex-shrink:0;overflow-x:auto">
+    <select id="pp-cmp-date-a" class="inp" style="flex:1;font-size:.72rem" onchange="ppUpdateComparison()"><option>—</option></select>
+    <select id="pp-cmp-date-b" class="inp" style="flex:1;font-size:.72rem" onchange="ppUpdateComparison()"><option>—</option></select>
+  </div>
+  <div style="padding:0 16px 6px;display:flex;gap:6px;flex-shrink:0">
+    <button class="filter-chip on" data-cpos="front"  onclick="ppSetCmpPos(this,'front')"  style="font-size:.65rem;padding:4px 10px">Front</button>
+    <button class="filter-chip"    data-cpos="back"   onclick="ppSetCmpPos(this,'back')"   style="font-size:.65rem;padding:4px 10px">Back</button>
+    <button class="filter-chip"    data-cpos="left"   onclick="ppSetCmpPos(this,'left')"   style="font-size:.65rem;padding:4px 10px">Left</button>
+    <button class="filter-chip"    data-cpos="right"  onclick="ppSetCmpPos(this,'right')"  style="font-size:.65rem;padding:4px 10px">Right</button>
+  </div>
+  <!-- Slider -->
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:0 16px 20px">
+    <div class="pp-compare-wrap" id="pp-cmp-wrap">
+      <img id="pp-cmp-before" src="" alt="before">
+      <img id="pp-cmp-after"  src="" alt="after" class="pp-compare-after">
+      <div class="pp-compare-line" id="pp-cmp-line"></div>
+      <div class="pp-compare-handle" id="pp-cmp-handle">◀▶</div>
+      <input type="range" class="pp-compare-range" id="pp-cmp-range" min="0" max="100" value="50"
+             oninput="ppSliderMove(this.value)">
+    </div>
+  </div>
+  <div style="padding:0 16px 16px;display:flex;justify-content:space-between;font-size:.68rem;color:var(--mu2);flex-shrink:0">
+    <span id="pp-cmp-lbl-a">Before</span>
+    <span id="pp-cmp-lbl-b">After</span>
+  </div>
+</div>
+
+<!-- ── PROGRESS PHOTOS: AI RESULT MODAL ── -->
+<div id="pp-ai-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;align-items:flex-end;justify-content:center">
+  <div onclick="event.stopPropagation()" style="background:#191919;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.08);width:100%;max-width:480px;padding:20px 18px 36px;max-height:75vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.08em;color:#a855f7">✨ AI ANALYSIS</div>
+      <button onclick="document.getElementById('pp-ai-modal').style.display='none'" style="background:none;border:none;color:var(--mu);font-size:1.1rem;cursor:pointer">&#10005;</button>
+    </div>
+    <div id="pp-ai-result" style="font-size:.8rem;color:var(--mu2);line-height:1.65;white-space:pre-wrap"></div>
+    <button id="pp-ai-share-btn" onclick="ppShareAnalysis()" style="display:none;width:100%;padding:10px;border-radius:9px;background:var(--s3);border:1px solid var(--bdr);color:var(--txt);font-family:inherit;font-size:.78rem;cursor:pointer;margin-top:14px">&#128172; Condividi con coach</button>
   </div>
 </div>
 
@@ -4510,7 +4602,7 @@ function vsv(name) {
   if(v){ v.style.display='flex'; v.classList.add('on'); }
   if(b) b.classList.add('on');
   if(name==='coach') { athLoadMessages(); switchCoachPanel('msgs'); }
-  if(name==='stats') loadPRChart();
+  if(name==='stats') { loadPRChart(); loadProgressPhotos(); }
   if(name==='settings') initExStyleSettings();
   if(name==='me') { renderMeView(); loadAthleteReview(); }
   if(name==='program') renderProgram();
@@ -6061,6 +6153,243 @@ async function _ppSignedUrl(path, secs) {
   secs = secs || 3600;
   var r = await sb.storage.from('progress-photos').createSignedUrl(path, secs);
   return r.data && r.data.signedUrl ? r.data.signedUrl : null;
+}
+
+// ── PROGRESS PHOTOS UI ───────────────────────────────────────
+var _ppComparePos = 'front';
+var _ppCompareDates = [];      // sorted unique dates from DB
+var _ppAllPhotos = [];         // all rows from progress_photos
+var _ppLastAnalyzedId = null;  // row id we saved analysis to
+
+function ppTapCard(pos) {
+  if (!localStorage.getItem('kratos_photos_consent')) {
+    var m = document.getElementById('pp-privacy-modal');
+    if (m) { m.style.display='flex'; m._pendingPos=pos; }
+    return;
+  }
+  var inp = document.getElementById('pp-file-'+pos);
+  if (inp) inp.click();
+}
+
+function ppAcceptPrivacy() {
+  localStorage.setItem('kratos_photos_consent','1');
+  var m = document.getElementById('pp-privacy-modal');
+  var pos = m && m._pendingPos;
+  if (m) m.style.display='none';
+  if (pos) { var inp=document.getElementById('pp-file-'+pos); if(inp) inp.click(); }
+}
+
+function ppFileSelected(pos, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  _ppState.files[pos] = file;
+  // Show spinner on card while blurring
+  var card = document.getElementById('pp-card-'+pos);
+  if (card) {
+    card.innerHTML = '<span style="font-size:1.1rem;color:var(--mu2)">⏳</span><span class="pp-pos-lbl">Blurring…</span>';
+    card.className = 'pp-pos-card';
+  }
+  blurFaceInImage(file).then(function(blob){
+    _ppState.blobs[pos] = blob;
+    var url = URL.createObjectURL(blob);
+    if (_ppState.previews[pos]) URL.revokeObjectURL(_ppState.previews[pos]);
+    _ppState.previews[pos] = url;
+    if (card) {
+      card.className = 'pp-pos-card has-preview';
+      card.innerHTML =
+        '<img src="'+url+'" alt="'+pos+'">' +
+        '<span class="pp-pos-badge new">NEW</span>' +
+        '<button class="pp-retake" onclick="event.stopPropagation();ppRetake(\''+pos+'\')">↺ Retake</button>';
+    }
+    _ppRefreshButtons();
+  }).catch(function(e){
+    if (card) { card.innerHTML='<span class="pp-pos-icon">⚠</span><span class="pp-pos-lbl" style="color:var(--red)">Error</span>'; }
+  });
+  input.value='';
+}
+
+function ppRetake(pos) {
+  _ppState.files[pos] = null; _ppState.blobs[pos] = null;
+  if (_ppState.previews[pos]) { URL.revokeObjectURL(_ppState.previews[pos]); _ppState.previews[pos]=null; }
+  var card = document.getElementById('pp-card-'+pos);
+  if (card) { card.className='pp-pos-card'; card.innerHTML='<span class="pp-pos-icon">📷</span><span class="pp-pos-lbl">'+pos.charAt(0).toUpperCase()+pos.slice(1)+'</span>'; }
+  _ppRefreshButtons();
+}
+
+function _ppRefreshButtons() {
+  var hasPending = POSITIONS.some(function(p){ return !!_ppState.blobs[p]; });
+  var uploadBtn = document.getElementById('pp-upload-btn');
+  if (uploadBtn) {
+    var count = POSITIONS.filter(function(p){ return !!_ppState.blobs[p]; }).length;
+    uploadBtn.style.display = hasPending ? 'block' : 'none';
+    uploadBtn.textContent = 'Upload '+count+' photo'+(count!==1?'s':'');
+  }
+}
+
+async function ppUploadAll() {
+  var pending = POSITIONS.filter(function(p){ return !!_ppState.blobs[p]; });
+  if (!pending.length) return;
+  var btn = document.getElementById('pp-upload-btn');
+  var statusEl = document.getElementById('pp-status');
+  if (btn) { btn.disabled=true; btn.textContent='Uploading…'; }
+  if (statusEl) { statusEl.style.display='block'; statusEl.textContent='Caricamento in corso…'; statusEl.style.color='var(--mu2)'; }
+  var errors = [];
+  for (var i=0;i<pending.length;i++) {
+    var pos = pending[i];
+    try {
+      var result = await uploadProgressPhoto(pos, _ppState.files[pos]);
+      _ppState.today[pos] = result;
+      // Refresh card to "uploaded" state
+      var card = document.getElementById('pp-card-'+pos);
+      var thumbUrl = _ppState.previews[pos];
+      if (card) {
+        card.className='pp-pos-card uploaded';
+        card.innerHTML='<img src="'+thumbUrl+'" alt="'+pos+'"><span class="pp-pos-badge ok">✓</span>';
+      }
+    } catch(e) { errors.push(pos+': '+(e.message||'error')); }
+  }
+  if (btn) { btn.disabled=false; }
+  if (errors.length) {
+    if (statusEl) { statusEl.textContent='Errori: '+errors.join(', '); statusEl.style.color='var(--red)'; }
+  } else {
+    if (statusEl) { statusEl.textContent='✓ Foto caricate!'; statusEl.style.color='var(--grn)'; }
+    // Clear pending state
+    POSITIONS.forEach(function(p){ _ppState.files[p]=null; _ppState.blobs[p]=null; });
+    if (btn) btn.style.display='none';
+    // Show AI button if all 4 positions uploaded today
+    var uploadedToday = Object.keys(_ppState.today);
+    var aiBtn = document.getElementById('pp-ai-btn');
+    if (aiBtn) aiBtn.style.display = uploadedToday.length===4 ? 'block' : 'none';
+    setTimeout(function(){ if(statusEl) statusEl.style.display='none'; loadProgressPhotos(); }, 1200);
+  }
+}
+
+async function loadProgressPhotos() {
+  if (!ME) return;
+  var r = await sb.from('progress_photos').select('*').eq('athlete_id',ME.id).order('taken_at',{ascending:false}).order('position');
+  if (r.error || !r.data) return;
+  _ppAllPhotos = r.data;
+  // Group by taken_at
+  var byDate = {};
+  r.data.forEach(function(row){ if(!byDate[row.taken_at]) byDate[row.taken_at]=[]; byDate[row.taken_at].push(row); });
+  var dates = Object.keys(byDate).sort(function(a,b){ return b.localeCompare(a); });
+  _ppCompareDates = dates;
+  // Today's photos → mark cards as uploaded
+  var today = new Date().toISOString().split('T')[0];
+  if (byDate[today]) {
+    byDate[today].forEach(function(row){
+      _ppState.today[row.position] = {id:row.id, photo_path:row.photo_url, thumb_path:row.thumb_url, taken_at:row.taken_at};
+    });
+    var aiBtn = document.getElementById('pp-ai-btn');
+    if (aiBtn) aiBtn.style.display = byDate[today].length===4?'block':'none';
+  }
+  // Compare button
+  var cmpBtn = document.getElementById('pp-compare-btn');
+  if (cmpBtn) cmpBtn.style.display = dates.length>=2?'inline-block':'none';
+  // Render timeline
+  var tlEl = document.getElementById('pp-timeline');
+  if (!tlEl) return;
+  if (!dates.length) { tlEl.innerHTML='<div style="font-size:.72rem;color:var(--mu2);text-align:center;padding:16px">Nessuna foto ancora — inizia scattando la prima 📸</div>'; return; }
+  tlEl.innerHTML='<div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;color:var(--mu2);margin-bottom:8px;text-transform:uppercase">History</div>';
+  // Only generate signed URLs for first 5 dates to avoid too many requests
+  var visibleDates = dates.slice(0,5);
+  for (var di=0;di<visibleDates.length;di++) {
+    var dt = visibleDates[di];
+    var rows = byDate[dt];
+    var entry = document.createElement('div'); entry.className='pp-tl-entry';
+    var meta = document.createElement('div');
+    meta.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:4px';
+    var wt = rows.find(function(r){ return r.weight_kg; });
+    meta.innerHTML='<span style="font-size:.74rem;font-weight:700">'+dt+'</span>'+(wt?'<span style="font-size:.68rem;color:var(--orn)">'+wt.weight_kg+' kg</span>':'');
+    entry.appendChild(meta);
+    if (rows[0]&&rows[0].notes) {
+      var notesDiv=document.createElement('div');
+      notesDiv.style.cssText='font-size:.68rem;color:var(--mu2);margin-bottom:4px';
+      notesDiv.textContent=rows[0].notes;
+      entry.appendChild(notesDiv);
+    }
+    var grid=document.createElement('div'); grid.className='pp-tl-grid';
+    var posMap = {}; rows.forEach(function(r){ posMap[r.position]=r; });
+    for (var pi=0;pi<4;pi++) {
+      var p=POSITIONS[pi];
+      var thumb=document.createElement('div'); thumb.className='pp-tl-thumb';
+      var row=posMap[p];
+      if (row && row.thumb_url) {
+        thumb.innerHTML='<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:var(--mu2);text-transform:uppercase">'+p+'</div>';
+        // Load signed URL async
+        (function(el,path,rowData,dt,p){
+          _ppSignedUrl(path).then(function(url){
+            if(url) el.innerHTML='<img src="'+url+'" alt="'+p+'">';
+          }).catch(function(){});
+        })(thumb, row.thumb_url, row, dt, p);
+      } else {
+        thumb.innerHTML='<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:var(--s4);text-transform:uppercase">'+p+'</div>';
+      }
+      grid.appendChild(thumb);
+    }
+    entry.appendChild(grid);
+    if (rows[0]&&rows[0].ai_analysis) {
+      var aDiv=document.createElement('div');
+      aDiv.style.cssText='font-size:.68rem;color:#a855f7;margin-top:4px;background:rgba(168,85,247,.08);border-radius:8px;padding:6px 8px;line-height:1.5';
+      aDiv.textContent='✨ '+rows[0].ai_analysis.slice(0,120)+(rows[0].ai_analysis.length>120?'…':'');
+      entry.appendChild(aDiv);
+    }
+    tlEl.appendChild(entry);
+  }
+}
+
+// ── COMPARISON SLIDER ─────────────────────────────────────────
+function openPhotoComparison() {
+  var m = document.getElementById('pp-compare-modal');
+  if (!m) return;
+  m.style.display='flex'; m.style.flexDirection='column';
+  // Populate date selects
+  var selA = document.getElementById('pp-cmp-date-a');
+  var selB = document.getElementById('pp-cmp-date-b');
+  if (selA && selB) {
+    var opts = _ppCompareDates.map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+    selA.innerHTML = opts; selB.innerHTML = opts;
+    if (_ppCompareDates.length >= 2) selB.value = _ppCompareDates[1];
+  }
+  document.getElementById('pp-cmp-range').value=50;
+  ppSliderMove(50);
+  ppUpdateComparison();
+}
+function closePPCompare() {
+  var m=document.getElementById('pp-compare-modal'); if(m) m.style.display='none';
+}
+function ppSetCmpPos(btn, pos) {
+  _ppComparePos=pos;
+  document.querySelectorAll('[data-cpos]').forEach(function(b){ b.classList.remove('on'); });
+  btn.classList.add('on');
+  ppUpdateComparison();
+}
+function ppSliderMove(val) {
+  var pct = val+'%';
+  var after=document.getElementById('pp-cmp-after');
+  var line=document.getElementById('pp-cmp-line');
+  var handle=document.getElementById('pp-cmp-handle');
+  if(after) after.style.clipPath='inset(0 '+(100-val)+'% 0 0)';
+  if(line) line.style.left=pct;
+  if(handle) handle.style.left=pct;
+}
+async function ppUpdateComparison() {
+  var dateA=document.getElementById('pp-cmp-date-a').value;
+  var dateB=document.getElementById('pp-cmp-date-b').value;
+  var pos=_ppComparePos;
+  var lblA=document.getElementById('pp-cmp-lbl-a');
+  var lblB=document.getElementById('pp-cmp-lbl-b');
+  if(lblA) lblA.textContent=dateA||'Before';
+  if(lblB) lblB.textContent=dateB||'After';
+  // Find rows
+  var rowA=_ppAllPhotos.find(function(r){ return r.taken_at===dateA&&r.position===pos; });
+  var rowB=_ppAllPhotos.find(function(r){ return r.taken_at===dateB&&r.position===pos; });
+  var imgA=document.getElementById('pp-cmp-before');
+  var imgB=document.getElementById('pp-cmp-after');
+  if(imgA) imgA.src='';
+  if(imgB) imgB.src='';
+  if(rowA&&rowA.photo_url) { _ppSignedUrl(rowA.photo_url).then(function(u){ if(u&&imgA) imgA.src=u; }); }
+  if(rowB&&rowB.photo_url) { _ppSignedUrl(rowB.photo_url).then(function(u){ if(u&&imgB) imgB.src=u; }); }
 }
 
 // ── PR CHART (athlete stats view) ────────────────────────────
