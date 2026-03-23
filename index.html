@@ -6224,11 +6224,14 @@ async function uploadProgressPhoto(position, imageFile) {
   if (r2.error) throw r2.error;
   var wt = parseFloat((document.getElementById('pp-weight')||{}).value)||null;
   var nt = ((document.getElementById('pp-notes')||{}).value||'').trim()||null;
-  var r3 = await sb.from('progress_photos').upsert({
+  // Delete existing row for same athlete+position+date before inserting (no unique constraint)
+  await sb.from('progress_photos').delete()
+    .eq('athlete_id', ME.id).eq('position', position).eq('taken_at', takenAt);
+  var r3 = await sb.from('progress_photos').insert({
     athlete_id: ME.id, coach_id: myProfile&&myProfile.coach_id||null,
     position: position, photo_url: photoPath, thumb_url: thumbPath,
     taken_at: takenAt, weight_kg: wt, notes: nt
-  },{onConflict:'athlete_id,position,taken_at'}).select().single();
+  }).select().single();
   if (r3.error) throw r3.error;
   return {id: r3.data.id, photo_path: photoPath, thumb_path: thumbPath, taken_at: takenAt};
 }
