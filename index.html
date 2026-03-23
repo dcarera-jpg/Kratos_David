@@ -12,6 +12,7 @@
 <link rel="apple-touch-icon" href="/Kratos_David/icons/icon-192.png">
 <title>KRATOS</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
 :root{
   --red:#E8112A;--rdim:rgba(232,17,42,.12);
@@ -292,6 +293,27 @@ select.inp{cursor:pointer}
 .tl-card-sub{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .tl-chip{font-size:.58rem;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:100px;background:var(--s3);color:var(--mu2)}
 .tl-start-btn{padding:4px 11px;border-radius:8px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:.7rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+/* ── PROGRESS PHOTOS ── */
+.pp-pos-card{aspect-ratio:1;border-radius:12px;border:2px dashed var(--bdr);background:var(--s3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;position:relative;overflow:hidden;transition:border-color .15s}
+.pp-pos-card.has-preview{border-style:solid;border-color:var(--orn)}
+.pp-pos-card.uploaded{border-style:solid;border-color:var(--grn)}
+.pp-pos-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:10px}
+.pp-pos-lbl{font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mu2);position:relative;z-index:1}
+.pp-pos-icon{font-size:1.3rem;position:relative;z-index:1}
+.pp-pos-badge{position:absolute;top:5px;right:5px;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:100px;z-index:2}
+.pp-pos-badge.ok{background:var(--grn);color:#000}
+.pp-pos-badge.new{background:var(--orn);color:#000}
+.pp-retake{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;border:none;font-family:inherit;font-size:.6rem;font-weight:700;padding:5px;cursor:pointer;letter-spacing:.06em;z-index:3}
+.pp-tl-entry{border-radius:12px;border:1px solid var(--bdr);background:var(--s2);padding:10px;margin-bottom:8px}
+.pp-tl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:8px 0}
+.pp-tl-thumb{aspect-ratio:1;border-radius:8px;background:var(--s3);overflow:hidden;cursor:pointer}
+.pp-tl-thumb img{width:100%;height:100%;object-fit:cover}
+.pp-compare-wrap{position:relative;width:100%;max-width:340px;margin:0 auto;aspect-ratio:.75;border-radius:12px;overflow:hidden;background:#111;touch-action:none}
+.pp-compare-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pp-compare-after{clip-path:inset(0 50% 0 0)}
+.pp-compare-line{position:absolute;top:0;bottom:0;left:50%;width:2px;background:#fff;pointer-events:none;z-index:3;transform:translateX(-50%)}
+.pp-compare-handle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#111;pointer-events:none;z-index:3;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.pp-compare-range{position:absolute;inset:0;opacity:0;cursor:col-resize;width:100%;height:100%;z-index:4;-webkit-appearance:none}
 .tl-skip-banner{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:10px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.3);border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .tl-skip-banner:active{opacity:.7}
 .tl-skip-text{font-size:.74rem;color:#f59e0b;font-weight:600;line-height:1.4}
@@ -5966,6 +5988,79 @@ function loadCompliance(ath) {
           }
         }).catch(function(){});
     }).catch(function(){});
+}
+
+// ── PROGRESS PHOTOS ──────────────────────────────────────────
+var _ppFaceApiLoaded = false;
+var _ppState = { files:{}, blobs:{}, previews:{}, today:{} };
+var POSITIONS = ['front','back','left','right'];
+
+async function blurFaceInImage(imageFile) {
+  var bitmap;
+  try { bitmap = await createImageBitmap(imageFile); }
+  catch(e) { return imageFile; }
+  var canvas = document.createElement('canvas');
+  canvas.width = bitmap.width; canvas.height = bitmap.height;
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(bitmap, 0, 0);
+  if (!_ppFaceApiLoaded) {
+    try {
+      await faceapi.nets.tinyFaceDetector.loadFromUri(
+        'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights');
+      _ppFaceApiLoaded = true;
+    } catch(e) {
+      return new Promise(function(res){ canvas.toBlob(res,'image/jpeg',.85); });
+    }
+  }
+  var detections = [];
+  try { detections = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions()); } catch(e){}
+  detections.forEach(function(det) {
+    var b = det.box, mg = .3;
+    var x = Math.max(0, Math.floor(b.x - b.width*mg));
+    var y = Math.max(0, Math.floor(b.y - b.height*mg));
+    var w = Math.min(canvas.width-x,  Math.ceil(b.width*(1+2*mg)));
+    var h = Math.min(canvas.height-y, Math.ceil(b.height*(1+2*mg)));
+    ctx.save(); ctx.filter='blur(25px)';
+    ctx.drawImage(canvas, x, y, w, h, x, y, w, h);
+    ctx.restore();
+  });
+  return new Promise(function(res){ canvas.toBlob(res,'image/jpeg',.85); });
+}
+
+async function _ppGenThumb(blob, size) {
+  var bm = await createImageBitmap(blob);
+  var sw = Math.min(bm.width, bm.height), sh = sw;
+  var sx = (bm.width-sw)/2, sy = (bm.height-sh)/2;
+  var c = document.createElement('canvas'); c.width=size; c.height=size;
+  c.getContext('2d').drawImage(bm, sx, sy, sw, sh, 0, 0, size, size);
+  return new Promise(function(res){ c.toBlob(res,'image/jpeg',.75); });
+}
+
+async function uploadProgressPhoto(position, imageFile) {
+  var takenAt = new Date().toISOString().split('T')[0];
+  var base = ME.id+'/'+takenAt+'_'+position;
+  var photoPath = base+'.jpg', thumbPath = ME.id+'/thumbs/'+takenAt+'_'+position+'.jpg';
+  var blurred = await blurFaceInImage(imageFile);
+  var thumb   = await _ppGenThumb(blurred, 300);
+  var r1 = await sb.storage.from('progress-photos').upload(photoPath, blurred, {contentType:'image/jpeg',upsert:true});
+  if (r1.error) throw r1.error;
+  var r2 = await sb.storage.from('progress-photos').upload(thumbPath, thumb, {contentType:'image/jpeg',upsert:true});
+  if (r2.error) throw r2.error;
+  var wt = parseFloat((document.getElementById('pp-weight')||{}).value)||null;
+  var nt = ((document.getElementById('pp-notes')||{}).value||'').trim()||null;
+  var r3 = await sb.from('progress_photos').upsert({
+    athlete_id: ME.id, coach_id: myProfile&&myProfile.coach_id||null,
+    position: position, photo_url: photoPath, thumb_url: thumbPath,
+    taken_at: takenAt, weight_kg: wt, notes: nt
+  },{onConflict:'athlete_id,position,taken_at'}).select().single();
+  if (r3.error) throw r3.error;
+  return {id: r3.data.id, photo_path: photoPath, thumb_path: thumbPath, taken_at: takenAt};
+}
+
+async function _ppSignedUrl(path, secs) {
+  secs = secs || 3600;
+  var r = await sb.storage.from('progress-photos').createSignedUrl(path, secs);
+  return r.data && r.data.signedUrl ? r.data.signedUrl : null;
 }
 
 // ── PR CHART (athlete stats view) ────────────────────────────
