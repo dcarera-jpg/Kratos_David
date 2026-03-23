@@ -6392,6 +6392,107 @@ async function ppUpdateComparison() {
   if(rowB&&rowB.photo_url) { _ppSignedUrl(rowB.photo_url).then(function(u){ if(u&&imgB) imgB.src=u; }); }
 }
 
+// ── AI PROGRESS ANALYSIS ─────────────────────────────────────
+async function analyzeProgressPhotos() {
+  var aiBtn = document.getElementById('pp-ai-btn');
+  var modal = document.getElementById('pp-ai-modal');
+  var resultEl = document.getElementById('pp-ai-result');
+  var shareBtn = document.getElementById('pp-ai-share-btn');
+  if (!modal || !resultEl) return;
+
+  // Find today's 4 photos
+  var today = new Date().toISOString().split('T')[0];
+  var todayRows = _ppAllPhotos.filter(function(r){ return r.taken_at===today; });
+  if (todayRows.length < 4) {
+    todayRows = _ppAllPhotos.filter(function(r,i,a){
+      var maxDate = a.reduce(function(m,x){ return x.taken_at>m?x.taken_at:m; },'');
+      return r.taken_at===maxDate;
+    });
+  }
+  if (!todayRows.length) return;
+
+  modal.style.display='flex';
+  resultEl.textContent='⏳ Analisi in corso…';
+  if (shareBtn) shareBtn.style.display='none';
+  if (aiBtn) { aiBtn.disabled=true; aiBtn.textContent='⏳ Analizzando…'; }
+
+  try {
+    // Load photos as base64 (use photo_url path → signed URL → fetch → base64)
+    var images = [];
+    for (var i=0;i<todayRows.length;i++) {
+      var row = todayRows[i];
+      try {
+        var signedUrl = await _ppSignedUrl(row.photo_url);
+        if (!signedUrl) continue;
+        var resp = await fetch(signedUrl);
+        var buf = await resp.arrayBuffer();
+        var bytes = new Uint8Array(buf);
+        var bin=''; var chunk=8192;
+        for(var j=0;j<bytes.length;j+=chunk) bin+=String.fromCharCode.apply(null,bytes.subarray(j,j+chunk));
+        images.push({ position: row.position, b64: btoa(bin) });
+      } catch(e) {}
+    }
+
+    var athleteName = (myProfile&&myProfile.full_name)||'atleta';
+    var weight = todayRows.find(function(r){return r.weight_kg;});
+    var context = 'Atleta: '+athleteName+(weight?' · Peso: '+weight.weight_kg+' kg':'')+'. Foto disponibili: '+images.map(function(i){return i.position;}).join(', ')+'.';
+
+    // Build messages with images
+    var contentParts = images.map(function(img){
+      return { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:img.b64 } };
+    });
+    contentParts.push({ type:'text', text:context+'\n\nAnalizza queste foto progress.' });
+
+    var r = await fetch(WORKER_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        system: 'Sei un coach fitness professionista. Analizza queste foto progress di un atleta. Fornisci feedback su: postura e simmetria, sviluppo muscolare visibile, punti di forza, aree di miglioramento. Tono professionale e motivante. Max 150 parole in italiano.',
+        messages: [{ role:'user', content: contentParts }]
+      })
+    });
+    var data = await r.json();
+    var analysis = data.content&&data.content[0]&&data.content[0].text ? data.content[0].text.trim() : 'Nessuna risposta.';
+
+    resultEl.textContent = analysis;
+    if (shareBtn) shareBtn.style.display='block';
+    shareBtn.dataset.analysis = analysis;
+
+    // Save analysis to the first row of today
+    _ppLastAnalyzedId = todayRows[0].id;
+    await sb.from('progress_photos').update({ai_analysis:analysis}).eq('athlete_id',ME.id).eq('taken_at',today);
+    // Update local cache
+    _ppAllPhotos.forEach(function(r){ if(r.taken_at===today) r.ai_analysis=analysis; });
+
+  } catch(e) {
+    resultEl.textContent = 'Errore: '+e.message;
+  } finally {
+    if (aiBtn) { aiBtn.disabled=false; aiBtn.textContent='✨ Get AI Analysis'; }
+  }
+}
+
+async function ppShareAnalysis() {
+  var shareBtn = document.getElementById('pp-ai-share-btn');
+  var analysis = shareBtn && shareBtn.dataset.analysis;
+  if (!analysis) return;
+  var today = new Date().toISOString().split('T')[0];
+  var msg = '📸 AI Progress Analysis — '+today+':\n\n'+analysis;
+  // Send as coach message (same pattern as existing coach messages)
+  if (myProfile && myProfile.coach_id) {
+    try {
+      await sb.from('messages').insert({
+        sender_id: ME.id, receiver_id: myProfile.coach_id,
+        content: msg, read: false
+      });
+      shareBtn.textContent='✓ Inviato al coach!';
+      shareBtn.style.color='var(--grn)';
+      setTimeout(function(){ document.getElementById('pp-ai-modal').style.display='none'; },1500);
+    } catch(e) { shareBtn.textContent='Errore invio'; }
+  }
+}
+
 // ── PR CHART (athlete stats view) ────────────────────────────
 var prHistoryCache = {};
 
