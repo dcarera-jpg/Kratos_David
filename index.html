@@ -5444,6 +5444,30 @@ function buildExItemProA(se, dayData) {
   return item;
 }
 
+// ── SHARED: Video / Demo button ───────────────────────────────
+function buildVideoButton(ex, se, dayData) {
+  var log = logbookCache[dayData.id+'_'+se.id] || {};
+  var altExId = log.alt_exercise_id || null;
+  var videoExId = altExId || ex.id;
+  var btn = document.createElement('button');
+  if (ex.video_url || altExId) {
+    btn.textContent = '🎬';
+    btn.setAttribute('style', 'background:none;border:1px solid rgba(245,158,11,.3);color:var(--orn);border-radius:8px;padding:5px 9px;font-size:.8rem;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation');
+    (function(eid){
+      btn.addEventListener('click', function(e){ e.stopPropagation(); openVideoModal(eid); });
+      btn.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openVideoModal(eid); }, {passive:false});
+    })(videoExId);
+  } else {
+    btn.innerHTML = '&#9654;';
+    btn.setAttribute('style', 'background:none;border:1px solid rgba(99,102,241,.3);color:#818cf8;border-radius:8px;padding:5px 9px;font-size:.72rem;font-weight:700;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation');
+    (function(exData, seData){
+      btn.addEventListener('click', function(e){ e.stopPropagation(); openExerciseDemo(exData, seData); });
+      btn.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openExerciseDemo(exData, seData); }, {passive:false});
+    })(ex, se);
+  }
+  return btn;
+}
+
 // ── STYLE SIMPLE ─────────────────────────────────────────────
 function buildExItemSimple(se, dayData) {
   var cacheKey = dayData.id+'_'+se.id;
@@ -5487,17 +5511,8 @@ function buildExItemSimple(se, dayData) {
   topRow.appendChild(circle);
   topRow.appendChild(info);
 
-  // Demo button (compact)
-  if (!ex.video_url) {
-    var demoBtn = document.createElement('button');
-    demoBtn.innerHTML = '&#9654;';
-    demoBtn.setAttribute('style','background:none;border:1px solid rgba(99,102,241,.3);color:#818cf8;border-radius:8px;width:28px;height:28px;font-size:.7rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation');
-    (function(exData,seData){
-      demoBtn.addEventListener('click', function(e){ e.stopPropagation(); openExerciseDemo(exData,seData); });
-      demoBtn.addEventListener('touchend', function(e){ e.stopPropagation(); e.preventDefault(); openExerciseDemo(exData,seData); },{passive:false});
-    })(ex, se);
-    topRow.appendChild(demoBtn);
-  }
+  // Video / Demo button
+  topRow.appendChild(buildVideoButton(ex, se, dayData));
 
   item.appendChild(topRow);
   item.appendChild(buildAltExtraRow(se, dayData, ex, false));
@@ -5560,7 +5575,7 @@ function buildExItemF(se, dayData) {
   doneCircle.style.cssText = 'width:26px;height:26px;border-radius:50%;border:2px solid '+(isDone?'var(--grn)':'var(--bdr)')+';background:'+(isDone?'var(--grn)':'none')+';display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
   if(isDone) doneCircle.innerHTML='&#10003;';
   (function(seid,ddid,ddobj){ doneCircle.addEventListener('click',function(){ toggleDone(seid,ddid,ddobj); }); doneCircle.addEventListener('touchend',function(e){ e.preventDefault(); toggleDone(seid,ddid,ddobj); },{passive:false}); })(se.id,dayData.id,dayData);
-  hdr.appendChild(nameEl); hdr.appendChild(pillEl); hdr.appendChild(doneCircle);
+  hdr.appendChild(nameEl); hdr.appendChild(pillEl); hdr.appendChild(buildVideoButton(ex, se, dayData)); hdr.appendChild(doneCircle);
   item.appendChild(hdr);
 
   // SVG Ring (tap to start rest timer)
@@ -5639,7 +5654,7 @@ function buildExItemI(se, dayData) {
   var pill = document.createElement('span');
   pill.style.cssText = 'font-size:.7rem;font-weight:700;color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:2px 7px;flex-shrink:0';
   pill.textContent = se.sets+'×'+(se.reps||'8-10');
-  hdr.appendChild(dot); hdr.appendChild(nameEl); hdr.appendChild(pill);
+  hdr.appendChild(dot); hdr.appendChild(nameEl); hdr.appendChild(pill); hdr.appendChild(buildVideoButton(ex, se, dayData));
   item.appendChild(hdr);
 
   // Set rows
