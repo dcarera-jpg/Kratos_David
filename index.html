@@ -1704,6 +1704,26 @@ select.inp{cursor:pointer}
   </div>
 </div>
 
+<!-- ── PROGRESS PHOTOS: FULLSCREEN VIEWER ── -->
+<div id="pp-viewer-modal" style="display:none;position:fixed;inset:0;background:#000;z-index:500;flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;position:absolute;top:0;left:0;right:0;z-index:1;background:linear-gradient(rgba(0,0,0,.7),transparent)">
+    <div>
+      <div id="pp-viewer-pos" style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.1em;color:#fff"></div>
+      <div id="pp-viewer-date" style="font-size:.7rem;color:rgba(255,255,255,.6)"></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button id="pp-viewer-del-btn" onclick="ppViewerDelete()" style="background:rgba(220,38,38,.8);border:none;border-radius:9px;padding:7px 14px;color:#fff;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent">🗑 Elimina</button>
+      <button onclick="ppViewerClose()" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:36px;height:36px;color:#fff;font-size:1rem;cursor:pointer;-webkit-tap-highlight-color:transparent">✕</button>
+    </div>
+  </div>
+  <img id="pp-viewer-img" src="" alt="" style="width:100%;height:100%;object-fit:contain">
+  <!-- prev/next -->
+  <div style="position:absolute;bottom:40px;left:0;right:0;display:flex;justify-content:center;gap:16px">
+    <button onclick="ppViewerNav(-1)" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:44px;height:44px;color:#fff;font-size:1.2rem;cursor:pointer;-webkit-tap-highlight-color:transparent">‹</button>
+    <button onclick="ppViewerNav(1)"  style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:44px;height:44px;color:#fff;font-size:1.2rem;cursor:pointer;-webkit-tap-highlight-color:transparent">›</button>
+  </div>
+</div>
+
 <!-- ── DAY ASSIGN MODAL (admin) ── -->
 <!-- VISTA ATLETA MODAL (coach) -->
 <div id="vista-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;overflow-y:auto">
@@ -6198,23 +6218,18 @@ function loadCompliance(ath) {
 var _ppState = { files:{}, blobs:{}, previews:{}, today:{} };
 var POSITIONS = ['front','back','left','right'];
 
-async function blurFaceInImage(imageFile) {
+async function _ppResizeImage(imageFile) {
   try {
     var bitmap = await createImageBitmap(imageFile);
+    var maxDim = 1200, w = bitmap.width, h = bitmap.height;
+    if (w > maxDim || h > maxDim) {
+      if (w >= h) { h = Math.round(h * maxDim / w); w = maxDim; }
+      else { w = Math.round(w * maxDim / h); h = maxDim; }
+    }
     var canvas = document.createElement('canvas');
-    canvas.width = bitmap.width; canvas.height = bitmap.height;
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(bitmap, 0, 0);
-    // Blur top 22% of image (where the face is in a standing body photo)
-    // Use a separate canvas to avoid reading/writing the same pixels
-    var faceH = Math.ceil(bitmap.height * 0.22);
-    var tmp = document.createElement('canvas');
-    tmp.width = bitmap.width; tmp.height = faceH;
-    var tc = tmp.getContext('2d');
-    tc.filter = 'blur(18px)';
-    tc.drawImage(bitmap, 0, 0, bitmap.width, faceH, 0, 0, bitmap.width, faceH);
-    ctx.drawImage(tmp, 0, 0);
-    return await new Promise(function(res){ canvas.toBlob(res,'image/jpeg',.85); });
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+    return await new Promise(function(res){ canvas.toBlob(res,'image/jpeg',.88); });
   } catch(e) { return imageFile; }
 }
 
@@ -6231,9 +6246,9 @@ async function uploadProgressPhoto(position, imageFile) {
   var takenAt = new Date().toISOString().split('T')[0];
   var base = ME.id+'/'+takenAt+'_'+position;
   var photoPath = base+'.jpg', thumbPath = ME.id+'/thumbs/'+takenAt+'_'+position+'.jpg';
-  var blurred = await blurFaceInImage(imageFile);
-  var thumb   = await _ppGenThumb(blurred, 300);
-  var r1 = await sb.storage.from('progress-photos').upload(photoPath, blurred, {contentType:'image/jpeg',upsert:true});
+  var resized = await _ppResizeImage(imageFile);
+  var thumb   = await _ppGenThumb(resized, 300);
+  var r1 = await sb.storage.from('progress-photos').upload(photoPath, resized, {contentType:'image/jpeg',upsert:true});
   if (r1.error) throw new Error('storage:photo: ' + r1.error.message);
   var r2 = await sb.storage.from('progress-photos').upload(thumbPath, thumb, {contentType:'image/jpeg',upsert:true});
   if (r2.error) throw new Error('storage:thumb: ' + r2.error.message);
@@ -6307,22 +6322,34 @@ var _selfieStream = null;
 var _selfiePos = null;
 var _selfieTimer = null;
 
-function ppSelfieOpen(pos) {
+async function ppSelfieOpen(pos) {
   _selfiePos = pos;
   var modal = document.getElementById('pp-selfie-modal');
   var video = document.getElementById('pp-selfie-video');
   if (!modal || !video) return;
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false })
-    .then(function(stream) {
-      _selfieStream = stream;
-      video.srcObject = stream;
-      modal.style.display = 'flex';
-    })
-    .catch(function(e) {
-      // Fallback: use file input with capture=user
-      var inp = document.getElementById('pp-file-'+pos);
-      if (inp) { inp.setAttribute('capture','user'); inp.value=''; inp.click(); }
+  try {
+    // Step 1: trigger permission prompt (iOS requires this before enumerateDevices returns labels)
+    var tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    tmp.getTracks().forEach(function(t){ t.stop(); });
+    // Step 2: find front camera by label
+    var devices = await navigator.mediaDevices.enumerateDevices();
+    var cams = devices.filter(function(d){ return d.kind === 'videoinput'; });
+    var front = cams.find(function(d){
+      var l = d.label.toLowerCase();
+      return l.includes('front') || l.includes('facetime') || l.includes('selfie') || l.includes('user');
     });
+    // Step 3: open with exact deviceId if found, otherwise facingMode ideal
+    var constraints = front
+      ? { video: { deviceId: { exact: front.deviceId }, width:{ideal:1280}, height:{ideal:1280} }, audio: false }
+      : { video: { facingMode: { ideal: 'user' }, width:{ideal:1280}, height:{ideal:1280} }, audio: false };
+    var stream = await navigator.mediaDevices.getUserMedia(constraints);
+    _selfieStream = stream;
+    video.srcObject = stream;
+    modal.style.display = 'flex';
+  } catch(e) {
+    var inp = document.getElementById('pp-file-'+pos);
+    if (inp) { inp.setAttribute('capture','user'); inp.value=''; inp.click(); }
+  }
 }
 
 function ppSelfieClose() {
@@ -6378,17 +6405,19 @@ function ppSelfieCapture() {
     _selfiePos = null;
     // Reuse the same blur+preview flow
     var card = document.getElementById('pp-card-'+pos);
-    if (card) { card.innerHTML='<span style="font-size:1.1rem;color:var(--mu2)">⏳</span><span class="pp-pos-lbl">Blurring…</span>'; card.className='pp-pos-card'; }
-    blurFaceInImage(fakeFile).then(function(blurredBlob) {
+    if (card) { card.innerHTML='<span style="font-size:1.1rem;color:var(--mu2)">⏳</span><span class="pp-pos-lbl">Caricamento…</span>'; card.className='pp-pos-card'; }
+    _ppResizeImage(fakeFile).then(function(resizedBlob) {
       _ppState.files[pos] = fakeFile;
-      _ppState.blobs[pos] = blurredBlob;
-      var url = URL.createObjectURL(blurredBlob);
+      _ppState.blobs[pos] = resizedBlob;
+      var url = URL.createObjectURL(resizedBlob);
       if (_ppState.previews[pos]) URL.revokeObjectURL(_ppState.previews[pos]);
       _ppState.previews[pos] = url;
       if (card) {
         card.className = 'pp-pos-card has-preview';
-        card.style.backgroundImage = 'url('+url+')';
-        card.innerHTML = '<span class="pp-pos-badge">'+pos.charAt(0).toUpperCase()+pos.slice(1)+'</span><button class="pp-retake" onclick="event.stopPropagation();ppRetake(\''+pos+'\')">↺</button>';
+        card.innerHTML =
+          '<img src="'+url+'" alt="'+pos+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px">' +
+          '<span class="pp-pos-badge new">NEW</span>' +
+          '<button class="pp-retake" onclick="event.stopPropagation();ppRetake(\''+pos+'\')">↺ Retake</button>';
       }
       _ppRefreshButtons();
     });
@@ -6410,10 +6439,10 @@ function ppFileSelected(pos, input) {
   // Show spinner on card while blurring
   var card = document.getElementById('pp-card-'+pos);
   if (card) {
-    card.innerHTML = '<span style="font-size:1.1rem;color:var(--mu2)">⏳</span><span class="pp-pos-lbl">Blurring…</span>';
+    card.innerHTML = '<span style="font-size:1.1rem;color:var(--mu2)">⏳</span><span class="pp-pos-lbl">Caricamento…</span>';
     card.className = 'pp-pos-card';
   }
-  blurFaceInImage(file).then(function(blob){
+  _ppResizeImage(file).then(function(blob){
     _ppState.blobs[pos] = blob;
     var url = URL.createObjectURL(blob);
     if (_ppState.previews[pos]) URL.revokeObjectURL(_ppState.previews[pos]);
@@ -6448,6 +6477,60 @@ function _ppRefreshButtons() {
     uploadBtn.style.display = hasPending ? 'block' : 'none';
     uploadBtn.textContent = 'Upload '+count+' photo'+(count!==1?'s':'');
   }
+}
+
+// ── PHOTO VIEWER ──────────────────────────────────────────────
+var _ppViewerRows = [];   // flat array of rows currently in viewer
+var _ppViewerIdx  = 0;
+
+async function ppOpenViewer(rows, idx) {
+  _ppViewerRows = rows;
+  _ppViewerIdx  = idx;
+  var modal = document.getElementById('pp-viewer-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  await _ppViewerLoad();
+}
+
+async function _ppViewerLoad() {
+  var row = _ppViewerRows[_ppViewerIdx];
+  if (!row) return;
+  var posEl  = document.getElementById('pp-viewer-pos');
+  var dateEl = document.getElementById('pp-viewer-date');
+  var img    = document.getElementById('pp-viewer-img');
+  if (posEl)  posEl.textContent  = row.position.toUpperCase();
+  if (dateEl) dateEl.textContent = row.taken_at;
+  if (img)    img.src = '';
+  var url = await _ppSignedUrl(row.photo_url, 3600);
+  if (img && url) img.src = url;
+  var delBtn = document.getElementById('pp-viewer-del-btn');
+  if (delBtn) delBtn._rowId = row.id;
+}
+
+function ppViewerNav(dir) {
+  var next = _ppViewerIdx + dir;
+  if (next < 0 || next >= _ppViewerRows.length) return;
+  _ppViewerIdx = next;
+  _ppViewerLoad();
+}
+
+function ppViewerClose() {
+  var modal = document.getElementById('pp-viewer-modal');
+  if (modal) modal.style.display = 'none';
+  var img = document.getElementById('pp-viewer-img');
+  if (img) img.src = '';
+}
+
+async function ppViewerDelete() {
+  var row = _ppViewerRows[_ppViewerIdx];
+  if (!row) return;
+  var delBtn = document.getElementById('pp-viewer-del-btn');
+  if (delBtn) { delBtn.disabled = true; delBtn.textContent = '…'; }
+  if (row.photo_url) await sb.storage.from('progress-photos').remove([row.photo_url]).catch(function(){});
+  if (row.thumb_url) await sb.storage.from('progress-photos').remove([row.thumb_url]).catch(function(){});
+  await sb.from('progress_photos').delete().eq('id', row.id).catch(function(){});
+  ppViewerClose();
+  loadProgressPhotos();
 }
 
 async function ppUploadAll() {
@@ -6540,12 +6623,15 @@ async function loadProgressPhotos() {
       var row=posMap[p];
       if (row && row.thumb_url) {
         thumb.innerHTML='<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:var(--mu2);text-transform:uppercase">'+p+'</div>';
-        // Load signed URL async
-        (function(el,path,rowData,dt,p){
+        thumb.style.cursor='pointer';
+        (function(el, path, allRows, rowIdx){
           _ppSignedUrl(path).then(function(url){
-            if(url) el.innerHTML='<img src="'+url+'" alt="'+p+'">';
+            if (url) {
+              el.innerHTML='<img src="'+url+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px">';
+              el.onclick = function(){ ppOpenViewer(allRows, rowIdx); };
+            }
           }).catch(function(){});
-        })(thumb, row.thumb_url, row, dt, p);
+        })(thumb, row.thumb_url, rows, rows.indexOf(row));
       } else {
         thumb.innerHTML='<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:var(--s4);text-transform:uppercase">'+p+'</div>';
       }
